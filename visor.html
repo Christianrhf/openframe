@@ -727,6 +727,81 @@
   .fld:focus{border-color:var(--on-border)}
   textarea.fld{min-height:62px;resize:vertical}
 
+  /* ═══ INVITADOS ═══
+     Tres autores, tres FORMAS (cero color): Cristian barra negra solida, Claude gris,
+     invitado barra A RAYAS y chip con borde discontinuo. Se lee a 9px sin leer el texto. */
+  :root{--invitado:#3a3a3a;--invitado-ring:#8a8a8a}
+  .note[data-who="invitado"],.rep[data-who="invitado"]{--own:var(--invitado);--own-ring:var(--invitado-ring)}
+  .note[data-who="invitado"]::before{
+    background:repeating-linear-gradient(180deg,var(--own) 0 3px,transparent 3px 6px)}
+  .rep[data-who="invitado"] .rwho::before{border-radius:1px;background:var(--own)}
+  .note .who.i{background:var(--panel);color:var(--fg);border:1px dashed var(--fg-dim);font-weight:600}
+  .mark.inv{background:repeating-linear-gradient(180deg,var(--own) 0 2px,transparent 2px 4px)}
+  .mark.inv::after{border-style:dashed}
+  .tlrail .rnote.inv{background:repeating-linear-gradient(180deg,var(--own) 0 1.5px,transparent 1.5px 3px)}
+  /* banner fijo del invitado: vive en la barra superior (46px, siempre visible) */
+  .invbanner{display:none;align-items:center;gap:5px;font-size:12px;color:var(--fg-dim);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+  .invbanner b{color:var(--fg);font-weight:600}
+  .invbanner .who.i{font-size:9.5px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+  body.invitado .invbanner{display:flex}
+  /* lo que un invitado NO ve: oculto (display:none), no deshabilitado */
+  body.invitado .rail, body.invitado .vcol, body.invitado .navhandle,
+  body.invitado #bProj, body.invitado .topbar .chk, body.invitado #bClaude, body.invitado #bCopy,
+  body.invitado #bOut, body.invitado #sello, body.invitado .undoBox,
+  body.invitado #bDel, body.invitado #bMove, body.invitado #tlChg, body.invitado #vfilter,
+  body.invitado #bShare, body.invitado #bHer, body.invitado #bUp,
+  body.invitado .note .acts .ok, body.invitado .note .acts .mv, body.invitado .note .acts .del,
+  body.invitado .rep .racts .del{display:none !important}
+  body.invitado .stage{padding-left:0 !important}
+  body.invitado .tp-row .tlinfo{flex:0 0 200px;width:200px}
+  /* enlace caducado: se ve, no se escribe */
+  body.inv-caducado #ta, body.inv-caducado .tools, body.inv-caducado #bEnd,
+  body.inv-caducado .note .acts, body.inv-caducado .rep .racts, body.inv-caducado #bErase,
+  body.inv-caducado #bUndo, body.inv-caducado #bRedo{opacity:.3;pointer-events:none}
+  body.inv-caducado .invbanner b{text-decoration:underline;text-decoration-style:dashed}
+  body.inv-caducado .framewrap canvas{cursor:default;pointer-events:none}
+  /* ── Compartir (Cristian): popover bajo el boton de la cabecera del video ── */
+  .shPop{position:fixed;z-index:900;width:396px;background:var(--raised);border:1px solid var(--line);
+    border-radius:9px;box-shadow:0 8px 26px var(--shadow-soft);padding:10px 12px 8px;display:none;
+    max-height:calc(100vh - 70px);overflow:hidden;flex-direction:column}
+  .shPop.on{display:flex}
+  .shPop[hidden]{display:none}
+  .shPop h3{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .shPop h3 svg{width:13px;height:13px;color:var(--fg-mute)}
+  .shPop h3 .shx{margin-left:auto;width:22px;height:22px;border-radius:5px;display:grid;place-items:center;color:var(--fg-mute)}
+  .shPop h3 .shx:hover{background:var(--hover);color:var(--fg)}
+  .shPop h3 .shx svg{width:12px;height:12px;color:inherit}
+  .shst-line{font-size:11px;color:var(--fg-mute);margin-bottom:8px;display:flex;align-items:center;gap:5px;min-height:16px}
+  .shst-line i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--fg-dim);flex:0 0 7px}
+  .shst-line.abierta i{background:var(--fg);border-color:var(--fg)}
+  .shform{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
+  .shform select,.shform input{height:26px;padding:0 7px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px}
+  .shform select{flex:0 0 auto}
+  .shform input{flex:1 1 110px;min-width:90px}
+  .shform .chk{font-size:11px;flex:0 0 auto}
+  .shform .btn.sm{flex:0 0 auto}
+  .shnuevo{display:none;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:11px}
+  .shnuevo.on{display:flex}
+  .shurl{font-family:var(--mono);font-size:10.5px;color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .shlist{overflow-y:auto;min-height:0}
+  .shempty{font-size:11.5px;color:var(--fg-mute);padding:9px 0 3px}
+  .shlink{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:11.5px}
+  .shlink:last-child{border-bottom:0}
+  .shlink .shb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .shlink .shn{display:flex;align-items:center;gap:6px;min-width:0}
+  .shlink .shetq{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .shlink .shm{font-family:var(--mono);font-size:10px;color:var(--fg-mute);white-space:nowrap}
+  .shst{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:9px;border:1px solid var(--line);
+    color:var(--fg-mute);background:var(--panel-2);white-space:nowrap;flex:0 0 auto}
+  .shst.activo{border-color:var(--fg);color:var(--fg);font-weight:600}
+  .shst.caducado{border-style:dashed}
+  .shst.revocado{text-decoration:line-through}
+  .shlink.muerto .shetq,.shlink.muerto .shm{color:var(--fg-mute)}
+  .shlink .btn.xs{flex:0 0 auto}
+  .shlink .btn.xs.confirmar{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+  .shaviso{font-size:11px;color:var(--fg-dim);padding:6px 0 0}
+
   @media (max-width:1180px){
     .rail{flex:0 0 176px;width:176px}
     .vcol{flex:0 0 200px;width:200px}
@@ -804,6 +879,8 @@
     <g id="i-reply"><polyline points="9 14 4 9 9 4"/><path d="M4 9h9a7 7 0 0 1 7 7v4"/></g>
     <!-- i-ver: heredar los hilos de la version anterior a esta -->
     <g id="i-ver"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></g>
+    <!-- i-share2: compartir con un enlace (Lucide share-2, geometria exacta de lucide-react) -->
+    <g id="i-share2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></g>
   </defs>
 </svg>
 
@@ -818,6 +895,7 @@
     <span class="undoLbl" id="undoLbl"></span>
   </div>
   <span class="sello" id="sello" title="Version que estas viendo">build —</span>
+  <div class="invbanner" id="invBanner" role="status" aria-live="polite"></div>
   <div class="spacer"></div>
   <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
   <label class="chk" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><span>Miniaturas</span></label>
@@ -849,6 +927,7 @@
     <div class="vcol-head">
       <svg viewBox="0 0 24 24" class="hdricon"><use href="#i-film"/></svg>
       <h3 id="vcolName">—</h3>
+      <button class="btn icon sm has-tip" id="bShare" data-tip="Compartir este video con un enlace" aria-label="Compartir este video con un enlace" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg></button>
       <button class="btn icon sm has-tip" id="bHer" data-tip="Traer los hilos abiertos de otra versión a esta"><svg viewBox="0 0 24 24"><use href="#i-ver"/></svg></button>
       <button class="btn icon sm has-tip" id="bUp" data-tip="Subir un video" title="Subir un video"><svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>
       <input type="file" id="file" accept="video/*,.mov,.mp4,.m4v,.webm" multiple hidden>
@@ -946,6 +1025,23 @@
        ningun ancestro con overflow la recorte ni la tape al plegar el panel. -->
   <div class="swPop" id="swPop" hidden></div>
 
+  <!-- Compartir: popover de Cristian. Vive en el body (nada lo recorta). -->
+  <div class="shPop" id="shPop" role="dialog" aria-label="Compartir este video con un enlace" hidden>
+    <h3><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg><span id="shTitulo">Compartir</span>
+      <button class="shx" id="shCerrar" title="Cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></h3>
+    <div class="shst-line" id="shEstado"><i></i><span>—</span></div>
+    <div class="shform">
+      <select id="shDias" title="Cuántos días vale el enlace" aria-label="Caducidad del enlace">
+        <option value="1">1 día</option><option value="7" selected>7 días</option><option value="30">30 días</option>
+      </select>
+      <input id="shEtq" maxlength="60" placeholder="Etiqueta (opcional)" title="Para quién es este enlace" aria-label="Etiqueta del enlace">
+      <label class="chk" title="Si está marcado, el invitado ve también las notas tuyas y de Claude"><input type="checkbox" id="shVe"><span>ver las notas de otros</span></label>
+      <button class="btn sm pri" id="shCrear" title="Crear un enlace secreto para este video">Crear enlace</button>
+    </div>
+    <div class="shnuevo" id="shNuevo"></div>
+    <div class="shlist" id="shList"></div>
+  </div>
+
   <div class="side">
     <div class="side-head">
       <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
@@ -985,6 +1081,15 @@
     <div class="sheet-foot" id="mFoot"></div>
   </div>
 </div>
+<!-- Invitado sin nombre: no se cierra sin nombre (ni Escape ni clic fuera). -->
+<div class="modal" id="invDlg" role="dialog" aria-modal="true" aria-labelledby="invDlgT">
+  <div class="sheet" style="max-width:360px">
+    <div class="sheet-head"><h3 id="invDlgT">¿Cómo te llamas?</h3></div>
+    <div class="sheet-body"><input class="fld" id="invNombre" maxlength="40" autocomplete="name" placeholder="Tu nombre" aria-label="Tu nombre" title="Así firmarás tus notas" style="margin-bottom:0"></div>
+    <div class="sheet-foot"><span class="warn" id="invDlgErr" role="alert" style="font-size:11.5px"></span><span style="flex:1"></span>
+      <button class="btn pri" id="invDlgOk" title="Guardar tu nombre y empezar a revisar">Entrar</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1020,6 +1125,43 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            replyTo:null,      // id de la nota raiz a la que apunta el cuadro de texto
            plegados:{}        // {idRaiz:true} hilos con las respuestas escondidas
          };
+
+/* ═══ INVITADOS ═══
+   `guest.py` inyecta window.__INVITADO = {slug, video, nombre, expira, ve_otras,
+   proyecto:{nombre,cliente}, version:{nombre,fps,duracion,ancho,alto}} antes de este
+   script. Si existe, la pagina es la de UN invitado: un solo video, sin proyectos,
+   sin borrar/resolver/subir. Ocultar NO es seguridad (la puerta de guest.py niega);
+   aqui ademas cada accion oculta esta guardada para que ni teclado ni consola la
+   dispare. Todo texto del invitado se pinta con textContent o con esc(). */
+const INV = (window.__INVITADO && typeof window.__INVITADO === "object") ? window.__INVITADO : null;
+const esInvitado = !!INV;
+let invCaducado = false;
+if(esInvitado) document.body.classList.add("invitado");
+const puedeEscribir = () => !esInvitado || !invCaducado;
+// quien firma una nota: "cristian" | "claude" | "invitado"
+function quienEs(n){
+  if(!n) return "cristian";
+  return n.author === "claude" ? "claude" : n.author === "invitado" ? "invitado" : "cristian";
+}
+// texto del chip de autor. El invitado SIEMPRE lleva «Invitado · Nombre»: no se
+// confunde ni con Cristian («Tú») ni con Claude.
+function nombreAutor(n){
+  const q = quienEs(n);
+  if(q === "claude") return "Claude";
+  if(q === "invitado") return "Invitado · " + String(n.autor_nombre || "sin nombre").slice(0, 40);
+  return esInvitado ? "Cristian" : "Tú";
+}
+// ¿esta nota la escribio quien mira la pantalla? (edicion de texto/dibujo)
+function esMia(n){
+  if(!n) return false;
+  if(!esInvitado) return quienEs(n) === "cristian";
+  if(quienEs(n) !== "invitado") return false;
+  if(INV.enlace_id && n.enlace_id) return n.enlace_id === INV.enlace_id;
+  return !!INV.nombre && n.autor_nombre === INV.nombre;
+}
+// PATCH de una nota: la puerta de invitados solo admite /api/notas/<slug>/<id>
+const NP = id => esInvitado ? ("/api/notas/" + encodeURIComponent(st.slug) + "/" + encodeURIComponent(id))
+                             : ("/api/proyectos/" + encodeURIComponent(st.slug) + "/notas/" + id);
 
 /* ═══ HILOS ═══
    Una nota es RAIZ (sin parent) o RESPUESTA (parent = id de la raiz). La respuesta
@@ -1072,6 +1214,7 @@ const v = $("#v"), cv = $("#cv"), ctx = cv.getContext("2d");
    cambio nunca pasaba a visto. Ahora aterrizar en el (Shift+N o clic en el marcador)
    lo marca, el contador baja solo y el punto se ve mas apagado. */
 async function marcarCambioVisto(c){
+  if(esInvitado) return;                 // «visto» es de Cristian; la puerta lo niega
   if(!c || c.visto || c.kind !== "cambio") return;
   c.visto = true;                        // optimista: el contador baja ya
   renderList(); updateMarks(); actualizarAsaNav();
@@ -1117,7 +1260,13 @@ applyTheme();
 /* ═══ API ═══ */
 async function api(path, opt){
   const r = await fetch(path, Object.assign({headers:{"Content-Type":"application/json"}}, opt||{}));
-  if(!r.ok){ let m=""; try{ m=(await r.json()).error; }catch(_){} throw new Error(m || ("HTTP "+r.status)); }
+  if(!r.ok){ let m=""; try{ m=(await r.json()).error; }catch(_){}
+    if(esInvitado){
+      // la puerta pide nombre antes de escribir; y cuando el enlace muere, TODO es 404
+      if(r.status === 403 && m === "nombre") invPedirNombre();
+      if(r.status === 404 && path === P(INV.slug)) invMarcarCaducado();
+    }
+    throw new Error(m || ("HTTP "+r.status)); }
   return r.json();
 }
 const P = p => "/api/proyectos/" + encodeURIComponent(p);
@@ -1130,12 +1279,27 @@ const P = p => "/api/proyectos/" + encodeURIComponent(p);
    que NO esté archivado. */
 const LAST_KEY = "openframe:last";
 function guardarSesion(){
+  if(esInvitado) return;
   try{ localStorage.setItem(LAST_KEY, JSON.stringify({slug: st.slug, vid: st.vid})); }catch(e){}
 }
 function leerSesion(){
   try{ return JSON.parse(localStorage.getItem(LAST_KEY) || "null") || {}; }catch(e){ return {}; }
 }
+/* El invitado no tiene lista de proyectos (/api/proyectos es 404 en la puerta):
+   sondea directamente el detalle de SU proyecto, que ya trae rev + videos + notas. */
+async function pullInvitado(){
+  try{
+    const d = await api(P(INV.slug));
+    setConn(true);
+    if(st.rev !== d.rev){
+      st.rev = d.rev;
+      if(!st.busyNote && !drawing && !cur) absorbDetail(d);
+      if(st.vid && !drawing){ renderList(); updateMarks(); updateEditor(); }
+    }
+  }catch(e){ setConn(false); }
+}
 async function pull(force){
+  if(esInvitado) return pullInvitado();
   try{
     const d = await api("/api/proyectos");
     st.proyectos = d.proyectos || [];
@@ -1154,7 +1318,9 @@ async function pull(force){
          nunca las pintaba: lo que Claude subia era invisible hasta que Cristian
          hacia clic en algo. Ahora se ve solo, y se avisa si son cosas nuevas. */
       if(st.slug){
-        if(!dibujando){ renderList(); updateMarks(); renderVideos(); updateEditor();
+        // (antes decia `dibujando`, una variable que no existe: ReferenceError en cada
+        //  cambio de rev y el poll nunca repintaba. La bandera real es `drawing`.)
+        if(!drawing){ renderList(); updateMarks(); renderVideos(); updateEditor();
           if(antes !== -1) avisarSiLlegoAlgoDeClaude(); }
       }
     }
@@ -1234,6 +1400,7 @@ async function heredarDesdeAnterior(nuevoId){
 }
 
 async function heredarHilos(){
+  if(esInvitado) return;
   if(!st.slug){ toast("Abre un proyecto primero"); return; }
   const vs = st.videos || [];
   if(vs.length < 2){ toast("Necesitas al menos dos versiones para heredar los hilos"); return; }
@@ -1313,6 +1480,7 @@ function actualizarBotonUndo(){
 async function deshacer(){
   // si el dibujo tiene historial propio sin usar, ese va primero
   if(st.hpos < st.hist.length - 1){ undo(); actualizarBotonUndo(); return; }
+  if(esInvitado) return;                 // el historial de acciones (borrar/crear) es de Cristian
   if(!hayUndo()){ toast("Nada que deshacer"); return; }
   const a = st.undo[st.uPos];
   st.uPos--;
@@ -1339,6 +1507,7 @@ async function deshacer(){
   }
 }
 async function rehacer(){
+  if(esInvitado){ redo(); return; }      // solo el rehacer del dibujo
   if(st.uPos + 1 >= st.undo.length){ toast("Nada que rehacer"); return; }
   st.uPos++;
   const a = st.undo[st.uPos];
@@ -1414,6 +1583,7 @@ function renderProyectos(){
 
 /* Archivar / desarchivar. No borra nada: solo cambia el estado. */
 async function archivarProyecto(slug, archivar){
+  if(esInvitado) return;
   const p = st.proyectos.find(x => x.slug === slug) || (st.archivados||[]).find(x => x.slug === slug);
   const nombre = p ? p.nombre : slug;
   if(archivar && st.slug === slug){
@@ -1435,6 +1605,7 @@ async function archivarProyecto(slug, archivar){
   }catch(e){ toast("No se pudo archivar: " + e.message, 3400); }
 }
 async function openProject(slug, opts){
+  if(esInvitado) return;                 // el invitado solo tiene SU proyecto (invArrancar)
   opts = opts || {};
   st.slug = slug; st.vid = null; st.filterVid = "";
   st.vidAVolver = opts.vid || null;
@@ -1452,6 +1623,8 @@ async function openProject(slug, opts){
   renderProyectos(); renderVideos(); renderList(); updateEditor(); updateUI();
 }
 async function openVideo(vid){
+  if(esInvitado && vid !== INV.video) return;   // un invitado ve UN video
+  if(typeof shCerrar === "function") shCerrar();
   st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
   guardarSesion();
   st.undo=[]; st.uPos=-1; actualizarBotonUndo();
@@ -1507,6 +1680,7 @@ function renderVideos(){
 
 /* ═══ notas ═══ */
 function askDelete(id){
+  if(esInvitado) return;                 // borrar no existe para el invitado
   const n = st.notas.find(x => x.id === id); if(!n) return;
   const previo = (n.text||"(solo dibujo)").slice(0,160);
   openModal("Eliminar nota",
@@ -1532,6 +1706,7 @@ function askDelete(id){
 
 function startEdit(id){
   const n = st.notas.find(x => x.id === id); if(!n) return;
+  if(esInvitado && (!esMia(n) || !puedeEscribir())) return;   // solo SUS notas
   if(n.video !== st.vid) openVideo(n.video);
   st.pend = {frame:n.frame, time:n.frame/fps};
   seek(n.frame/fps);
@@ -1552,6 +1727,7 @@ function startEdit(id){
    del cursor. El hilo apuntado se marca en la lista (fondo + barra inferior) para que
    nunca se responda a ciegas. */
 function startReply(id){
+  if(!puedeEscribir()){ toast("Este enlace caducó"); return; }
   const n = st.notas.find(x => x.id === id); if(!n) return;
   const raiz = raizDe(n);
   if(raiz.kind === "cambio"){ toast("Un marcador de cambio no lleva conversación"); return; }
@@ -1578,6 +1754,7 @@ function cancelReply(){
   return true;
 }
 function selectNoteById(id){
+  if(esInvitado) return;                 // «mover» es de Cristian
   const n = st.notas.find(x => x.id === id); if(!n) return;
   if(n.video !== st.vid) openVideo(n.video);
   st.pend = {frame:n.frame, time:n.frame/fps};
@@ -1639,17 +1816,19 @@ function renderFilter(){
 }
 /* Un bloque de hilo: la raiz + sus respuestas colgando de una linea vertical. */
 function htmlRespuesta(r){
-  const quien = r.author === "claude" ? "Claude" : "Tú";   // el chip va con mayuscula
+  const quien = nombreAutor(r);            // «Tú» / «Claude» / «Invitado · Nombre»
   const cuando = (r.created || "").slice(11, 16);
-  return '<div class="rep' + (st.replyTo === r.parent ? "" : "") + '" data-rid="' + r.id +
-    '" data-who="' + quien + '">' +
+  // data-who en minusculas: es lo que leen los selectores .rep[data-who=...] del CSS
+  // (antes llevaba «Claude»/«Tú» y ninguna regla de color de autor casaba)
+  const acts = esInvitado
+    ? (esMia(r) ? '<button class="ed has-tip" data-ed="' + esc(r.id) + '" data-tip="Editar tu respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' : '')
+    : '<button class="ed has-tip" data-ed="' + esc(r.id) + '" data-tip="Editar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
+      '<button class="del has-tip" data-del="' + esc(r.id) + '" data-tip="Eliminar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button>';
+  return '<div class="rep" data-rid="' + esc(r.id) + '" data-who="' + quienEs(r) + '">' +
     '<div class="rbody"><div class="rmeta">' +
-      '<span class="rwho">' + esc(quien) + (cuando ? " · " + cuando : "") + '</span></div>' +
+      '<span class="rwho">' + esc(quien) + (cuando ? " · " + esc(cuando) : "") + '</span></div>' +
       '<div class="rtxt">' + esc(r.text || "") + '</div></div>' +
-    '<div class="racts">' +
-      '<button class="ed has-tip" data-ed="' + r.id + '" data-tip="Editar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
-      '<button class="del has-tip" data-del="' + r.id + '" data-tip="Eliminar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button>' +
-    '</div></div>';
+    '<div class="racts">' + acts + '</div></div>';
 }
 function renderList(){
   const L = $("#list"), list = visibleNotes().filter(n => n.kind !== "cambio");
@@ -1676,9 +1855,9 @@ function renderList(){
     /* El chip de autor va SIEMPRE, con TEXTO. Antes tus notas no llevaban nada y se
    distinguian de las de Claude solo por una barra de 3px negra contra gris — eso no
    es un estado, es adivinar. Y "hermes" era un resto muerto de una version vieja. */
-const who = n.author === "claude" ? '<span class="who c">Claude</span>'
-            : n.author === "cristian" ? '<span class="who y">Tú</span>'
-            : '';
+const quien = quienEs(n);
+const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitado" ? "i" : "y") + '">' +
+            esc(nombreAutor(n)) + '</span>';
     const th = st.thumbs && n.thumb ? '<img class="thumb" src="/thumbs/' + st.slug + '/' + n.thumb + '" alt="">' : '';
     const txt = n.text ? esc(n.text) :
       (n.drawing && n.drawing.strokes && n.drawing.strokes.length ? '<span style="color:var(--fg-mute);font-style:italic">[dibujo]</span>' :
@@ -1702,17 +1881,20 @@ const who = n.author === "claude" ? '<span class="who c">Claude</span>'
     return '<div class="hilo-b" data-hilo="' + n.id + '">' +
       '<div class="note raiz' + (on?" on":"") + (bajo?" ph":"") + (n.resolved?" res":"") +
       (st.replyTo === n.id ? " respondiendo" : "") +
-      '" data-v="' + n.video + '" data-f="' + n.frame + '" data-id="' + n.id + '" data-who="' + (n.author === "claude" ? "claude" : "cristian") + '">' +
+      '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="' + quien + '">' +
       '<span class="phdot" title="Aqui esta el cursor del video"></span>' +
-      '<div class="body"><div class="meta"><span class="tcx">' + n.timecode + '</span>' +
+      '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span>' +
       rng + who + pastilla + deOtra + '</div>' +
       '<div class="txt">' + txt + '</div></div>' + th +
       '<div class="acts">' +
-      '<button class="rp has-tip" data-rp="' + n.id + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
-      '<button class="ed has-tip" data-ed="' + n.id + '" data-tip="Editar el texto"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
-      '<button class="ok has-tip" data-res="' + n.id + '" data-tip="' + (n.resolved?"Reabrir el hilo":"Cerrar el hilo") + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></button>' +
-      '<button class="mv has-tip" data-mv="' + n.id + '" data-tip="Mover a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg></button>' +
-      '<button class="del has-tip" data-del="' + n.id + '" data-tip="Eliminar' + (reps.length ? " el hilo entero" : "") + '"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button></div></div>' +
+      '<button class="rp has-tip" data-rp="' + esc(n.id) + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
+      // el invitado solo edita SUS notas; cerrar / mover / borrar no existen para el
+      ((!esInvitado || esMia(n)) ? '<button class="ed has-tip" data-ed="' + esc(n.id) + '" data-tip="' + (esInvitado ? "Editar tu nota" : "Editar el texto") + '"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' : '') +
+      (esInvitado ? '' :
+      '<button class="ok has-tip" data-res="' + esc(n.id) + '" data-tip="' + (n.resolved?"Reabrir el hilo":"Cerrar el hilo") + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></button>' +
+      '<button class="mv has-tip" data-mv="' + esc(n.id) + '" data-tip="Mover a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg></button>' +
+      '<button class="del has-tip" data-del="' + esc(n.id) + '" data-tip="Eliminar' + (reps.length ? " el hilo entero" : "") + '"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button>') +
+      '</div></div>' +
       cuerpoReps +
       '</div>';
   }).join("");
@@ -1747,6 +1929,7 @@ const who = n.author === "claude" ? '<span class="who c">Claude</span>'
   }
 }
 async function delNote(id){
+  if(esInvitado) return;
   await withBusyNote(async ()=>{
     try{
       await api(P(st.slug) + "/notas/" + id, {method:"DELETE"});
@@ -1761,6 +1944,7 @@ async function delNote(id){
   });
 }
 async function toggleRes(id){
+  if(esInvitado) return;                 // resolver / reabrir es de Cristian
   const n = st.notas.find(x => x.id === id); if(!n) return;
   await withBusyNote(async ()=>{
     const antesRes = snapNota(n);
@@ -1781,7 +1965,8 @@ v.addEventListener("loadedmetadata", () => {
   // "dato del archivo" y contaminaria todas las notas nuevas. El fps medido se
   // manda aparte, desde tickFps, solo cuando el contenedor no lo trae.
   if(!okFps(m.fps) && okFps(detFps)) patch.fps = detFps;
-  api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify(patch)})
+  // la meta del video la escribe Cristian; para el invitado esa ruta es 404
+  if(!esInvitado) api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify(patch)})
     .then(()=>pull()).catch(()=>{});
   setFps();
   fit(); updateUI(); renderVideos();
@@ -1875,7 +2060,7 @@ function tickFps(now, meta){
       const m = vmeta();
       if(m && !okFps(m.fps) && st.slug && st.vid){
         m.fps = g;
-        api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify({fps:g})}).catch(()=>{});
+        if(!esInvitado) api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify({fps:g})}).catch(()=>{});
       }
       if(setFps()) refreshFpsDeps();
     }
@@ -1943,7 +2128,9 @@ function redo(){ if(st.hpos+1>=st.hist.length) return;
   drawCanvas(); saveDrawing(); renderList(); }
 async function saveDrawing(){
   const n = curNote(); if(!n) return;
-  try{ await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({drawing: n.drawing})}); }
+  if(esInvitado && !esMia(n)) return;    // el dibujo de otro no se toca
+  if(String(n.id).startsWith("tmp_")) return;   // aun sin id del servidor: viaja al sincronizar
+  try{ await api(NP(n.id), {method:"PATCH", body:JSON.stringify({drawing: n.drawing})}); }
   catch(e){}
 }
 function pt(ev){
@@ -1959,6 +2146,7 @@ cv.addEventListener("pointerdown", e => {
     if(v.paused) play(); else pause();
     return;
   }
+  if(!puedeEscribir()){ toast("Este enlace caducó"); return; }
   e.preventDefault();
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
   ensurePend();
@@ -1966,6 +2154,7 @@ cv.addEventListener("pointerdown", e => {
      el instante para que el trazo tenga donde agarrarse. Crearla al soltar hacia
      perder siempre el primer trazo. */
   let n = curNote();
+  if(esInvitado && n && !esMia(n)) n = null;   // nunca dibujar sobre la nota de otro
   if(!n) n = crearNotaParaDibujar();
   if(!n) return;
   _inicioX = e.clientX; _inicioY = e.clientY; _gestoReal = false;
@@ -2017,15 +2206,17 @@ function crearNotaParaDibujar(){
      siempre — de ahi que "las herramientas no funcionan". */
   if(!st.slug || !st.vid) return null;
   const f = snap(v.currentTime);
-  const ya = noteAt(st.vid, f);
+  // el invitado solo reutiliza una nota del fotograma si es SUYA
+  const ya = esInvitado ? (notesAt(st.vid, f).find(esMia) || null) : noteAt(st.vid, f);
   if(ya){ st.pend = {frame:f, time:f/fps}; return ya; }
   const nota = {
     id: "tmp_" + Date.now().toString(36),
     video: st.vid, frame: f, fps: fps,
     timecode: tc(f/fps, f), time: Math.round(f/fps*1000)/1000,
     end_frame: null, text: "", kind: "nota", resolved: false,
-    author: "cristian", drawing: {strokes:[]}, pendiente_sync: true
+    author: esInvitado ? "invitado" : "cristian", drawing: {strokes:[]}, pendiente_sync: true
   };
+  if(esInvitado) nota.autor_nombre = INV.nombre || "";
   st.notas.push(nota);
   st.notas.sort(cmpNotas);
   st.pend = {frame:f, time:f/fps};
@@ -2034,7 +2225,7 @@ function crearNotaParaDibujar(){
   drawCanvas(); renderList(); updateMarks(); updateEditor();
   // sincronizar en segundo plano: si falla, se quita la nota temporal
   api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
-    video: st.vid, frame: f, text: "", author: "cristian", fps: fps})})
+    video: st.vid, frame: f, text: "", author: esInvitado ? "invitado" : "cristian", fps: fps})})
   .then(r => {
     const real = r.nota;
     if(!real) return;
@@ -2082,9 +2273,11 @@ function crearNotaParaDibujar(){
 function eraseFrame(){
   /* El borrador limpia el dibujo DEL FOTOGRAMA ACTUAL, no el de la nota seleccionada.
      Antes usaba curNote(), asi que desde otro frame borraba el dibujo equivocado. */
+  if(!puedeEscribir()) return;
   ensurePend();
   const n = notaVisibleEnElFrameActual();
   if(!n || !n.drawing || !n.drawing.strokes.length) return;
+  if(esInvitado && !esMia(n)){ toast("Solo puedes borrar tus dibujos"); return; }
   pushHist(); n.drawing = {strokes:[]}; drawCanvas(); saveDrawing(); renderList();
 }
 function drawCanvas(){
@@ -2171,7 +2364,7 @@ async function saveReply(){
     let saved = null;
     await withBusyNote(async ()=>{
       const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
-        parent: raiz.id, text: val, author:"cristian" })});
+        parent: raiz.id, text: val, author: esInvitado ? "invitado" : "cristian" })});
       saved = r.nota || null;
     });
     if(saved) upsertNote(saved);
@@ -2189,9 +2382,12 @@ async function saveReply(){
 
 async function saveNote(){
   if(!st.slug || !st.vid) return;
+  if(!puedeEscribir()){ toast("Este enlace caducó: ya no se pueden enviar notas"); return; }
   if(st.replyTo) return saveReply();      // el cuadro esta en modo respuesta
   const val = $("#ta").value;
-  const f = editorFrame();
+  // invitado con tramo marcado: la nota nace en el INICIO del tramo y llega hasta «fin»
+  const tramo = (esInvitado && st.invTramo) ? st.invTramo : null;
+  const f = tramo ? tramo.ini : editorFrame();
   // sin texto y sin edicion activa: nada que enviar
   if(!val.trim() && !editingId){
     setDirty(false); toast("Escribe algo para guardar", 1600); return;
@@ -2206,16 +2402,18 @@ async function saveNote(){
     let saved = null;
     await withBusyNote(async ()=>{
       if(existing){
-        const r = await api(P(st.slug)+"/notas/"+existing.id, {method:"PATCH", body:JSON.stringify({text: val})});
+        const r = await api(NP(existing.id), {method:"PATCH", body:JSON.stringify({text: val})});
         saved = r.nota || null;
         if(saved) saved.video = st.vid;
       }else{
-        const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
-          video: st.vid, frame: f, text: val, author:"cristian", fps: fps })});
+        const cuerpo = { video: st.vid, frame: f, text: val, author: esInvitado ? "invitado" : "cristian", fps: fps };
+        if(tramo && tramo.fin > f) cuerpo.end_frame = tramo.fin;
+        const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify(cuerpo)});
         saved = r.nota || null;
       }
     });
     editingId = null;
+    st.invTramo = null;
     // la nota entra a la lista sin refetch (el PATCH ya la devuelve)
     if(saved){
       if(existing) upsertNote(saved); else upsertNote(saved);
@@ -2244,7 +2442,7 @@ async function saveNote(){
     // si ya hay una nota tuya en este fotograma, Enter responde en su hilo en vez de
     // crear otra nota (asi no se duplican: habia un par duplicado en los datos)
     const miaAqui = st.notas.find(n => n.video === st.vid && n.frame === f
-      && n.author !== "claude" && !n.parent && !esRespuesta(n));
+      && esMia(n) && !n.parent && !esRespuesta(n));
     if(miaAqui && !existing){ setTimeout(() => startReply(miaAqui.id), 120); }
     $("#bCancel").style.display = "none";
     renderList(); renderVideos(); updateMarks(); updateEditor();
@@ -2341,6 +2539,7 @@ function _movTick(){
 }
 
 $("#bMove").onclick = () => {
+  if(esInvitado) return;                 // mover (PATCH frame) no existe para el invitado
   const n = curNote();
   if(!n){ toast("No hay ninguna nota que mover"); return; }
   const maxF = Math.max(0, Math.round((vdur||0)*fps));
@@ -2451,6 +2650,7 @@ $("#bMove").onclick = () => {
 };
 
 $("#bEnd").onclick = () => {
+  if(esInvitado){ invMarcarFin(); return; }   // el tramo del invitado viaja en el POST
   const n = curNote(); if(!n) return;
   const f = snap(v.currentTime);
   if(n.end_frame != null && n.end_frame === f){ n.end_frame = null; toast("Intervalo quitado"); }
@@ -2594,6 +2794,7 @@ delete ATAJOS["p"];   // "p" minúscula = nota anterior (jumpNote). El lapiz es 
 
 document.addEventListener("keydown", e => {
   if($("#modal").classList.contains("on")){ if(e.key==="Escape") closeModal(); return; }
+  if($("#invDlg").classList.contains("on")) return;     // sin nombre no hay atajos (ni Escape)
   const tag = (e.target.tagName||"").toLowerCase();
   if(tag==="textarea"||tag==="input"||tag==="select") return;
   if(!st.vid) return;
@@ -2774,6 +2975,7 @@ function soloCambios(){
                  .sort((a,b) => a.frame - b.frame);
 }
 function irACambio(dir){
+  if(esInvitado) return;                 // los cambios de Claude son flujo de Cristian
   const cs = soloCambios();
   if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
   const t = v.currentTime + (dir > 0 ? 0.001 : -0.001);
@@ -2866,14 +3068,15 @@ function pintarRail(){
   {
     for(const n of [...notas, ...cambios]){
       const e = document.createElement("div");
-      e.className = "rnote" + (n.kind === "cambio" ? " cambio" : "") + (n.resolved ? " done" : "");
+      const q = quienEs(n);
+      e.className = "rnote" + (n.kind === "cambio" ? " cambio" : "") + (n.resolved ? " done" : "") + (q === "invitado" ? " inv" : "");
       e.style.left = clamp(n.frame / totalFrames * 100, 0, 100) + "%";     // <-- coordenada pura
-      e.style.setProperty("--own", n.author === "claude" ? "var(--claude)" : "var(--yo)");
+      e.style.setProperty("--own", q === "claude" ? "var(--claude)" : q === "invitado" ? "var(--invitado)" : "var(--yo)");
       if(n.id === st.selId) e.classList.add("sel");
       e.dataset.nid = n.id;
       e.tabIndex = 0;
       e.setAttribute("role", "button");
-      const et = n.kind === "cambio" ? "Cambio de Claude" : (n.author === "claude" ? "claude" : "tú");
+      const et = n.kind === "cambio" ? "Cambio de Claude" : nombreAutor(n);
       e.setAttribute("aria-label", et + " en " + n.timecode);
       e.title = et + " · " + n.timecode + " · f" + n.frame + (n.kind === "cambio" ? "" : "\n" + (n.text||"").slice(0,70));
       e.onclick = ev => { ev.stopPropagation(); saltarANota(n.id); };
@@ -3213,16 +3416,17 @@ function updateMarks(){
     puestos.push({px:px, fila:fila});
 
     const e = document.createElement("div");
-    e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "");
+    const q = quienEs(n);
+    e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "") + (q === "invitado" ? " inv" : "");
     e.style.left = (frac * 100) + "%";
     e.style.setProperty("--fila", String(fila));
     // el marcador hereda el color del autor: mismo mecanismo que la tarjeta
-    e.style.setProperty("--own", n.author === "claude" ? "var(--claude)" : "var(--yo)");
+    e.style.setProperty("--own", q === "claude" ? "var(--claude)" : q === "invitado" ? "var(--invitado)" : "var(--yo)");
     e.dataset.nid = n.id;   // para arrastrarlo sobre la barra
     e.dataset.t = t;
     e.title = n.kind === "cambio"
       ? "Cambio de Claude · " + n.timecode + " · clic para ver"
-      : (n.author === "claude" ? "claude" : "tú") + " · " + n.timecode + " — " + (n.text||"");
+      : nombreAutor(n) + " · " + n.timecode + " — " + (n.text||"");
     e.onclick = ev => { ev.stopPropagation();
       st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
       if(n.kind === "cambio"){ editingId = null; setDirty(false); }
@@ -3256,6 +3460,11 @@ function updateEditor(){
   }
   const ed = $("#edAt");
   if(ed && replying && rNota) ed.textContent = rNota.timecode;
+  // invitado con tramo marcado: el cuadro dice de donde a donde va la proxima nota
+  if(esInvitado && st.invTramo && !replying && !enEdicion){
+    if(ed) ed.textContent = tc(null, st.invTramo.ini) + " → " + tc(null, st.invTramo.fin);
+    if(lbl) lbl.textContent = "tramo · " + (st.invTramo.fin - st.invTramo.ini + 1) + " f";
+  }
   ta.placeholder = replying
     ? "Escribe tu respuesta al hilo…  Enter envía al hilo, no crea otra nota"
     : "Escribe la nota y pulsa Enter para enviarla. Shift+Enter = nueva linea.";
@@ -3298,10 +3507,11 @@ $("#modal").onclick = e => { if(e.target.id==="modal") closeModal(); };
 
 /* ═══ subir video ═══ */
 $("#bHer").onclick = heredarHilos;
-$("#bUp").onclick = () => $("#file").click();
+$("#bUp").onclick = () => { if(!esInvitado) $("#file").click(); };
 $("#bDel").disabled = true; $("#bMove").disabled = true;
 $("#file").onchange = async e => {
   const fs = [...e.target.files]; e.target.value = "";
+  if(esInvitado) return;
   if(!st.slug){ toast("Crea un proyecto primero"); return; }
   for(const f of fs){
     toast("Subiendo " + f.name + "…", 30000);
@@ -3326,6 +3536,7 @@ $("#file").onchange = async e => {
 
 /* ═══ proyecto nuevo ═══ */
 async function nuevoProyecto(){
+  if(esInvitado) return;
   openModal("Nuevo proyecto",
     '<label class="lbl">Nombre</label><input class="fld" id="pn" placeholder="Ej: Animales Sueltos — Trailer 2">' +
     '<label class="lbl">Cliente (opcional)</label><input class="fld" id="pc" placeholder="Ej: Perspectiva">' +
@@ -3385,6 +3596,7 @@ function asMD(){
   return s;
 }
 $("#bOut").onclick = () => {
+  if(esInvitado) return;
   if(!st.slug){ openModal("Exportar","<p style='color:var(--fg-dim)'>Abre un proyecto primero.</p>",""); return; }
   openModal("Exportar", `
     <h4>Archivo</h4>
@@ -3433,6 +3645,7 @@ function asCSV(){
 
 /* ═══ copiar para Claude ═══ */
 $("#bCopy").onclick = async () => {
+  if(esInvitado) return;
   if(!st.slug){ toast("Abre un proyecto primero"); return; }
   const ok = await copyText(asMD());
   toast(ok ? "Copiado — pégalo en Claude" : "No se pudo copiar", ok?2000:3200);
@@ -3440,6 +3653,7 @@ $("#bCopy").onclick = async () => {
 
 /* ═══ para Claude ═══ */
 $("#bClaude").onclick = () => {
+  if(esInvitado) return;
   const p = pro();
   const brief = [
     "Soy Cristian, edito video. Uso un visor local (http://127.0.0.1:8477) donde dejo notas ancladas al fotograma exacto, y tu las lees por API.",
@@ -3473,6 +3687,279 @@ $("#bClaude").onclick = () => {
   $("#cpB").onclick = async () => toast(await copyText($("#brief").textContent) ? "Copiado" : "No se pudo copiar");
   $("#dlB").onclick = () => { download("para-claude.md", brief, "text/markdown"); toast("Guardado en Descargas"); };
 };
+
+/* ═══ INVITADO: arranque, banner, nombre, caducidad, tramo ═══ */
+function fechaCorta(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "";
+  return pad(d.getDate()) + "/" + pad(d.getMonth()+1) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+// el banner se escribe con textContent: el nombre viene del invitado, nunca es HTML
+function invPintarBanner(){
+  const b = $("#invBanner"); if(!b || !INV) return;
+  b.textContent = "";
+  const add = (t, tag) => { const s = document.createElement(tag || "span"); s.textContent = t; b.appendChild(s); return s; };
+  const proy = (INV.proyecto && INV.proyecto.nombre) || INV.slug || "";
+  const ver  = (INV.version && INV.version.nombre) || "";
+  if(invCaducado){
+    add("Este enlace caducó", "b"); add(" · solo lectura · " + proy + (ver ? " · " + ver : ""));
+    b.title = "El enlace ya no vale: puedes mirar, pero no enviar notas";
+    return;
+  }
+  add("Revisando como "); add(INV.nombre || "…", "b");
+  add(" · " + proy + (ver ? " · " + ver : ""));
+  b.title = INV.expira ? ("Este enlace caduca el " + fechaCorta(INV.expira)) : "";
+}
+function invPedirNombre(){
+  const d = $("#invDlg"); if(!d || !esInvitado || invCaducado) return;
+  if(d.classList.contains("on")) return;
+  d.classList.add("on");
+  $("#invDlgErr").textContent = "";
+  setTimeout(() => { const i = $("#invNombre"); if(i) i.focus(); }, 30);
+}
+async function invEnviarNombre(){
+  const i = $("#invNombre"), err = $("#invDlgErr");
+  // sin caracteres de control; 1–40 (la puerta vuelve a validar)
+  const nombre = String(i.value || "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 40);
+  if(!nombre){ err.textContent = "Escribe tu nombre"; i.focus(); return; }
+  $("#invDlgOk").disabled = true;
+  try{
+    const r = await api("/api/invitado/nombre", {method:"POST", body: JSON.stringify({nombre: nombre})});
+    INV.nombre = String((r && r.nombre) || nombre).slice(0, 40);
+    $("#invDlg").classList.remove("on");
+    invPintarBanner(); renderList();
+    toast("Hola, " + INV.nombre, 1800);
+    $("#ta").focus();
+  }catch(e){ err.textContent = "No se pudo guardar el nombre: " + e.message; }
+  $("#invDlgOk").disabled = false;
+}
+$("#invDlgOk").onclick = invEnviarNombre;
+$("#invNombre").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); invEnviarNombre(); } });
+/* Enlace caducado a mitad de sesion: se avisa claro y se apaga TODA la escritura.
+   Lo detectan dos vias: el reloj (INV.expira) y un 404 de la puerta en el sondeo. */
+function invMarcarCaducado(){
+  if(!esInvitado || invCaducado) return;
+  invCaducado = true;
+  document.body.classList.add("inv-caducado");
+  st.tool = null; $$("[data-tool]").forEach(x => x.classList.remove("on"));
+  st.replyTo = null; editingId = null; st.invTramo = null;
+  const ta = $("#ta"); ta.value = ""; ta.disabled = true;
+  ta.placeholder = "Este enlace caducó: ya no se pueden enviar notas.";
+  $("#bSave").disabled = true; $("#bCancel").style.display = "none";
+  $("#invDlg").classList.remove("on");
+  invPintarBanner(); renderList(); updateEditor();
+  toast("Este enlace caducó: ya no se pueden enviar notas", 6000);
+}
+function invVigilarCaducidad(){
+  const t = (INV && INV.expira) ? Date.parse(INV.expira) : NaN;
+  if(!isFinite(t)) return;
+  const mirar = () => { if(Date.now() >= t) invMarcarCaducado(); };
+  mirar(); setInterval(mirar, 5000);
+}
+/* «fin» del invitado: la puerta no deja PATCH end_frame, asi que el tramo se decide
+   ANTES de enviar y viaja en el POST. Inicio = fotograma donde empezo a escribir
+   (st.pend) o el cursor; fin = el cursor al pulsar «fin». Se consume al enviar. */
+function invMarcarFin(){
+  if(!puedeEscribir()){ toast("Este enlace caducó"); return; }
+  if(!st.vid) return;
+  const f = snap(v.currentTime);
+  if(st.invTramo && st.invTramo.fin === f){ st.invTramo = null; toast("Intervalo quitado"); updateEditor(); return; }
+  const ini = st.pend ? st.pend.frame : f;
+  if(f <= ini){ toast("Mueve el cursor más allá del inicio"); return; }
+  st.invTramo = {ini: ini, fin: f};
+  st.pend = {frame: ini, time: frameT(ini)};
+  toast("La próxima nota va de " + tc(null, ini) + " a " + tc(null, f), 2600);
+  updateEditor();
+}
+async function invArrancar(){
+  // un solo proyecto, el del enlace: pro() y absorbDetail() lo encuentran aqui
+  st.proyectos = [{slug: INV.slug, nombre: (INV.proyecto && INV.proyecto.nombre) || INV.slug,
+                   cliente: (INV.proyecto && INV.proyecto.cliente) || "", videos: 1, notas: 0, pendientes: 0}];
+  st.slug = INV.slug; st.filterVid = "";
+  document.body.classList.remove("nav-plegado");
+  invPintarBanner();
+  await pullDetail();
+  const pv = (st.videos || []).find(x => x.id === INV.video) || (st.videos || [])[0];
+  if(pv) await openVideo(pv.id);
+  renderList(); updateEditor(); updateUI();
+  invVigilarCaducidad();
+  if(!INV.nombre && !invCaducado) invPedirNombre();
+}
+
+/* ═══ COMPARTIR (Cristian): un enlace secreto por invitado ═══
+   Popover bajo el boton de la cabecera del video. Crear, listar (estado, usos,
+   nº de notas), copiar y revocar (confirmacion en el propio boton, sin confirm()).
+   Si server.py aun no tiene los endpoints (404), lo dice en una linea y no rompe nada.
+   Etiquetas y URLs se pintan con textContent: nada del servidor entra como HTML. */
+const SH = {enlaces: [], estado: null, sinEndpoints: false, error: "", cargando: false, confirmar: null, confirmarT: 0, nuevo: null};
+const shBtn = $("#bShare"), shPop = $("#shPop");
+function shAbierto(){ return !!shPop && !shPop.hidden; }
+function shUrl(){ return P(st.slug) + "/videos/" + encodeURIComponent(st.vid) + "/invitar"; }
+function shEstadoEnlace(e){
+  if(e.revocado) return "revocado";
+  const t = Date.parse(e.expira || "");
+  return (isFinite(t) && t <= Date.now()) ? "caducado" : "activo";
+}
+function shEl(tag, cls, txt){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(txt != null) e.textContent = txt;
+  return e;
+}
+function shColocar(){
+  if(!shAbierto() || !shBtn) return;
+  const b = shBtn.getBoundingClientRect(), M = 8;
+  shPop.style.top = Math.round(b.bottom + 6) + "px";
+  const W = shPop.offsetWidth || 396;
+  shPop.style.left = Math.round(Math.max(M, Math.min(b.left, innerWidth - W - M))) + "px";
+}
+function shCerrar(){
+  if(!shPop || shPop.hidden) return;
+  shPop.hidden = true; shPop.classList.remove("on");
+  if(shBtn) shBtn.setAttribute("aria-expanded", "false");
+  SH.confirmar = null; SH.nuevo = null;
+}
+async function shAbrir(){
+  if(esInvitado || !shPop) return;
+  if(!st.slug || !st.vid){ toast("Abre un video primero"); return; }
+  shPop.hidden = false; shPop.classList.add("on");
+  shBtn.setAttribute("aria-expanded", "true");
+  const m = vmeta();
+  $("#shTitulo").textContent = "Compartir «" + ((m && m.nombre) || st.vid) + "»";
+  $("#shEtq").value = ""; $("#shVe").checked = false; $("#shDias").value = "7";
+  SH.nuevo = null;
+  shPintar(); shColocar();
+  await shCargar();
+  shColocar();
+}
+async function shCargar(){
+  if(!st.slug || !st.vid) return;
+  SH.cargando = true; SH.error = ""; shPintar();
+  try{
+    const d = await api(shUrl());
+    SH.enlaces = (d && Array.isArray(d.enlaces)) ? d.enlaces : [];
+    SH.sinEndpoints = false;
+    try{ SH.estado = await api("/api/invitados/estado"); }catch(e){ SH.estado = null; }
+  }catch(e){
+    SH.enlaces = [];
+    SH.sinEndpoints = /^HTTP 404|no encontrado/.test(e.message || "");
+    SH.error = SH.sinEndpoints ? "" : (e.message || "error");
+  }
+  SH.cargando = false; shPintar();
+}
+function shPintar(){
+  if(!shPop) return;
+  // ── linea de estado ──
+  const est = $("#shEstado"); est.textContent = ""; est.classList.remove("abierta");
+  est.appendChild(shEl("i"));
+  const activos = SH.enlaces.filter(e => shEstadoEnlace(e) === "activo").length;
+  let linea;
+  if(SH.cargando) linea = "Consultando…";
+  else if(SH.sinEndpoints) linea = "El servidor aún no admite enlaces de invitado.";
+  else if(SH.error) linea = "No se pudo consultar: " + SH.error;
+  else if(SH.estado && typeof SH.estado.publicada === "boolean"){
+    linea = (SH.estado.publicada ? "Puerta abierta" : "Puerta cerrada") + " · " +
+            (SH.estado.enlaces_activos != null ? SH.estado.enlaces_activos : activos) + " activos";
+    if(SH.estado.publicada) est.classList.add("abierta");
+  } else linea = activos + (activos === 1 ? " enlace activo" : " enlaces activos");
+  est.appendChild(shEl("span", "", linea));
+  est.title = SH.sinEndpoints ? "Falta la parte del servidor (server.py): los enlaces se crearán cuando exista"
+            : "Puerta abierta = el túnel está publicado mientras haya enlaces vivos";
+  for(const id of ["shDias", "shEtq", "shVe", "shCrear"]){ const e = $("#" + id); if(e) e.disabled = SH.sinEndpoints || SH.cargando; }
+  // ── enlace recien creado ──
+  const nu = $("#shNuevo"); nu.textContent = ""; nu.classList.toggle("on", !!SH.nuevo);
+  if(SH.nuevo){
+    nu.appendChild(shEl("span", "shurl", SH.nuevo.url || ""));
+    nu.lastChild.title = SH.nuevo.url || "";
+    const bc = shEl("button", "btn xs", "Copiar"); bc.title = "Copiar el enlace al portapapeles";
+    bc.onclick = async () => toast((await copyText(SH.nuevo.url)) ? "Enlace copiado" : "No se pudo copiar", 2200);
+    nu.appendChild(bc);
+    if(SH.nuevo.publicada === false){
+      const av = shEl("div", "shaviso", "La puerta NO quedó abierta" + (SH.nuevo.aviso ? ": " + SH.nuevo.aviso : "") + ". El invitado no podrá entrar hasta abrirla (publicar.sh on).");
+      av.style.flex = "1 1 100%"; nu.appendChild(av);
+    }
+  }
+  // ── lista ──
+  const L = $("#shList"); L.textContent = "";
+  if(!SH.cargando && !SH.sinEndpoints && !SH.enlaces.length){
+    L.appendChild(shEl("div", "shempty", "Este video no tiene enlaces. Crea uno arriba."));
+  }
+  const orden = SH.enlaces.slice().sort((a, b) => String(b.creado||"").localeCompare(String(a.creado||"")));
+  for(const e of orden){
+    const estado = shEstadoEnlace(e);
+    const row = shEl("div", "shlink" + (estado === "activo" ? "" : " muerto"));
+    row.dataset.eid = e.id || "";
+    row.dataset.estado = estado;
+    const body = shEl("div", "shb");
+    const n1 = shEl("div", "shn");
+    n1.appendChild(shEl("span", "shst " + estado, estado));
+    n1.appendChild(shEl("span", "shetq", e.etiqueta ? String(e.etiqueta).slice(0, 60) : ("enlace " + (e.id || ""))));
+    body.appendChild(n1);
+    const usos = +e.usos || 0, notas = +e.notas || 0;
+    body.appendChild(shEl("span", "shm",
+      usos + (usos === 1 ? " uso" : " usos") + " · " + notas + (notas === 1 ? " nota" : " notas") +
+      (e.ve_otras ? " · ve otras" : "") +
+      (e.expira ? " · " + (estado === "caducado" ? "caducó " : "hasta ") + fechaCorta(e.expira) : "")));
+    row.appendChild(body);
+    if(estado === "activo"){
+      const bc = shEl("button", "btn xs", "Copiar");
+      bc.title = "Copiar el enlace de " + (e.etiqueta || e.id || "este invitado");
+      bc.onclick = async () => toast((await copyText(e.url || "")) ? "Enlace copiado" : "No se pudo copiar", 2200);
+      row.appendChild(bc);
+      const br = shEl("button", "btn xs" + (SH.confirmar === e.id ? " confirmar" : ""), SH.confirmar === e.id ? "¿Revocar?" : "Revocar");
+      br.title = SH.confirmar === e.id ? "Pulsa otra vez para revocar: el invitado deja de entrar al instante"
+                                       : "Revocar este enlace (pide confirmación)";
+      br.dataset.rev = e.id || "";
+      br.onclick = () => shRevocar(e.id);
+      row.appendChild(br);
+    }
+    L.appendChild(row);
+  }
+}
+async function shCrear(){
+  if(esInvitado || !st.slug || !st.vid) return;
+  const dias = +$("#shDias").value || 7;
+  const etiqueta = String($("#shEtq").value || "").trim().slice(0, 60);
+  const ve_otras = !!$("#shVe").checked;
+  $("#shCrear").disabled = true;
+  try{
+    const r = await api(shUrl(), {method:"POST", body: JSON.stringify({dias: dias, etiqueta: etiqueta, ve_otras: ve_otras})});
+    SH.nuevo = r || null;
+    $("#shEtq").value = "";
+    toast(r && r.publicada === false ? "Enlace creado, pero la puerta NO quedó abierta" : "Enlace creado", 3000);
+    await shCargar();
+    if(SH.nuevo && SH.nuevo.url) copyText(SH.nuevo.url).then(ok => { if(ok) toast("Enlace creado y copiado", 2600); });
+  }catch(e){ toast("No se pudo crear el enlace: " + e.message, 4000); }
+  $("#shCrear").disabled = false;
+  shColocar();
+}
+// confirmacion EN el boton: primer clic lo arma 4 s, segundo clic revoca
+async function shRevocar(id){
+  if(esInvitado || !id) return;
+  if(SH.confirmar !== id){
+    SH.confirmar = id; shPintar();
+    clearTimeout(SH.confirmarT);
+    SH.confirmarT = setTimeout(() => { if(SH.confirmar === id){ SH.confirmar = null; shPintar(); } }, 4000);
+    return;
+  }
+  SH.confirmar = null; clearTimeout(SH.confirmarT);
+  try{
+    await api(shUrl() + "/" + encodeURIComponent(id), {method:"DELETE"});
+    toast("Enlace revocado", 2200);
+  }catch(e){ toast("No se pudo revocar: " + e.message, 4000); }
+  await shCargar(); shColocar();
+}
+if(shBtn && shPop){
+  shBtn.onclick = ev => { ev.stopPropagation(); shAbierto() ? shCerrar() : shAbrir(); };
+  $("#shCerrar").onclick = shCerrar;
+  $("#shCrear").onclick = shCrear;
+  $("#shEtq").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); shCrear(); } });
+  document.addEventListener("click", ev => {
+    if(shAbierto() && !shPop.contains(ev.target) && !shBtn.contains(ev.target)) shCerrar();
+  });
+  document.addEventListener("keydown", ev => { if(ev.key === "Escape" && shAbierto()){ shCerrar(); } });
+  window.addEventListener("resize", shColocar);
+}
 
 /* ═══ arranque ═══ */
 /* Color: un circulito con el color actual; al clic se despliega el resto.
@@ -3551,6 +4038,7 @@ for(const el of $$("[data-tool]")) el.onclick = () => { st.tool = el.dataset.too
 
 (function init(){
   renderFilter(); renderList();
+  if(esInvitado){ invArrancar(); return; }
   pull(true).then(() => {
     if(st.slug || !st.proyectos.length) return;
     const ses = leerSesion();
