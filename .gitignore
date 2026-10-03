@@ -1,0 +1,5 @@
+data/
+logs/
+shots/
+__pycache__/
+*.bak-*

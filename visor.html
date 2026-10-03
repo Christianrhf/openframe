@@ -1,0 +1,3566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenFrame</title>
+<style>
+  /* ═══ TEMA CLARO (por defecto) ═══ */
+
+  /* ── Color por AUTOR (mecanismo de Frame.io: el color identifica QUIEN, no QUE nota).
+     Tu violeta, Claude coral. El mismo color se repite en la tarjeta y en el marcador
+     de la linea de tiempo: sin leer, ves de quien es cada nota. ── */
+
+  /* ── SELECCION visible ──
+     Antes: .pitem.on diferenciaba #FFF de #F8F8F6 -> 3 unidades de luminancia, o sea
+     nada. Ahora 5 canales a la vez: barra, fondo, borde, peso y tamano del icono. */
+  /* ═══ BLANCO Y NEGRO ═══
+     Cristian: "No uses el morado, usa negro. Que la app sea a blanco y negro."
+     No hay color: la distincion entre tu nota, la de Claude y los cambios de Claude
+     la carga la FORMA y el grosor, no el tono. Negro para lo activo y el cursor,
+     gris para lo inactivo. El unico color que queda es el ambar del timecode,
+     porque es el dato que hay que leer. */
+  :root{
+    --bg:#ffffff;--panel:#ffffff;--panel-2:#f6f6f5;--raised:#ffffff;
+    --line:#dcdcdc;--line-soft:#ebebeb;
+    --fg:#111111;--fg-dim:#4a4a4a;--fg-mute:#8a8a8a;
+    /* acento = negro. Todo lo activo es negro. */
+    --accent:#111111;--accent-dim:#555555;--accent-ink:#ffffff;--accent-hover:#000000;
+    --danger:#111111;--ok:#1a1a1a;--info:#333333;
+    --accent-soft:rgba(0,0,0,.06);--accent-glow:rgba(0,0,0,.16);
+    --accent-glow-2:rgba(0,0,0,.30);--ok-soft:rgba(0,0,0,.07);
+    --ok-glow:rgba(0,0,0,.26);--info-soft:rgba(0,0,0,.06);
+    --track:#e0e0e0;--hover:#f2f2f2;--hover-ink:#111111;
+    --pri-ink:#ffffff;--pri-hover:#000000;--on-border:#c8c8c8;
+    --scroll:#c4c4c4;--scroll-h:#a8a8a8;
+    --chk-border:#b4b4b4;--strike:#9a9a9a;
+    --screen-a:#fbfbfb;--screen-b:#ededed;
+    --nocodec-bg:rgba(255,255,255,.97);--modal-bg:rgba(0,0,0,.35);
+    --shadow:rgba(0,0,0,.14);--shadow-soft:rgba(0,0,0,.09);
+    --sheet-shadow:0 18px 48px rgba(0,0,0,.16);
+    --badge-no-bg:#f2f2f2;--badge-no-line:#c8c8c8;
+    --line-c:#d0d0d0;--line-y:#d0d0d0;
+    /* seleccion: negra, no violeta */
+    --sel-bg:#f0f0f0;--sel-line:#b8b8b8;--sel-bar:#000000;
+    /* autores: se distinguen por TONO DE GRIS y por forma, no por color */
+    --yo:#111111;        /* Cristian: negro solido, 3px */
+    --yo-ring:#555555;
+    --claude:#8a8a8a;     /* Claude: gris medio */
+    --claude-ring:#b4b4b4;
+    /* el ambar del chip se queda: es el dato, y a blanco y negro seria un gris mas */
+    --tcf:#1a1a1a;--tcb:#f0f0f0;
+    --cambio:#111111;--cambio-ring:#111111;--cambio-soft:#f0f0f0;
+    /* ── GEOMETRIA FIJA DE LA BARRA DE TIEMPO ──
+       Un solo sitio decide el tamano de la barra y de los marcadores, y ese tamano
+       NO depende del zoom. Antes el JS escribia host.style.minHeight segun cuantos
+       marcadores se pisaban: al acercar, la barra crecia, crecia el transporte, se
+       encogia la pantalla del video y el ResizeObserver volvia a medirlo todo.
+       Eso era el "se descuadra la pantalla". Con la altura fija eso no puede pasar. */
+    /* ── UNA SOLA BANDA: tres capas que comparten caja y eje X ──
+       De abajo arriba: regleta (solo con zoom) · pista de progreso · marcadores.
+       Las medidas se declaran aqui y en ningun otro sitio, para que el apilado de
+       marcadores no pueda volver a empujar la caja (eso era el descuadre del zoom). */
+    --scrub-h:32px;      /* alto de la banda: constante en cualquier zoom */
+    --track-y:4px;       /* la pista, medida desde el suelo de la banda */
+    --track-h:5px;
+    --mark-base:9px;     /* la fila 0 de marcadores arranca justo sobre la pista */
+    --mark-h:9px;        /* alto de un marcador */
+    --lane-px:11px;      /* separacion entre filas de marcadores apilados */
+    --rule-h:6px;        /* la regleta del video entero, pegada bajo la pista */
+    --radius:7px;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
+  }
+  /* ═══ TEMA OSCURO ═══ */
+  [data-theme="dark"]{
+    --bg:#111111;--panel:#151515;--panel-2:#1c1c1c;--raised:#212121;
+    --line:#2e2e2e;--line-soft:#242424;
+    --fg:#f0f0f0;--fg-dim:#c0c0c0;--fg-mute:#8f8f8f;
+    --accent:#f0f0f0;--accent-dim:#a0a0a0;--accent-ink:#111111;--accent-hover:#ffffff;
+    --danger:#e0e0e0;--ok:#d0d0d0;--info:#a0a0a0;
+    --accent-soft:rgba(255,255,255,.08);--accent-glow:rgba(255,255,255,.18);
+    --accent-glow-2:rgba(255,255,255,.32);--ok-soft:rgba(255,255,255,.09);
+    --ok-glow:rgba(255,255,255,.28);--info-soft:rgba(255,255,255,.08);
+    --track:#333333;--hover:#242424;--hover-ink:#f0f0f0;
+    --pri-ink:#111111;--pri-hover:#ffffff;--on-border:#3a3a3a;
+    --scroll:#3a3a3a;--scroll-h:#4a4a4a;
+    --chk-border:#4a4a4a;--strike:#6a6a6a;
+    --screen-a:#0d0d0d;--screen-b:#1a1a1a;
+    --nocodec-bg:rgba(20,20,20,.97);--modal-bg:rgba(0,0,0,.55);
+    --shadow:rgba(0,0,0,.5);--shadow-soft:rgba(0,0,0,.35);
+    --sheet-shadow:0 18px 48px rgba(0,0,0,.55);
+    --badge-no-bg:#242424;--badge-no-line:#3a3a3a;
+    --line-c:#333333;--line-y:#333333;
+    --sel-bg:#242424;--sel-line:#4a4a4a;--sel-bar:#ffffff;
+    --yo:#f0f0f0;--yo-ring:#a0a0a0;--claude:#9a9a9a;--claude-ring:#6a6a6a;
+    --tcf:#e0e0e0;--tcb:#262626;
+    --cambio:#f0f0f0;--cambio-ring:#f0f0f0;--cambio-soft:#242424;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;overflow:hidden;display:flex;flex-direction:column}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font:inherit;color:inherit;background:none;border:none;outline:none}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:9px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
+
+  .topbar{height:46px;flex:0 0 46px;display:flex;align-items:center;gap:10px;padding:0 12px;
+    background:var(--panel);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent-glow-2)}
+  .sep{width:1px;height:20px;background:var(--line);flex:0 0 1px}
+  .conn{font-size:11px;color:var(--fg-mute);display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .conn i{width:6px;height:6px;border-radius:50%;background:var(--fg-mute);flex:0 0 6px}
+  .conn.live i{background:var(--ok);box-shadow:0 0 7px var(--ok-glow)}
+  .conn.live{color:var(--ok)}
+  .spacer{flex:1}
+  .sello{font-family:var(--mono);font-size:9.5px;color:var(--fg-mute);
+    background:var(--panel-2);border:1px solid var(--line);padding:1px 5px;border-radius:4px;white-space:nowrap}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--radius);
+    border:1px solid var(--line);background:var(--panel-2);color:var(--fg-dim);font-size:12px;white-space:nowrap}
+  .btn:hover{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
+  .btn svg{width:14px;height:14px;flex:0 0 14px}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+  .btn.pri:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:var(--accent-ink)}
+  .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
+  .btn.danger:hover{filter:brightness(.92)}
+  .btn.on{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
+  .btn.icon{width:28px;padding:0;justify-content:center}
+  .btn.sm{height:24px;padding:0 8px;font-size:11px}
+  .btn:disabled{opacity:.3;cursor:default}
+  .btn:disabled:hover{background:var(--panel-2);color:var(--fg-dim);border-color:var(--line)}
+
+  .main{flex:1;display:flex;min-height:0}
+
+  /* ── Barra de proyectos ── */
+  .rail{flex:0 0 216px;width:216px;background:var(--panel);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;min-height:0}
+  .rail-head{padding:9px 10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:6px}
+  .hdricon{width:13px;height:13px;color:var(--fg-mute);flex:0 0 13px}
+  .rail-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1}
+  .plist{flex:1;overflow-y:auto;padding:6px}
+  .pitem{position:relative;padding:8px 9px;border-radius:var(--radius);cursor:pointer;margin-bottom:3px;border:1px solid transparent}
+  .pitem:hover{background:var(--panel-2)}
+  .pitem.on{background:var(--raised);border-color:var(--line)}
+  .pitem.on .pname{color:var(--fg)}
+  .pname{font-size:12.5px;font-weight:500;color:var(--fg-dim);margin-bottom:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pmeta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--fg-mute);font-family:var(--mono)}
+  .pmeta .vd{color:var(--info)}
+  .pmeta .pn{color:var(--accent)}
+  .pmeta .pz{color:var(--ok)}
+
+  /* ── Columna de videos ── */
+  .vcol{flex:0 0 246px;width:246px;background:var(--panel);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;min-height:0}
+  .vcol-head{padding:9px 11px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:7px}
+  .vcol-head h3{font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vlist{flex:1;overflow-y:auto;padding:7px}
+  .vitem{padding:8px;border-radius:var(--radius);cursor:pointer;margin-bottom:4px;
+    border:1px solid var(--line-soft);background:var(--panel-2)}
+  .vitem:hover{background:var(--raised)}
+  .vitem.on{background:var(--raised);border-color:var(--on-border)}
+  .vitem .vn{font-size:12px;font-weight:500;margin-bottom:4px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
+  .vitem .vc{font-size:10px;color:var(--fg-mute);font-family:var(--mono);display:flex;gap:7px;flex-wrap:wrap}
+  .badge{font-size:9.5px;padding:1px 5px;border-radius:3px;background:var(--raised);
+    color:var(--fg-mute);border:1px solid var(--line);font-family:var(--mono);flex:0 0 auto}
+  .badge.no{color:var(--danger);border-color:var(--badge-no-line);background:var(--badge-no-bg)}
+  .vitem .vrow{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .bar{flex:1;height:3px;background:var(--track);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ok)}
+  .vitem .vn2{font-size:10px;font-family:var(--mono);color:var(--fg-mute)}
+
+  /* ── Reproductor ── */
+  .stage{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);min-height:0}
+  .screen{flex:1;display:grid;place-items:center;min-height:0;padding:16px;position:relative;
+    background:radial-gradient(ellipse at 50% 0%,var(--screen-a) 0%,var(--screen-b) 70%)}
+  .framewrap{position:relative;line-height:0;max-width:100%;max-height:100%;display:none}
+  .framewrap.on{display:block}
+  .framewrap video{max-width:100%;max-height:100%;display:block;background:#000;border-radius:2px}
+  .framewrap canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  .nocodec{position:absolute;inset:0;display:none;place-items:center;z-index:20;
+    background:var(--nocodec-bg);padding:26px;text-align:center}
+  .nocodec.on{display:grid}
+  .nocodec b{display:block;color:var(--danger);font-size:14px;margin-bottom:7px}
+  .nocodec span{color:var(--fg-dim);font-size:12.5px;line-height:1.75;max-width:400px;display:block}
+  .nocodec code{font-family:var(--mono);font-size:11px;background:var(--panel-2);padding:2px 6px;
+    border-radius:4px;color:var(--fg-mute);display:inline-block;margin-top:9px}
+
+  /* tres bandas con rango distinto: linea de tiempo > transporte > dibujo.
+     Antes las separaba el mismo gap:7px y ninguna mandaba. */
+  .transport{flex:0 0 auto;background:var(--panel);border-top:1px solid var(--line);
+    padding:8px 12px 7px;display:flex;flex-direction:column;gap:0}
+  .transport > .tlinesa{padding-bottom:9px}
+  .transport > .tp-row{border-top:1px solid var(--line-soft);padding-top:7px}
+  .transport > .tools{border-top:1px solid var(--line-soft);padding-top:7px;margin-top:6px}
+  .scrub{position:relative;height:var(--scrub-h);cursor:pointer;display:flex;align-items:center;
+    touch-action:none;flex:0 0 var(--scrub-h)}
+  /* top/transform explicitos: antes la pista no tenia posicion vertical y dependia de
+     como el navegador coloca un hijo absoluto dentro de un flex (static position).
+     Con el alto de la barra fijo da igual, pero el contrato queda escrito. */
+  /* la pista y los marcadores se anclan al SUELO de la banda, no a su linea media.
+     Asi la fila de marcadores crece hacia arriba y la regleta cuelga por debajo:
+     las tres capas quedan pegadas y leen como una sola pieza (Frame.io hace lo
+     mismo con sus dos filas). Anclarlo al centro obligaba a repartir el alto a
+     ambos lados y la regleta no tenia donde ir. */
+  .scrub-track{position:absolute;left:0;right:0;bottom:var(--track-y);
+    height:var(--track-h);background:var(--track);border-radius:3px}
+  .scrub-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent-dim);border-radius:3px}
+  .scrub-head{position:absolute;bottom:calc(var(--track-y) + var(--track-h) / 2 - 6px);
+    width:12px;height:12px;margin-left:-6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);pointer-events:none}
+  /* la FILA del marcador la pone el JS en --fila (0 = sobre la pista, 1 = encima).
+     Toda la geometria vive aqui: el JS ya no escribe top/bottom/height/transform
+     en linea, que era la via por la que el zoom movia cajas. */
+  .mark{position:absolute;bottom:calc(var(--mark-base) + var(--fila,0) * var(--lane-px));
+    width:3px;height:var(--mark-h);margin-left:-1.5px;border-radius:3px;
+    background:var(--own,var(--fg-mute));pointer-events:auto;cursor:grab;z-index:2}
+  .mark:hover{filter:brightness(1.25)}
+  .mark:active{cursor:grabbing}
+  .mark.done{opacity:.4}
+  /* Los botones NO pueden encogerse: con flex-wrap y sin flex-shrink:0 el navegador
+     los estrujaba a 16px de ancho con un icono de 14px dentro — el de reproducir
+     quedaba invisible. Cristian: "el boton de reproducir no se ve". */
+  .tp-row{display:flex;align-items:center;gap:8px}
+  .tp-row > .btn{flex:0 0 auto}
+  .tp-row .btn.icon{width:30px;height:30px;flex:0 0 30px}
+  .tp-row .btn svg{width:16px;height:16px;flex:0 0 16px}
+  .tc{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;min-width:92px;letter-spacing:-.02em}
+  .tc .fr{color:var(--accent)}
+  .tc .s{color:var(--fg-mute);font-size:11px;margin-left:6px;font-family:var(--sans)}
+  .tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .tool{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--fg-dim);border:1px solid transparent}
+  .tool:hover{background:var(--raised);color:var(--fg)}
+  .tool.on{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
+  .tool svg{width:15px;height:15px}
+  .swatches{display:flex;gap:3px;padding:2px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
+  .sw{width:15px;height:15px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.on{border-color:var(--fg);transform:scale(1.12)}
+  .wsize{display:flex;align-items:center;gap:5px;padding:2px 7px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
+  .wsize button{width:8px;height:8px;border-radius:50%;background:var(--fg-dim);cursor:pointer}
+  .wsize button.on{background:var(--accent);transform:scale(1.25)}
+
+  /* ── Panel de notas ── */
+  .side{flex:0 0 360px;width:360px;background:var(--panel);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;min-height:0}
+  .side-head{flex:0 0 auto;padding:8px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
+  .side-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1}
+  .cnt{font-family:var(--mono);font-size:11px;color:var(--fg-mute)}
+  .filter{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:6px 11px;border-bottom:1px solid var(--line-soft);font-size:11px}
+  .vfilter{padding:3px 6px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);
+    font-size:10.5px;color:var(--fg-dim);max-width:118px}
+  .chk{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 0}
+  .chk input{appearance:none;width:13px;height:13px;border:1px solid var(--chk-border);border-radius:3.5px;cursor:pointer;position:relative;flex:0 0 13px}
+  .chk input:checked{background:var(--accent);border-color:var(--accent)}
+  .chk input:checked::after{content:"";position:absolute;left:4px;top:1px;width:3.5px;height:7px;
+    border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .chk:hover{color:var(--fg-dim)}
+  .list{flex:1;overflow-y:auto;min-height:0}
+  .empty{padding:34px 20px;text-align:center;color:var(--fg-mute);font-size:12px;line-height:1.8}
+  .empty svg{width:24px;height:24px;opacity:.4;margin-bottom:9px}
+
+  .note{padding:8px 11px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;gap:8px;position:relative}
+  .note:hover{background:var(--panel-2)}
+  .note.on{background:var(--raised)}
+  .note.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+  /* la nota que esta bajo el cursor del reproductor */
+  .note.ph{background:var(--accent-soft)}
+
+  .note[data-who="cristian"]{--own:var(--yo);    --own-ring:var(--yo-ring)}
+  .note[data-who="claude"] {--own:var(--claude); --own-ring:var(--claude-ring)}
+  /* anillo de identidad a la izquierda, como el avatar-ring de Frame.io */
+  .note[data-who]::before{
+    content:"";position:absolute;left:0;top:7px;bottom:7px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--own);opacity:.9;
+  }
+  .note.res::before{opacity:.32}
+  .note.on::before{opacity:1;box-shadow:0 0 0 1px var(--own)}
+  /* el timecode pasa de texto suelto a CHIP calido (unico color calido de la UI) */
+  /* el chip del timecode ya no usa color (todo es gris). Se destaca por
+     fondo, borde y peso de fuente — igual que hace Frame.io, pero sin tono. */
+  .note .tcx{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums;
+    color:var(--tcf);background:var(--tcb);padding:1px 5px;border-radius:5px;
+    letter-spacing:.2px;border:1px solid var(--line);
+  }
+  /* el marcador de la barra de tiempo toma el color del autor */
+  .mark::after{
+    content:"";position:absolute;inset:-2.5px -1px;border-radius:2px;
+    border:1px solid var(--own,#111);opacity:.5;
+  }
+  .mark.done{opacity:.38}
+
+  .note.ph .txt{color:var(--fg)}
+  .note.ph .phdot{
+    display:block;position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
+  }
+  .note .phdot{display:none}
+  .note.ph.on{background:var(--raised)}
+  .note.ph.on .phdot{width:3px;background:var(--accent)}
+  .note.on .phdot{display:block;background:var(--accent)}
+  .note.res .txt{color:var(--fg-mute);text-decoration:line-through;text-decoration-color:var(--strike)}
+  .note .body{flex:1;min-width:0}
+  .note .meta{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
+  /* (la regla vieja de .tcx que pisaba el chip la borramos) */
+  .note .frx,.note .rng{font-family:var(--mono);font-size:10px;color:var(--fg-mute)}
+  .note .who{font-size:9.5px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+  .note .who.c{background:var(--info-soft);color:var(--info);border:1px solid var(--line-c)}
+  .note .who.y{background:var(--ok-soft);color:var(--ok);border:1px solid var(--line-y)}
+  .note .txt{font-size:12.5px;white-space:pre-wrap;word-break:break-word;line-height:1.55}
+  .note .thumb{width:54px;height:31px;border-radius:4px;object-fit:cover;flex:0 0 54px;border:1px solid var(--line);background:#000}
+  .note .acts{display:flex;gap:1px;opacity:0;flex:0 0 auto}
+  .note:hover .acts,.note.on .acts{opacity:1}
+  .note .acts button{width:21px;height:21px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
+  .note .acts button:hover{background:var(--hover);color:var(--hover-ink)}
+  .note .acts button svg{width:12px;height:12px}
+  .note .acts button.ok:hover{color:var(--ok)}
+  .note .acts button.ed:hover{color:var(--accent)}
+  .note .acts button.mv:hover{color:var(--accent)}
+  .note .acts button.del:hover{color:var(--danger)}
+  .note .acts button[disabled]{opacity:.35;cursor:default}
+
+  /* ═══ HILOS ═══
+     Un hilo es un bloque: la nota raiz y debajo sus respuestas, colgando de una
+     linea vertical fina que sale del anillo de identidad de la raiz (es como lo
+     hace Frame.io: "linea vertical fina colgando del avatar del padre").
+     El separador entre HILOS es el hairline de siempre; entre la raiz y sus
+     respuestas no hay separador, porque son la misma conversacion. */
+  .hilo-b{border-bottom:1px solid var(--line-soft);position:relative}
+  .hilo-b .note{border-bottom:0}
+  /* la raiz de un hilo con respuestas no se separa de ellas */
+  .hilo-b .note.raiz{padding-bottom:5px}
+  /* las respuestas: sangradas, mas pequenas, sin chip de timecode (comparten el
+     momento de la raiz: repetirlo seria ruido que miente sobre que son) */
+  .rep{display:flex;gap:7px;padding:4px 11px 4px 26px;position:relative;cursor:pointer}
+  .rep:hover{background:var(--panel-2)}
+  .rep[data-who="cristian"]{--own:var(--yo); --own-ring:var(--yo-ring)}
+  .rep[data-who="claude"]  {--own:var(--claude); --own-ring:var(--claude-ring)}
+  /* el hilo vertical: nace bajo el anillo de la raiz y baja por todas las respuestas */
+  .rep::before{content:"";position:absolute;left:13px;top:0;bottom:0;width:1px;
+    background:var(--line)}
+  .rep:last-child::before{bottom:calc(100% - 11px)}   /* la ultima lo corta a su altura */
+  /* el codo que entra a la respuesta */
+  .rep::after{content:"";position:absolute;left:13px;top:10px;width:8px;height:1px;
+    background:var(--line)}
+  .rep .rbody{flex:1;min-width:0}
+  .rep .rmeta{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+  .rep .rwho{font-size:9.5px;font-family:var(--mono);color:var(--fg-mute);
+    display:flex;align-items:center;gap:4px}
+  /* el punto de identidad de quien responde: mismo mecanismo de anillo, en pequeno */
+  .rep .rwho::before{content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--own,var(--fg-mute));flex:0 0 6px}
+  .rep .rtxt{font-size:12px;white-space:pre-wrap;word-break:break-word;line-height:1.5;color:var(--fg-dim)}
+  .rep .racts{display:flex;gap:1px;opacity:0;flex:0 0 auto}
+  .rep:hover .racts{opacity:1}
+  .rep .racts button{width:19px;height:19px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
+  .rep .racts button:hover{background:var(--hover);color:var(--hover-ink)}
+  .rep .racts button svg{width:11px;height:11px}
+
+  /* ── ESTADO DEL HILO: una pastilla, tres formas, cero color ──
+     pendiente  = sin pastilla (el caso normal no gasta tinta)
+     respondida = pastilla con la cuenta de respuestas, borde solido
+     cerrada    = pastilla con check, borde punteado y texto tachado (ya lo hacia .res) */
+  .hst{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:9px;
+    border:1px solid var(--line);color:var(--fg-mute);background:var(--panel-2);
+    cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+  .hst:hover{border-color:var(--on-border);color:var(--fg)}
+  .hst.abierto{border-color:var(--fg-mute);color:var(--fg-dim);font-weight:600}
+  .hst.cerrado{border-style:dashed}
+  .hst .cv{display:inline-block;width:5px;height:5px;border-right:1.5px solid currentColor;
+    border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-bottom:2px}
+  .hst.plegado .cv{transform:rotate(-45deg);margin:0 0 0 1px}
+  /* chip "viene de la version anterior" */
+  .vfrom{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:5px;
+    border:1px dashed var(--line);color:var(--fg-mute);white-space:nowrap}
+  /* la caja de respuesta abierta: el editor de abajo cambia de modo, y aqui se marca
+     a QUE hilo esta apuntando para que no se responda a ciegas */
+  .note.respondiendo, .rep.respondiendo{background:var(--accent-soft)}
+  .note.respondiendo::after{content:"";position:absolute;left:0;right:0;bottom:0;
+    height:2px;background:var(--accent)}
+
+  .editor{flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel-2);padding:9px 11px}
+  .ed-head{display:flex;align-items:center;gap:7px;margin-bottom:6px;min-height:19px}
+  .ed-head .at{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-soft);
+    padding:2px 6px;border-radius:4px;font-variant-numeric:tabular-nums}
+  .ed-head .lbl{font-size:11px;color:var(--fg-mute);flex:1}
+  .ed-head button{font-size:10.5px;color:var(--fg-dim);padding:2px 5px;border-radius:4px;display:flex;align-items:center;gap:3px}
+  .ed-head button:hover{background:var(--hover);color:var(--hover-ink)}
+  .ed-head button svg{width:11px;height:11px}
+  /* aviso de nota sin guardar */
+  .dirty{
+    font-size:10px;color:var(--accent);display:none;align-items:center;gap:4px;
+    padding:2px 6px;border-radius:4px;background:var(--accent-soft);white-space:nowrap;
+  }
+  .dirty.on{display:flex}
+  .dirty::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);flex:0 0 5px}
+  #ta{width:100%;min-height:64px;max-height:180px;resize:vertical;font-size:12.5px;line-height:1.55;
+    background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:8px 9px}
+  #ta:focus{border-color:var(--on-border)}
+  #ta::placeholder{color:var(--fg-mute)}
+  .ed-foot{display:flex;align-items:center;gap:7px;margin-top:6px}
+  /* Los atajos ya no se imprimen aqui: ocupan dos lineas y empujaban el boton de
+     borrar. Ahora viven en el tooltip del boton Guardar y en el panel de ayuda. */
+  .hint{flex:1;min-width:0}
+  kbd{font-family:var(--mono);font-size:9.5px;background:var(--track);border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:3.5px;padding:1px 4px;color:var(--fg-dim)}
+
+
+  /* ── Mover nota: vista previa + barra ── */
+  .mvprev{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;
+    margin-bottom:10px;max-height:210px;display:grid;place-items:center}
+  .mvprev video{max-width:100%;max-height:210px;display:block}
+  .mvtc{position:absolute;left:8px;bottom:6px;font-family:var(--mono);font-size:12px;
+    color:#fff;background:rgba(0,0,0,.66);padding:2px 7px;border-radius:4px;
+    font-variant-numeric:tabular-nums}
+  .mvbar{position:relative;height:26px;cursor:pointer;touch-action:none;margin-bottom:8px}
+  .mvtrack{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:4px;
+    background:var(--track);border-radius:3px}
+  .mvhead{position:absolute;top:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;
+    background:var(--accent);transform:translateY(-50%);box-shadow:0 0 0 3px var(--accent-glow);
+    pointer-events:none}
+  .mvmarks{position:absolute;left:0;right:0;top:50%;height:26px;transform:translateY(-50%);pointer-events:none}
+  .mark2{position:absolute;top:50%;width:2px;height:9px;margin-left:-1px;transform:translateY(-50%);
+    background:var(--fg-mute);opacity:.7;border-radius:1px}
+  .mvrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .mvsec{width:96px;margin:0;font-family:var(--mono);text-align:center}
+  .mvsec::-webkit-outer-spin-button,.mvsec::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+
+  /* ── etiqueta flotante al pasar el mouse ──
+     Antes era un ::after dentro del propio boton. No se veia nunca en los sitios
+     donde mas falta hacia: los botones de cada nota viven dentro de .list, que
+     tiene overflow-y:auto (eso recorta en los DOS ejes), y la etiqueta sale por
+     el borde derecho y por arriba de la lista. Los de la barra superior se
+     cortaban contra el techo de la ventana (body tiene overflow:hidden).
+     Ahora es UNA sola capa position:fixed colgada del <body>: nada la recorta. */
+  .has-tip{position:relative}
+  #tipLayer{
+    position:fixed;left:0;top:0;z-index:300;pointer-events:none;
+    background:var(--raised);color:var(--fg);border:1px solid var(--on-border);
+    padding:5px 9px;border-radius:5px;font-size:11.5px;font-family:var(--sans);
+    line-height:1.35;white-space:nowrap;box-shadow:0 4px 14px var(--shadow-soft);
+    opacity:0;transform:translateY(3px);transition:opacity .11s,transform .11s;
+  }
+  /* la posicion va en left/top (sin transicion, salto limpio entre botones) y la
+     entrada se anima solo con opacity + un transform de 3px */
+  #tipLayer.on{opacity:1;transform:translateY(0)}
+  #tipLayer{will-change:opacity}
+  #tipLayer kbd{margin-left:6px}
+  @media (prefers-reduced-motion: reduce){ #tipLayer{transition:none} }
+
+
+  /* ── Timeline con zoom ──
+     Los botones [−] [+] ya NO viven dentro de la banda: se fueron a .tlctrls con el
+     resto de controles. Eso elimina de raiz el desfase de eje que obligaba a poner
+     `margin:0 28px` en la regleta para que su 50 % cayera sobre el 50 % de la pista. */
+  .scrub-fill{background:var(--accent-dim)}
+  /* zona de agarre invisible mas ancha que el marcador (6px -> 22px) */
+  .mark::before{content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+  .mark::after{border-radius:3px}
+  .tlinfo{font-family:var(--mono);font-size:10px;color:var(--fg-mute);letter-spacing:.2px}
+  /* height:22px = misma altura que los botones de zoom. Los cuatro .xs viven en
+     .tlctrls y son el mismo grupo: tienen que medir lo mismo. */
+  .btn.xs{height:22px;padding:0 7px;font-size:10.5px;border-radius:4px;font-family:var(--sans)}
+  /* los .xs con icono: mismo cuadro que los de zoom, geometria en vez de texto */
+  .btn.xs.icon{width:22px;height:22px;padding:0;justify-content:center}
+  .btn.xs svg{width:13px;height:13px;flex:0 0 13px}
+
+
+  /* ── Deshacer / rehacer ── */
+  .undoBox{display:flex;align-items:center;gap:3px}
+  .undoBox .btn.icon{width:24px;height:24px;padding:0}
+  .undoLbl{font-size:11.5px;color:var(--fg-mute);font-family:var(--sans);white-space:nowrap;
+    max-width:210px;overflow:hidden;text-overflow:ellipsis}
+  #bRedoAccion:disabled{opacity:.4;cursor:default}
+
+
+  /* ── Marcadores de CAMBIO (kind:"cambio") ──
+     Claude los pone donde toco algo. Punto verde, sin texto: solo una senal para
+     saltar directo al cambio y no ver el video entero. */
+  .mark.cambio{background:var(--cambio) !important;border-color:var(--cambio) !important}
+  /* el anillo del punto de cambio tambien es redondo: con inset:-2.5px -1px y
+     border-radius:3px (heredados de .mark::after) quedaba un cuadrado alrededor
+     de un circulo */
+  .mark.cambio::after{border-color:var(--cambio) !important;opacity:.85;
+    inset:-2.5px;border-radius:50%}
+  .mark.cambio::before{ /* area de agarre igual de comoda */
+    content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+  .mark.cambio:hover{filter:brightness(1.3)}
+  /* el punto de cambio es una esfera, no una linea: se distingue de un vistazo.
+     Sin `top`: con top + bottom + height a la vez la caja queda sobre-restringida y
+     el navegador descarta el bottom — el marcador se iba de su fila. */
+  .mark.cambio{width:var(--mark-h);height:var(--mark-h);margin-left:calc(var(--mark-h) * -0.5);
+    border-radius:50%;border:0;background:var(--cambio)}
+
+  /* ── MARCADOR DE HILO ──
+     Una nota con respuestas es la MISMA marca con una muesca encima: un hilo no es
+     otra cosa, es una nota que ya tiene conversacion. Sin color: la senal es la forma
+     (el ancho sube de 3 a 5px y aparece la muesca), que es lo que se lee a 9px. */
+  .mark.hilo{width:5px;margin-left:-2.5px}
+  .mark.hilo::before{top:-11px}             /* el agarre crece con la muesca */
+  .mark.hilo .muesca{position:absolute;left:-1px;right:-1px;top:-4px;height:3px;
+    border-radius:1px;background:var(--own,var(--fg-mute))}
+  /* heredada de la version anterior: contorno abierto en vez de barra solida.
+     "Esto viene de v1" se ve antes de leer nada. */
+  .mark.her{background:var(--panel)}
+  .mark.her::after{border-width:1.5px;opacity:1}
+
+  /* ── SPRITE DE ICONOS ──
+     Los <path> son geometria Lucide exacta, pero Lucide depende de heredar
+     fill:none + stroke:currentColor del <svg> host. Sin este contrato, el
+     navegador los pinta con fill:black -> siluetas negras. Estan todos vacios
+     a proposito: la app es local y no puede depender de la red. */
+  svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* los iconos que son silueta solida (play, pause, prev, next) llevan
+     fill="currentColor" inline, que gana sobre el CSS: se ven rellenos. */
+  svg.sprite{display:none}
+
+
+  /* ── REGLETA DEL VIDEO ENTERO ──
+     Antes era un CARRIL de 18px con borde, fondo y etiqueta propios, apilado ENCIMA
+     de la barra de tiempo: dos cajas del mismo ancho, una sobre otra, leidas como dos
+     lineas de tiempo. El problema no era la informacion, era que tenia cuerpo de barra.
+
+     Ahora es una REGLETA de 6px sin borde, pegada bajo la pista de progreso DENTRO de
+     la misma banda, y solo existe cuando hay zoom (.on lo pone tlPintarVentana).
+     Con zoom 1 — el estado normal — la pista YA es el video entero y los marcadores
+     agarrables ya estan ahi: la regleta no tendria nada que anadir, asi que no esta.
+     Hay UNA barra.
+
+     Lo que NO cambia: la coordenada sigue siendo frame/duracionTotal, pura, sin pasar
+     por la ventana de zoom. Por eso los ticks no se mueven al navegar, el clic en el
+     fondo sigue llevando a cualquier punto del video (la unica via de salir de la
+     ventana con zoom alto) y el clic en un tick sigue saltando a su fotograma. */
+  .tlrail{position:relative;height:var(--rule-h);flex:0 0 var(--rule-h);
+    margin:1px 0 0;border-radius:3px;background:var(--panel-2);border:0;
+    overflow:visible;cursor:pointer;display:none}
+  .tlrail.on{display:block}
+  /* nota = tick de 2px · cambio = 3px con capa por encima. Dos formas, cero color. */
+  .tlrail .rnote{position:absolute;bottom:0;width:2px;height:var(--rule-h);
+    border-radius:1px;transform:translateX(-50%);
+    background:var(--own,var(--fg-mute));opacity:.85;cursor:pointer;z-index:1}
+  /* area de clic comoda alrededor de un tick de 2px */
+  .tlrail .rnote::before{content:"";position:absolute;left:-5px;right:-5px;top:-7px;bottom:-7px}
+  .tlrail .rnote.cambio{width:3px;background:var(--cambio);opacity:1;border:0}
+  .tlrail .rnote.cambio::after{content:"";position:absolute;left:-1px;right:-1px;
+    top:-3px;height:3px;background:var(--cambio);border-radius:1px}
+  /* hilo con respuestas: una muesca arriba del tick, la misma senal que en la pista */
+  .tlrail .rnote.hilo::after{content:"";position:absolute;left:-1.5px;right:-1.5px;
+    top:-3px;height:2px;background:var(--own,var(--fg-mute));border-radius:1px}
+  .tlrail .rnote.done{opacity:.3}
+  .tlrail .rnote:hover{opacity:1;box-shadow:0 0 0 1px var(--fg)}
+  .tlrail .rnote:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .tlrail .rnote.sel{box-shadow:0 0 0 2px var(--sel-bar);border-radius:2px}
+  .tlrail:hover{background:var(--track)}
+  /* ── VENTANA VISIBLE sobre la regleta ──
+     El rectangulo que dice que trozo del video esta representando la pista de arriba.
+     Va por debajo de los ticks (z-index 0 contra 1) y no recibe el puntero, asi que
+     no estorba ni al clic de la regleta ni al de un marcador. */
+  .tlwin{position:absolute;top:-1px;bottom:-1px;min-width:2px;
+    border:1px solid var(--fg);border-radius:3px;background:var(--accent-soft);
+    pointer-events:none;display:none;z-index:0}
+  .tlwin.on{display:block}
+  /* la cuenta de cambios/notas se fue con los controles: en una regleta de 6px no
+     hay sitio para texto, y de todas formas es una lectura, no parte del mapa */
+  .rlbl{font-family:var(--mono);font-size:9.5px;color:var(--fg-mute);
+    letter-spacing:.2px;pointer-events:none;white-space:nowrap;padding-right:2px}
+
+
+  /* los 5 canales de "esta seleccionado" */
+  .pitem.on, .vitem.on{
+    background:var(--sel-bg) !important;
+    border-color:var(--sel-line) !important;
+    font-weight:600;
+  }
+  .pitem.on::before, .vitem.on::before{
+    content:"";position:absolute;left:-1px;top:3px;bottom:3px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--sel-bar);
+  }
+  .pitem.on .vn, .vitem.on .vn{color:var(--fg) !important}
+  .pitem.on svg, .vitem.on svg{color:var(--sel-bar) !important;opacity:1 !important;width:13px;height:13px}
+  .pitem:hover:not(.on), .vitem:hover:not(.on){background:var(--hover) !important}
+  /* el proyecto activo tiene ademas un punto verde si Claude marco cambios sin ver */
+  .pitem{position:relative}
+  .vitem{position:relative}
+  .pitem.on, .vitem.on{border-radius:7px}
+
+
+  /* ── Paneles plegables ──
+     Cristian: "quizas las columnas proyectos y tomas se pueda minimizar para ocupar
+     menos espacio". Se pliegan a un asa de 30px que conserva lo accionable:
+     numero de notas y si hay cambios sin revisar. */
+  /* Los dos botones de la cabecera (plegar / nuevo) miden LO MISMO. Antes uno era
+     .plegar (26px, svg 13px) y el otro .btn.icon.sm (28px, svg 16px): se veian
+     descuadrados uno al lado del otro. */
+  .plegar{display:flex;align-items:center;justify-content:center;
+    width:26px;height:26px;flex:0 0 26px;padding:0;border-radius:6px;
+    background:transparent;border:1px solid transparent;color:var(--fg-mute);
+    cursor:pointer;transition:color .12s,background .12s}
+  .plegar:hover{background:var(--hover);color:var(--fg)}
+  .plegar svg{width:14px;height:14px;height:14px;transition:transform .16s}
+  .plegar > svg{flex:0 0 auto;display:block}
+  body.nav-plegado .rail, body.nav-plegado .vcol{
+    flex:0 0 0 !important;width:0 !important;overflow:hidden;border-right:0}
+  body.nav-plegado .rail-head, body.nav-plegado .vcol-head{display:none}
+  /* El asa plegada mide 30px y va pegada al borde izquierdo. El contenido tiene que
+     empezar a su derecha: antes se metia debajo y el primer boton de la barra de
+     dibujo (lapiz) quedaba tapado. El main ya no existe en esa zona porque el rail
+     esta a width:0, asi que el margen va en el stage. */
+  body.nav-plegado .stage{padding-left:30px}
+  /* el asa vive pegada al borde del stage cuando el panel esta plegado */
+  /* El asa plegada va DEBAJO de la cabecera, no encima. Antes era top:0 bottom:0 con
+     z-index:20 y tapaba el nombre del programa, el estado y el boton de la build. */
+  .navhandle{position:absolute;left:0;top:46px;bottom:0;width:30px;z-index:5;
+    display:none;align-items:center;flex-direction:column;gap:9px;padding-top:9px;
+    background:var(--panel);border-right:1px solid var(--line)}
+  body.nav-plegado .navhandle{display:flex}
+  .navhandle .hb{font-family:var(--mono);font-size:10px;color:var(--fg-dim);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:5px;
+    padding:2px 5px;cursor:pointer}
+  .navhandle .hb.chg{background:var(--cambio-soft,#E4F0EA);color:var(--cambio,#277A5A);
+    border-color:var(--cambio-ring,#4FB08C)}
+  .navhandle button{writing-mode:vertical-rl;padding:7px 3px;border-radius:0 5px 5px 0;
+    background:transparent;border:0;border-right:1px solid var(--line);
+    color:var(--fg-mute);cursor:pointer;font-size:11px;letter-spacing:.06em}
+  .navhandle button:hover{background:var(--hover);color:var(--fg)}
+
+
+  /* ── UNA SOLA BARRA ──
+     Una banda. Dentro: marcadores arriba, pista en medio, regleta abajo (solo con
+     zoom). Un borde (ninguno), un fondo (ninguno), un eje X. Los controles — incluidos
+     [−] y [+], que antes partian la banda por los lados — viven todos a la derecha.
+
+     Medidas reales de la banda, de abajo arriba (ver :root):
+       regleta   0..6px   bajo la banda, solo con zoom
+       pista     4..9px   desde el suelo de la banda
+       fila 0    9..18px  marcadores
+       fila 1   20..29px  marcadores apilados (tope: TL_LANES = 2)
+       alto total 32px — FIJO. Ningun pintado lo cambia. */
+  .tlinesa{display:flex;align-items:flex-end;gap:10px;padding:0 10px;flex:0 0 auto}
+  .tlstack{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0}
+  .tlctrls{display:flex;align-items:center;gap:4px;flex:0 0 auto;padding-bottom:2px}
+  /* los [−] [+] son del mismo grupo que los demas: mismo cuadro de 22px */
+  .tlctrls .btn.xs.icon{font-size:14px;line-height:1;display:grid;place-items:center}
+  /* lecturas numericas de la fila de transporte.
+     ANCHO FIJO a proposito: el texto cambia de largo con el zoom ("todo el video" ->
+     "00:00:12:04 – 00:00:14:16 · 8× · 60 f"). Si la caja creciera con el texto, cada
+     paso de zoom empujaria todos los botones de la fila. Lo que sobra se recorta. */
+  .tp-row .tlinfo{font-family:var(--mono);font-size:10.5px;color:var(--fg-mute);
+    letter-spacing:.2px;white-space:nowrap;margin:0;
+    flex:0 0 252px;width:252px;overflow:hidden;text-overflow:ellipsis}
+  .fpsv{font-family:var(--mono);font-size:10.5px;color:var(--fg-mute);white-space:nowrap}
+
+
+  /* ── Color: UN circulito que se despliega ──
+     Antes eran 7 circulitos en fila, que ocupaban 129px de la barra de dibujo y de ahi
+     la sensacion de "menu que no se entiende". Ahora: un circulito con el color actual,
+     y al hacer clic se despliegan los demas. */
+  .colorWrap{position:relative;flex:0 0 auto}
+  .swatchBtn{width:26px;height:26px;border-radius:50%;padding:3px;cursor:pointer;
+    border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
+  .swatchBtn:hover{border-color:var(--fg)}
+  .swatchDot{width:16px;height:16px;border-radius:50%;background:var(--pincel,#ff4d4d);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+  #edLbl.respondiendo{color:var(--fg);font-weight:650;background:var(--panel-2);
+    padding:1px 7px;border-radius:5px;box-shadow:inset 0 0 0 1px var(--fg)}
+
+  /* ── Archivar proyecto ── */
+  .parch{position:absolute;right:6px;top:6px;width:22px;height:22px;padding:0;
+    display:none;place-items:center;border-radius:5px;border:1px solid transparent;
+    background:var(--panel);color:var(--fg-mute);cursor:pointer;z-index:2}
+  .parch svg{width:13px;height:13px}
+  .parch:hover{background:var(--hover);color:var(--fg);border-color:var(--line)}
+  .pitem:hover .parch, .pitem:focus-within .parch{display:grid}
+  .pitem.arch{opacity:.62}
+  .pitem.arch .parch{display:grid}
+  .psecc{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--fg-dim);padding:14px 10px 6px;margin-top:6px;border-top:1px solid var(--line-soft)}
+  /* La banda ocupa TODO el ancho. Antes .tlctrls estaba dentro de .tlinesa y le
+     robaba 301px a la pista. */
+  .tlinesa{width:100%}
+  .tlstack{flex:1 1 auto;min-width:0}
+  .tlctrls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    padding:6px 12px 0;border-top:1px solid var(--line-soft);margin-top:6px}
+  .tlctrls .rlbl{margin-right:auto}
+  .swPop{position:fixed;display:flex;gap:4px;padding:5px;border-radius:9px;
+    background:var(--raised);border:1px solid var(--line);
+    box-shadow:0 6px 22px var(--shadow-soft);z-index:900;max-width:calc(100vw - 16px);
+    flex-wrap:wrap;justify-content:center}
+  /* cuando no hay sitio arriba, se voltea hacia abajo */
+  .swPop.arrriba{bottom:auto}
+  .swPop.abajo{top:auto}
+  .swPop[hidden]{display:none}
+  .swPop .sw{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .swPop .sw.on{border-color:var(--fg);transform:scale(1.1)}
+
+  .modal{position:fixed;inset:0;background:var(--modal-bg);z-index:100;display:none;place-items:center;padding:24px}
+  .modal.on{display:grid}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:11px;width:100%;max-width:640px;
+    max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--sheet-shadow);overflow:hidden}
+  .sheet-head{padding:14px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+  .sheet-head h3{font-size:14px;font-weight:600;flex:1}
+  .sheet-body{padding:15px 17px;overflow-y:auto}
+  .sheet-foot{padding:11px 17px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;background:var(--panel-2)}
+  pre{font-family:var(--mono);font-size:11.5px;line-height:1.7;background:var(--bg);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px;overflow-x:auto;white-space:pre}
+  .copybox{font-family:var(--mono);font-size:11.5px;line-height:1.75;background:var(--bg);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px;max-height:270px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;color:var(--fg-dim)}
+  .st{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:12px}
+  .st .k{color:var(--fg-mute);flex:0 0 100px}
+  .st .v{color:var(--fg);flex:1;word-break:break-word;font-family:var(--mono);font-size:11.5px}
+  .srow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+  .srow .btn{height:30px;padding:0 11px}
+  h4{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);margin:17px 0 8px;font-weight:600}
+  h4:first-child{margin-top:0}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--raised);
+    border:1px solid var(--on-border);color:var(--fg);padding:9px 14px;border-radius:8px;font-size:12px;opacity:0;
+    transition:.19s;z-index:200;box-shadow:0 10px 30px var(--shadow-soft);pointer-events:none;white-space:nowrap;max-width:88vw}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .warn{color:var(--danger)}
+  .lbl{font-size:11px;color:var(--fg-mute);display:block;margin-bottom:5px}
+  .fld{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);
+    padding:7px 9px;font-size:12.5px;margin-bottom:11px}
+  .fld:focus{border-color:var(--on-border)}
+  textarea.fld{min-height:62px;resize:vertical}
+
+  @media (max-width:1180px){
+    .rail{flex:0 0 176px;width:176px}
+    .vcol{flex:0 0 200px;width:200px}
+    .side{flex:0 0 300px;width:300px}
+    /* sigue siendo fijo (no crece con el texto), solo mas estrecho */
+    .tp-row .tlinfo{flex:0 0 150px;width:150px}
+  }
+  @media (max-width:920px){
+    .main{flex-wrap:wrap}
+    .rail{flex:1 1 100%;width:auto;max-height:118px;border-right:none;border-bottom:1px solid var(--line)}
+    .plist{display:flex;gap:5px;overflow-x:auto;padding:7px}
+    .pitem{flex:0 0 156px;margin-bottom:0}
+    .vcol{flex:0 0 186px;width:186px}
+    .side{flex:1 1 100%;width:auto;max-height:44vh;border-left:none;border-top:1px solid var(--line)}
+    /* en pantalla estrecha la fila de transporte no cabe en una linea: que baje
+       en vez de desbordar y dejar botones fuera del encuadre */
+    .tp-row{flex-wrap:wrap;row-gap:6px}
+  }
+</style>
+</head>
+<body>
+
+<svg class="sprite" viewBox="0 0 24 24" aria-hidden="true">
+  <defs>
+    <g id="i-play"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/></g>
+    <g id="i-pause"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></g>
+    <g id="i-prev"><polygon points="18 20 8 12 18 4 18 20" fill="currentColor"/><rect x="4" y="4" width="2.6" height="16" rx="1" fill="currentColor"/></g>
+    <g id="i-next"><polygon points="6 4 16 12 6 20 6 4" fill="currentColor"/><rect x="17.4" y="4" width="2.6" height="16" rx="1" fill="currentColor"/></g>
+    <g id="i-back"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></g>
+    <g id="i-fwd"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></g>
+    <!-- saltar a marcador: chevron TRAZADO + barra. Se distingue de i-prev/i-next,
+         que son triangulos RELLENOS (paso de fotograma). -->
+    <g id="i-mkprev"><polyline points="14 18 8 12 14 6"/><path d="M19 5v14"/></g>
+    <g id="i-mknext"><polyline points="10 18 16 12 10 6"/><path d="M5 5v14"/></g>
+    <g id="i-pen"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></g>
+    <g id="i-arrow"><path d="M5 19 19 5"/><path d="M12 5h7v7"/></g>
+    <g id="i-rect"><rect width="18" height="18" x="3" y="3" rx="2"/></g>
+    <g id="i-ellipse"><circle cx="12" cy="12" r="10"/></g>
+    <g id="i-eraser"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></g>
+    <g id="i-undo"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></g>
+    <g id="i-redo"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></g>
+    <g id="i-check"><path d="M20 6 9 17l-5-5"/></g>
+    <g id="i-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></g>
+    <g id="i-trash"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></g>
+    <g id="i-copy"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>
+    <g id="i-dl"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>
+    <g id="i-up"><path d="M12 17V5"/><polyline points="6 11 12 5 18 11"/><path d="M21 20v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1"/></g>
+    <g id="i-film"><rect width="20" height="20" x="2" y="2" rx="2.2"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 12h20"/><path d="M2 7h5"/><path d="M2 17h5"/><path d="M17 17h5"/><path d="M17 7h5"/></g>
+    <g id="i-arch"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></g><g id="i-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></g>
+    <g id="i-msg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></g>
+    <g id="i-nav"><path d="M3 11l19-9-9 19-2-8-8-2Z"/></g>
+    <g id="i-cog"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></g>
+    <g id="i-max"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></g>
+    <g id="i-eye"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></g>
+    <g id="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></g>
+    <g id="i-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>
+    <g id="i-save"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></g>
+    <g id="i-move"><path d="M12 2v20"/><path d="m8 6 4-4 4 4"/><path d="m8 18 4 4 4-4"/><path d="M2 12h20"/><path d="m6 8-4 4 4 4"/><path d="m18 8 4 4-4 4"/></g>
+    <g id="i-shifts"><path d="M12 2v20"/><path d="m8 6 4-4 4 4"/><path d="m8 18 4 4 4-4"/></g>
+    <g id="i-note"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 13h6"/><path d="M9 17h4"/></g>
+    <!-- i-out: marca de salida ] del intervalo. Antes "fin" usaba i-fwd, el MISMO
+         icono que "un segundo adelante": dos acciones distintas, un solo dibujo. -->
+    <g id="i-out"><path d="M14 4h5v16h-5"/><path d="M4 12h10"/><path d="m10 8 4 4-4 4"/></g>
+    <!-- i-target: ir / localizar. Antes "ir" usaba i-eye, que significa ver u ocultar. -->
+    <g id="i-target"><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v3.5"/><path d="M12 19v3.5"/><path d="M1.5 12H5"/><path d="M19 12h3.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></g>
+    <!-- i-timeshift: mover en el TIEMPO. Antes i-move (4 flechas) decia "arrastrar
+         en 2D", que no es lo que hace el boton. -->
+    <g id="i-timeshift"><path d="M3 17h18"/><path d="M12 4v9"/><path d="m8 9 4 4 4-4"/><path d="m6 20-3-3 3-3"/><path d="m18 20 3-3-3-3"/></g>
+    <!-- i-brush: trazo libre. El lapiz (i-pen) queda reservado para "editar texto". -->
+    <!-- i-panelL: plegar el panel de la izquierda -->
+    <g id="i-panelL"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></g>
+    <g id="i-brush"><path d="M3.5 19c2.5-1 2-4 4.5-6s5.5-1 7.5-3.5S17 3.5 20.5 3"/><path d="M3 20.5c1.2.5 2.6.4 3.6-.5"/></g>
+    <!-- i-reply: responder EN el hilo. Flecha que vuelve y entra, no el sobre de
+         i-msg (que significa "hay notas") ni i-undo (que significa "deshacer"). -->
+    <g id="i-reply"><polyline points="9 14 4 9 9 4"/><path d="M4 9h9a7 7 0 0 1 7 7v4"/></g>
+    <!-- i-ver: heredar los hilos de la version anterior a esta -->
+    <g id="i-ver"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></g>
+  </defs>
+</svg>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>OpenFrame</div>
+  <div class="sep"></div>
+  <div class="conn" id="conn"><i></i><span id="connTxt">conectando…</span></div>
+  <div class="sep"></div>
+  <div class="undoBox">
+    <button class="btn icon has-tip" id="bUndoAccion" data-tip="Deshacer" title="⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
+    <button class="btn icon has-tip" id="bRedoAccion" data-tip="Rehacer" title="⇧⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
+    <span class="undoLbl" id="undoLbl"></span>
+  </div>
+  <span class="sello" id="sello" title="Version que estas viendo">build —</span>
+  <div class="spacer"></div>
+  <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
+  <label class="chk" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><span>Miniaturas</span></label>
+  <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Claude</button>
+  <button class="btn" id="bCopy" title="Copiar las notas de este proyecto"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar para Claude</button>
+  <button class="btn" id="bOut"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Exportar</button>
+</div>
+
+<div class="main">
+    <div class="navhandle" id="navhandle">
+    <button id="navOpen" data-tip="Mostrar proyectos y tomas">proyectos ▸</button>
+    <span class="hb" id="navNotas" title="notas del proyecto">0</span>
+    <span class="hb chg" id="navChg" title="cambios de Claude sin revisar">0</span>
+  </div>
+
+  <div class="rail">
+    <div class="rail-head">
+      <h2>Proyectos</h2>
+      <span style="flex:1"></span>
+      <button class="plegar has-tip" id="bNavFold" data-tip="Plegar esta columna" title="Plegar">
+        <svg viewBox="0 0 24 24"><use href="#i-panelL"/></svg>
+      </button>
+      <button class="plegar has-tip" id="bProj2" title="Nuevo proyecto" data-tip="Nuevo proyecto"><svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>
+    </div>
+    <div class="plist" id="plist"></div>
+  </div>
+
+  <div class="vcol">
+    <div class="vcol-head">
+      <svg viewBox="0 0 24 24" class="hdricon"><use href="#i-film"/></svg>
+      <h3 id="vcolName">—</h3>
+      <button class="btn icon sm has-tip" id="bHer" data-tip="Traer los hilos abiertos de otra versión a esta"><svg viewBox="0 0 24 24"><use href="#i-ver"/></svg></button>
+      <button class="btn icon sm has-tip" id="bUp" data-tip="Subir un video" title="Subir un video"><svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>
+      <input type="file" id="file" accept="video/*,.mov,.mp4,.m4v,.webm" multiple hidden>
+    </div>
+    <div class="vlist" id="vlist"></div>
+  </div>
+
+  <div class="stage">
+    <div class="screen" id="screen">
+      <div class="framewrap" id="fw">
+        <video id="v" playsinline preload="metadata"></video>
+        <canvas id="cv"></canvas>
+      </div>
+      <div class="nocodec" id="nocodec">
+        <div>
+          <b>Este codec no lo reproduce el navegador</b>
+          <span id="ncMsg"></span>
+          <code> visor/server.py no transcodifica</code>
+        </div>
+      </div>
+    </div>
+    <div class="transport">
+      <!-- UNA SOLA BANDA.
+           Antes: carril de 18px con borde propio ARRIBA + barra de tiempo con los
+           botones de zoom metidos a los lados ABAJO. Dos cajas del mismo ancho, una
+           sobre otra: se leian como dos lineas de tiempo porque LO ERAN.
+
+           Ahora hay una banda de 32px con tres capas pegadas que comparten el eje X:
+           marcadores (arriba) · pista de progreso (medio) · regleta del video entero
+           (abajo, 6px, y SOLO cuando hay zoom — con zoom 1 la pista ya es el video
+           entero, asi que no hay nada que duplicar). Los botones de zoom se fueron a
+           la derecha con los demas controles: la banda ya no se parte por los lados. -->
+      <div class="tlinesa">
+        <div class="tlstack">
+          <div class="scrub" id="scrub">
+            <div class="scrub-track"><div class="scrub-fill" id="fill"></div></div>
+            <div class="scrub-head" id="head"></div>
+          </div>
+          <div class="tlrail" id="tlrail" title="Regleta del video completo (aparece al acercar). Los ticks no se mueven con el zoom. Clic = ir a ese punto.">
+            <span class="tlwin" id="tlWin"></span>
+          </div>
+        </div>
+      </div>
+      <div class="tp-row">
+        <div class="tc"><span id="tcTC">00:00:00:00</span></div>
+        <!-- la ventana visible es una LECTURA, no un control: vive junto al timecode.
+             Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
+        <span class="tlinfo" id="tlInfo">todo el video</span>
+        <div class="sep"></div>
+        <button class="btn icon has-tip" id="bPrev" data-tip="Fotograma anterior" data-key="←" title="←"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
+        <button class="btn icon has-tip" id="bPlay" data-tip="Reproducir / pausar" data-key="Espacio" title="Espacio"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
+        <button class="btn icon has-tip" id="bNext" data-tip="Fotograma siguiente" data-key="→" title="→"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
+        <button class="btn icon has-tip" id="bBack" data-tip="Un segundo atrás" data-key="⇧←" title="⇧←"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+        <button class="btn icon has-tip" id="bFwd" data-tip="Un segundo adelante" data-key="⇧→" title="⇧→"><svg viewBox="0 0 24 24"><use href="#i-fwd"/></svg></button>
+        <div class="sep"></div>
+        <!-- lectura y control separados: la casilla no decia que hacia porque su
+             etiqueta era el propio valor de fps. Ahora dice "medir". -->
+        <span class="fpsv" id="fpsLbl">auto</span>
+        <label class="chk" title="Medir los fps reales mientras se reproduce"><input type="checkbox" id="cDet" checked><span>medir</span></label>
+        <div class="spacer"></div>
+        <button class="btn icon has-tip" id="bErase" data-tip="Borrar el dibujo de este fotograma" title="⌫"><svg viewBox="0 0 24 24"><use href="#i-eraser"/></svg></button>
+        <button class="btn icon has-tip" id="bUndo" data-tip="Deshacer el dibujo" title="⌘Z"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
+        <button class="btn icon has-tip" id="bRedo" data-tip="Rehacer el dibujo" title="⇧⌘Z"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
+        <button class="btn icon has-tip" id="bMax" data-tip="Pantalla completa" title=""><svg viewBox="0 0 24 24"><use href="#i-max"/></svg></button>
+      </div>
+      <!-- Controles de la banda de tiempo. Antes vivian A LA DERECHA de la banda y le
+           robaban 301px: la pista se quedaba en 423px de los 778 disponibles. Ahora
+           ocupan su propia fila abajo y la banda usa el ancho entero de lado a lado. -->
+      <div class="tlctrls">
+          <span class="rlbl" id="rlLbl" title="notas y cambios de este video"></span>
+          <button class="btn xs has-tip" id="tlChg" data-tip="Saltar al siguiente cambio de Claude" data-key="⇧N" title="Shift+N">solo cambios</button>
+          <button class="btn xs icon has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="["><svg viewBox="0 0 24 24"><use href="#i-mkprev"/></svg></button>
+          <button class="btn xs icon has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]"><svg viewBox="0 0 24 24"><use href="#i-mknext"/></svg></button>
+          <button class="btn xs has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0">ver todo</button>
+          <button class="btn xs icon has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo">&minus;</button>
+          <button class="btn xs icon has-tip" id="tlZout" data-tip="Acercar" data-key="+" aria-label="Acercar la línea de tiempo">&plus;</button>
+        </div>
+            <div class="tools">
+        <button class="tool has-tip" data-tip="Dibujar a mano alzada" data-tool="pen" data-key="B"><svg viewBox="0 0 24 24"><use href="#i-brush"/></svg></button>
+        <button class="tool has-tip" data-tip="Dibujar una flecha" data-tool="arrow" data-key="F"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+        <button class="tool has-tip" data-tip="Dibujar un rectángulo" data-tool="rect" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-rect"/></svg></button>
+        <button class="tool has-tip" data-tip="Dibujar un círculo" data-tool="ellipse" data-key="C"><svg viewBox="0 0 24 24"><use href="#i-ellipse"/></svg></button>
+        <div class="sep"></div>
+        <div class="colorWrap">
+          <button class="swatchBtn has-tip" id="swBtn" data-tip="Cambiar el color  C" aria-label="Cambiar el color del pincel">
+            <span class="swatchDot" id="swDot"></span>
+          </button>
+        </div>
+        <div class="wsize" id="ws"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capa del selector de color: vive en el body, no dentro de la barra, para que
+       ningun ancestro con overflow la recorte ni la tape al plegar el panel. -->
+  <div class="swPop" id="swPop" hidden></div>
+
+  <div class="side">
+    <div class="side-head">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
+      <h2>Notas</h2>
+      <span class="cnt" id="cnt">0</span>
+    </div>
+    <div class="filter">
+      <select class="vfilter" id="vfilter" title="Filtrar por video"></select>
+      <label class="chk"><input type="checkbox" id="cPend"><span>Pendientes</span></label>
+      <label class="chk"><input type="checkbox" id="cThumb"><span>Miniaturas</span></label>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="editor">
+      <div class="ed-head">
+        <span class="at" id="edAt">00:00:00:00</span>
+        <span class="lbl" id="edLbl">—</span>
+        <span class="dirty" id="edDirty">sin guardar</span>
+        <button class="has-tip" id="bCancel" style="display:none" data-tip="Dejar la nota como estaba">cancelar</button>
+        <button class="has-tip" id="bEnd" data-tip="Marcar aquí el final del intervalo"><svg viewBox="0 0 24 24"><use href="#i-out"/></svg>fin</button>
+        <button class="has-tip" id="bMove" data-tip="Mover la nota a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg>mover</button>
+        <button class="has-tip" id="bGo" data-tip="Llevar el cursor a esta nota"><svg viewBox="0 0 24 24"><use href="#i-target"/></svg>ir</button>
+      </div>
+      <textarea id="ta" placeholder="Escribe la nota y pulsa Enter para enviarla. Shift+Enter = nueva linea."></textarea>
+      <div class="ed-foot">
+        <span class="hint"></span>
+        <button class="btn has-tip" id="bDel" data-tip="Eliminar la nota seleccionada"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>Borrar</button>
+        <button class="btn pri has-tip" id="bSave" data-tip="Guardar la nota" data-key="Enter"><svg viewBox="0 0 24 24"><use href="#i-save"/></svg>Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="sheet-head"><h3 id="mTitle">—</h3><button class="btn icon" id="mClose"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></div>
+    <div class="sheet-body" id="mBody"></div>
+    <div class="sheet-foot" id="mFoot"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+// el segundo argumento es la raiz. Habia dos llamadas que ya lo pasaban —
+// $$(".rnote", rail) y $$(".mark", host) — y se ignoraba: borraban por TODO el
+// documento. Funcionaba por casualidad (solo hay un carril y un scrub).
+const $$ = (s, root) => [...(root || document).querySelectorAll(s)];
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v,a,b) => v<a?a:v>b?b:v;
+const pad = (n,l=2) => String(n).padStart(l,'0');
+let _tt;
+function toast(m,ms=2100){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove("on"),ms); }
+async function copyText(s){ try{ await navigator.clipboard.writeText(s); return true; }catch(e){
+  const ta=document.createElement("textarea"); ta.value=s; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(_){} ta.remove(); return ok; } }
+const base = s => s.replace(/\.[^.\/]+$/,"");
+
+const PALETTE = ["#ff4d4d","#ff9f0a","#ffd60a","#5ac08a","#40c8e0","#5b8cff","#bf5af2"];
+const SIZES = [3,5,8];
+let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendingPoll:false,
+           // vista del timeline: zoom (1 = video entero) y off (inicio en segundos).
+           // Vive aqui desde el arranque: antes se creaba 1300 lineas mas abajo y
+           // cualquier lectura anterior (vmeta, tlSeg) encontraba st.tl undefined.
+           tl:{zoom:1, off:0},
+           tool:null, color:PALETTE[0], size:SIZES[1], pend:null, hist:[], hpos:-1,
+           det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
+           selId:null,        // id de la nota activa (editar/mover/borrar)
+           playhead:-1,      // fotograma bajo el cursor de reproduccion
+           phNote:"",         // ids de las notas bajo el cursor (para no repintar de mas)
+           // ── HILOS ──
+           replyTo:null,      // id de la nota raiz a la que apunta el cuadro de texto
+           plegados:{}        // {idRaiz:true} hilos con las respuestas escondidas
+         };
+
+/* ═══ HILOS ═══
+   Una nota es RAIZ (sin parent) o RESPUESTA (parent = id de la raiz). La respuesta
+   no tiene momento propio: comparte video y fotograma con su raiz, y por eso NO pinta
+   marcador — un hilo entero es un solo punto del video, como en Frame.io.
+
+   El estado es DERIVADO de los datos que ya existen, no un campo nuevo:
+     pendiente  = raiz sin respuestas y sin resolver
+     respondida = raiz con respuestas y sin resolver
+     cerrada    = raiz con resolved = true   (lo que ya hacia "marcar como hecha")
+   Asi "cerrar" y "reabrir" siguen siendo el mismo boton de siempre y no hay dos
+   verdades que puedan desincronizarse. */
+const esRespuesta = n => !!(n && n.parent);
+function respuestasDe(id){
+  return st.notas.filter(n => n.parent === id)
+                 .sort((a,b) => String(a.created||"").localeCompare(String(b.created||"")) ||
+                                String(a.id).localeCompare(String(b.id)));
+}
+const EST = {PEND:"pendiente", RESP:"respondida", CERR:"cerrada"};
+function estadoHilo(raiz){
+  if(!raiz) return EST.PEND;
+  if(raiz.resolved) return EST.CERR;
+  return respuestasDe(raiz.id).length ? EST.RESP : EST.PEND;
+}
+// la nota raiz de cualquier nota (una respuesta devuelve su raiz)
+function raizDe(n){
+  if(!n) return null;
+  return esRespuesta(n) ? (st.notas.find(x => x.id === n.parent) || n) : n;
+}
+/* ── fps: UN SOLO lugar lo decide ──
+   El fps es propiedad del VIDEO. Lo que mide el navegador solo rellena cuando el
+   contenedor no lo declara, y una nota NUNCA cambia el fps del reproductor.
+   Antes `fps` se escribia desde tres sitios (meta del video, tickFps y el valor
+   por defecto) y las notas se pintaban con el ultimo que hubiera ganado: de ahi
+   venia la sensacion de que las notas "se mueven". */
+const FPS_MIN = 12, FPS_MAX = 240, FPS_DEFAULT = 24;
+const okFps = x => Number.isFinite(+x) && +x >= FPS_MIN && +x <= FPS_MAX;
+let fps = FPS_DEFAULT;     // solo setFps() escribe aqui
+let detFps = 0;            // lo ultimo que midio el navegador (0 = nada fiable)
+let fpsSrc = "defecto";    // de donde salio: archivo | medido | defecto
+let vw = 0, vh = 0, vdur = 0;
+const v = $("#v"), cv = $("#cv"), ctx = cv.getContext("2d");
+/* ── Que cuenta como pendiente ──
+   La MISMA regla que el servidor (es_pendiente). Antes cada sitio contaba lo suyo y
+   por eso la tarjeta del proyecto decia "51 pendientes" con 37 marcadores de cambio
+   metidos: Cristian tenia 2 notas que atender, no 51. Un cambio no se resuelve, se
+   mira: se marca `visto` al aterrizar en el. */
+/* ── Un cambio se marca "visto" al aterrizar en el ──
+   Fable 2.7: el contador de "sin revisar" se quedaba en 37 para siempre porque un
+   cambio nunca pasaba a visto. Ahora aterrizar en el (Shift+N o clic en el marcador)
+   lo marca, el contador baja solo y el punto se ve mas apagado. */
+async function marcarCambioVisto(c){
+  if(!c || c.visto || c.kind !== "cambio") return;
+  c.visto = true;                        // optimista: el contador baja ya
+  renderList(); updateMarks(); actualizarAsaNav();
+  try{
+    const r = await api(P(st.slug)+"/notas/"+c.id, {method:"PATCH", body:JSON.stringify({visto:true})});
+    if(r && r.nota) upsertNote(r.nota);
+  }catch(e){ c.visto = false; }           // si fallo, volver atras
+}
+
+function esPendiente(n){
+  if(!n) return false;
+  if(n.kind === "cambio") return false;   // no es trabajo pendiente de Cristian
+  if(n.parent) return false;               // cuelga de su raiz, no cuenta dos veces
+  return !n.resolved;
+}
+function pendientesDe(vid){
+  return st.notas.filter(n => (!vid || n.video === vid) && esPendiente(n)).length;
+}
+function cambiosSinVer(){
+  return st.notas.filter(n => n.kind === "cambio" && !n.visto).length;
+}
+
+const pro = () => st.proyectos.find(p => p.slug === st.slug) || null;
+// mientras se muta una nota, el polling no debe pisar st.notas (provoca "no encontrado")
+async function withBusyNote(fn){
+  st.busyNote = true;
+  try{ return await fn(); }
+  finally{ st.busyNote = false; }
+}
+// `st.videos` puede no existir todavia (el detalle llega por red): || [] evita que
+// un fallo de conexion tire toda la UI con "find of undefined"
+const vmeta = () => ((pro() ? st.videos : []) || []).find(x => x.id === st.vid) || null;
+
+/* ═══ tema CLARO, obligatorio ═══
+   Cristian lo dijo dos veces. Habia un boton que cambiaba a oscuro y lo guardaba en
+   localStorage: un clic sin querer dejaba la app oscura hasta descubrir como volver.
+   El boton se elimino y el tema se fija en claro. No queda forma de cambiarlo. */
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", "light");
+}
+try{ localStorage.removeItem("visor-notas:tema"); }catch(e){}
+applyTheme();
+/* ═══ API ═══ */
+async function api(path, opt){
+  const r = await fetch(path, Object.assign({headers:{"Content-Type":"application/json"}}, opt||{}));
+  if(!r.ok){ let m=""; try{ m=(await r.json()).error; }catch(_){} throw new Error(m || ("HTTP "+r.status)); }
+  return r.json();
+}
+const P = p => "/api/proyectos/" + encodeURIComponent(p);
+
+/* ═══ carga / sincronizacion ═══ */
+/* ── Recordar donde estabas ──
+   Cristian: "cuando uno recarga siempre vuelve al proyecto 1, deberia quedarse en
+   el que uno esta trabajando". Se guarda el proyecto y el video en localStorage y al
+   arrancar se abre ese. Si ya no existe (se archivó o se borró), se cae al primero
+   que NO esté archivado. */
+const LAST_KEY = "openframe:last";
+function guardarSesion(){
+  try{ localStorage.setItem(LAST_KEY, JSON.stringify({slug: st.slug, vid: st.vid})); }catch(e){}
+}
+function leerSesion(){
+  try{ return JSON.parse(localStorage.getItem(LAST_KEY) || "null") || {}; }catch(e){ return {}; }
+}
+async function pull(force){
+  try{
+    const d = await api("/api/proyectos");
+    st.proyectos = d.proyectos || [];
+    st.archivados  = d.archivados || [];
+    setConn(true);
+    if(st.rev !== d.rev){
+      const antes = st.rev;
+      st.rev = d.rev;
+      /* Mientras se dibuja NO se pisan las notas: pullDetail() reemplaza st.notas
+         entero con la lista del servidor y la nota optimista (tmp_...) se perdia a
+         mitad del gesto — el trazo desaparecia sin explicacion. Hay 2 opciones:
+         seguir dibujando o dejar el trazo de lado; el poll espera 2 s. */
+      if(st.slug && !st.busyNote) await pullDetail();
+      renderProyectos();
+      /* Repintar SIEMPRE. Antes el poll traia las notas de Claude al estado pero
+         nunca las pintaba: lo que Claude subia era invisible hasta que Cristian
+         hacia clic en algo. Ahora se ve solo, y se avisa si son cosas nuevas. */
+      if(st.slug){
+        if(!dibujando){ renderList(); updateMarks(); renderVideos(); updateEditor();
+          if(antes !== -1) avisarSiLlegoAlgoDeClaude(); }
+      }
+    }
+  }catch(e){ setConn(false); }
+}
+// Extrae las notas de una respuesta de detalle (compartida por fetch y por PATCH)
+function absorbDetail(d){
+  if(d.videos) st.videos = d.videos;
+  if(d.notas){
+    /* Las notas optimistas (todavia sin id del servidor) se conservan: si se perdieran
+       al absorber, el trazo que se esta haciendo se perdia con ellas. */
+    const optimistas = (st.notas||[]).filter(n => String(n.id).startsWith("tmp_"));
+    st.notas = d.notas;
+    for(const o of optimistas){
+      if(!st.notas.some(n => n.id === o.id)) st.notas.push(o);
+    }
+    st.notas.sort(cmpNotas);
+  }
+  // la meta del video puede haber cambiado de fps: reevaluar la unica fuente
+  if(d.videos && st.vid && typeof setFps === "function") setFps();
+  if(d.proyecto){ const p = pro(); if(p){ p.nombre = d.proyecto.nombre; p.cliente = d.proyecto.cliente; p.nota = d.proyecto.nota; } }
+}
+async function pullDetail(){
+  if(!st.slug) return;
+  /* Nunca reemplazar st.notas a mitad de un trazo. Esta es la UNICA funcion que lo
+     hace (absorbe la lista del servidor), asi que la guarda va aqui y no en pull():
+     cuando pull() evaluaba la condición, el POST de la nota nueva ya habia cambiado
+     `rev` y el poll entraba con la nota optimista todavia en la mano. */
+  if(typeof drawing !== "undefined" && (drawing || cur)) return;
+  try{
+    const d = await api(P(st.slug));
+    // si hay una nota mutandose, no pisar la lista: la operacion traera el dato fresco
+    if(!st.busyNote) absorbDetail(d);
+    setConn(true);
+  }catch(e){ setConn(false); }
+}
+
+/* ── Aviso de que Claude subió algo ──
+   Fable: "Claude's uploads invisible until Cristian clicks something". Con el poll
+   ya repintando, solo falta que Cristian entienda que algo llego sin que el脉冲
+   loonsonara: un aviso corto, no una notificacion cada 2 segundos. */
+let _ultimoRevVisto = -1;
+function avisarSiLlegoAlgoDeClaude(){
+  if(_ultimoRevVisto === -1){ _ultimoRevVisto = st.rev; return; }   // primer arranque: no avisar
+  if(st.rev === _ultimoRevVisto) return;
+  _ultimoRevVisto = st.rev;
+  const nuevos = st.notas.filter(n => n.author === "claude" && !n._visto);
+  if(!nuevos.length) return;
+  for(const n of nuevos) n._visto = true;
+  const cambios = nuevos.filter(n => n.kind === "cambio").length;
+  const respuestas = nuevos.length - cambios;
+  const partes = [];
+  if(respuestas) partes.push(respuestas + (respuestas===1 ? " respuesta" : " respuestas"));
+  if(cambios)   partes.push(cambios   + (cambios===1   ? " cambio"   : " cambios"));
+  toast("Claude: " + partes.join(" y "), 3200);
+}
+
+
+/* ── Traer los hilos de otra versión ──
+   Fable: "#bHer (inherit threads to new cut) has no onclick. Dead button." El boton
+   existia en la interfaz pero no hacia nada. Ahora trae los hilos del video anterior
+   de este proyecto al video actual, y dice cuantos trajo. */
+/* Trae los hilos abiertos del corte ANTERIOR a este video. Devuelve cuantos trajo.
+   La usa la subida desde la UI; `visor.sh subir` hace lo mismo por su cuenta. */
+async function heredarDesdeAnterior(nuevoId){
+  const vs = st.videos || [];
+  const otros = vs.filter(v => v.id !== nuevoId && v.id !== st.vid);
+  if(!otros.length) return 0;
+  const idx = vs.findIndex(v => v.id === nuevoId);
+  const prev = (idx > 0) ? vs[idx-1] : otros[otros.length-1];
+  if(!prev || prev.id === nuevoId) return 0;
+  try{
+    const r = await api(P(st.slug) + "/heredar", {method:"POST",
+      body: JSON.stringify({desde: prev.id, hacia: nuevoId, solo_pendientes:true, offset_frames:0})});
+    return (r && r.heredados) ? r.heredados : 0;
+  }catch(e){ return 0; }
+}
+
+async function heredarHilos(){
+  if(!st.slug){ toast("Abre un proyecto primero"); return; }
+  const vs = st.videos || [];
+  if(vs.length < 2){ toast("Necesitas al menos dos versiones para heredar los hilos"); return; }
+  const otros = vs.filter(v => v.id !== st.vid);
+  // el anterior = el que queda justo antes del actual en la lista
+  const idx = vs.findIndex(v => v.id === st.vid);
+  const origen = otros.length ? (idx >= 0 ? vs[idx-1] : otros[otros.length-1]) : null;
+  if(!origen){ toast("No hay otra versión en este proyecto"); return; }
+  const datos = await openModal({
+    titulo: "Traer hilos de «" + origen.nombre + "»",
+    cuerpo: '<p class="muted">Se copian al video actual las notas que siguen abiertas ' +
+            '(sin resolver) de la version anterior, con sus respuestas.</p>' +
+            '<div class="frow"><label>Version de origen</label><div>' +
+            otros.map(v => '<label class="chk"><input type="radio" name="herOrigen" value="' +
+              esc(v.id) + '"' + (v.id === origen.id ? " checked" : "") + '> ' +
+              esc(v.nombre) + '</label>').join("") + '</div></div>',
+    pie: '<button class="btn" id="hCancel">Cancelar</button>' +
+         '<button class="btn pri" id="hGo">Traer los hilos</button>'
+  });
+  if(!datos) return;
+  const sel = datos.herOrigen || origen.id;
+  try{
+    const r = await api(P(st.slug) + "/heredar", {method:"POST",
+      body: JSON.stringify({desde: sel, hacia: st.vid, solo_pendientes:true, offset_frames:0})});
+    const n = (r && (r.heredados != null)) ? r.heredados : (r && r.ok ? 1 : 0);
+    await pullDetail(); renderList(); updateMarks(); renderVideos(); updateEditor();
+    toast(n ? ("Se trajeron " + n + (n===1?" hilo":" hilos") + " de la version anterior")
+             : "No hay hilos abiertos que traer", 3000);
+  }catch(e){ toast("No se pudieron traer los hilos: " + e.message, 3600); }
+}
+
+function setConn(ok){
+  const c = $("#conn"); c.classList.toggle("live", ok);
+  $("#connTxt").textContent = ok ? "en línea" : "sin conexión";
+}
+setInterval(()=>{ if(!st.pendingPoll && !st.busyNote) pull(); }, 2200);
+
+
+/* ═══ HISTORIAL DE ACCIONES (deshacer) ═══
+   Cristian: "hay que agregar un boton de deshacer el ultimo cambio hecho".
+   Cubre lo que uno hace de verdad en una sesion de revision: crear, borrar, mover,
+   editar el texto, marcar como hecha, y el dibujo. Cada accion guarda el estado
+   anterior de la nota, asi que deshacer es volver a ponerlo — no adivinar.
+   Se cruza con el undo del dibujo: si hay un dibujo sin deshacer, primero ese. */
+st.undo = [];        // pila de acciones
+st.uPos = -1;        // posicion dentro de la pila (permite rehacer)
+
+function snapNota(n){
+  if(!n) return null;
+  return {id:n.id, video:n.video, frame:n.frame, end_frame:n.end_frame == null ? null : n.end_frame,
+          text:n.text, resolved:!!n.resolved, drawing:n.drawing ? JSON.parse(JSON.stringify(n.drawing)) : null,
+          thumb:n.thumb || null, author:n.author, fps:n.fps, time:n.time, timecode:n.timecode,
+          // sin parent, "rehacer" una respuesta la recrearia como nota suelta en el
+          // fotograma de la raiz: dos notas donde habia un hilo
+          parent:n.parent || null, kind:n.kind || "nota", created:n.created || null,
+          from_note:n.from_note || null, from_video:n.from_video || null};
+}
+function pushUndo(etiqueta, acc){
+  // si hay rehacer pendiente, se descarta: se esta haciendo una accion nueva
+  st.undo.length = st.uPos + 1;
+  st.undo.push(Object.assign({etiqueta:etiqueta, ts:Date.now()}, acc));
+  if(st.undo.length > 80) st.undo.shift();
+  st.uPos = st.undo.length - 1;
+  actualizarBotonUndo();
+}
+function hayUndo(){ return st.uPos >= 0; }
+function actualizarBotonUndo(){
+  const b = $("#bUndoAccion"), r = $("#bRedoAccion");
+  const a = hayUndo() ? st.undo[st.uPos] : null;
+  const prox = st.undo[st.uPos + 1] || null;
+  if(b){ b.style.display = a ? "" : "none"; if(a) b.setAttribute("data-tip", "Deshacer: " + a.etiqueta); }
+  if(r){ r.style.display = prox ? "" : "none";
+         if(prox) r.setAttribute("data-tip", "Rehacer: " + prox.etiqueta); }
+  const e = $("#undoLbl");
+  if(e) e.textContent = a ? a.etiqueta : "";
+}
+async function deshacer(){
+  // si el dibujo tiene historial propio sin usar, ese va primero
+  if(st.hpos < st.hist.length - 1){ undo(); actualizarBotonUndo(); return; }
+  if(!hayUndo()){ toast("Nada que deshacer"); return; }
+  const a = st.undo[st.uPos];
+  st.uPos--;
+  const P_ = st.slug;
+  try{
+    if(a.tipo === "crear"){
+      await api(P(P_)+"/notas/"+a.antes.id, {method:"DELETE"});
+    }else if(a.tipo === "borrar"){
+      // volver a crear la nota tal cual estaba (el id se conserva si el servidor lo acepta)
+      await api(P(P_)+"/notas", {method:"POST", body:JSON.stringify(a.antes)});
+    }else if(a.tipo === "campo"){
+      const patch = {};
+      for(const k of a.cambios) patch[k] = a.antes[k];
+      await api(P(P_)+"/notas/"+a.antes.id, {method:"PATCH", body:JSON.stringify(patch)});
+    }
+    await pullDetail();
+    st.hist = []; st.hpos = -1;
+    drawCanvas(); renderList(); renderVideos(); updateMarks(); updateEditor(); updateUI();
+    actualizarBotonUndo();
+    toast("Deshecho: " + a.etiqueta, 2400);
+  }catch(e){
+    st.uPos++;  // no se pudo: devolverlo al punto de partida
+    toast("No se pudo deshacer: " + e.message, 4000);
+  }
+}
+async function rehacer(){
+  if(st.uPos + 1 >= st.undo.length){ toast("Nada que rehacer"); return; }
+  st.uPos++;
+  const a = st.undo[st.uPos];
+  const P_ = st.slug;
+  try{
+    if(a.tipo === "crear"){
+      await api(P(P_)+"/notas", {method:"POST", body:JSON.stringify(a.despues)});
+    }else if(a.tipo === "borrar"){
+      await api(P(P_)+"/notas/"+a.antes.id, {method:"DELETE"});
+    }else if(a.tipo === "campo"){
+      const patch = {};
+      for(const k of a.cambios) patch[k] = a.despues[k];
+      await api(P(P_)+"/notas/"+a.antes.id, {method:"PATCH", body:JSON.stringify(patch)});
+    }
+    await pullDetail();
+    drawCanvas(); renderList(); renderVideos(); updateMarks(); updateEditor(); updateUI();
+    actualizarBotonUndo();
+    toast("Rehecho: " + a.etiqueta, 2200);
+  }catch(e){
+    st.uPos--;
+    toast("No se pudo rehacer: " + e.message, 4000);
+  }
+}
+
+/* ═══ proyectos ═══ */
+function renderProyectos(){
+  const h = $("#plist"); h.innerHTML = "";
+  if(!st.proyectos.length){
+    h.innerHTML = '<div class="empty" style="padding:20px 10px">Sin proyectos.<br>Crea uno o pídele a Claude.</div>';
+    return;
+  }
+  for(const p of st.proyectos){
+    const el = document.createElement("div");
+    el.className = "pitem" + (p.slug===st.slug ? " on" : "");
+    el.innerHTML = '<div class="pname">' + esc(p.nombre) + '</div>' +
+      '<div class="pmeta"><span class="vd">' + p.videos + ' vid</span>' +
+      '<span class="pn">' + p.notas + ' nota' + (p.notas===1?'':'s') + '</span>' +
+      (p.pendientes ? '<span class="pz">' + p.pendientes + ' pend</span>' : '') +
+      (p.cambios ? '<span class="pz chg">' + p.cambios + ' cambios</span>' : '') + '</div>' +
+      '<button class="parch has-tip" title="Archivar este proyecto" data-tip="Archivar">' +
+        '<svg viewBox="0 0 24 24"><use href="#i-arch"/></svg></button>';
+    el.onclick = (ev) => { if(ev.target.closest(".parch")) return; openProject(p.slug); };
+    const bArch = el.querySelector(".parch");
+    bArch.onclick = (ev) => { ev.stopPropagation(); archivarProyecto(p.slug, true); };
+    h.appendChild(el);
+  }
+  /* ── Archivados ──
+     Cristian: "el 1 ya esta terminado, deberia archivarse o algo... y que se acomode
+     por ahi". Archivar NO borra nada: el proyecto desaparece de la lista normal, deja
+     de abrirse al recargar, y queda plegado aqui abajo con un boton para sacarlo. */
+  const ar = st.archivados || [];
+  if(ar.length){
+    const t = document.createElement("div");
+    t.className = "psecc";
+    t.textContent = "Archivados (" + ar.length + ")";
+    h.appendChild(t);
+    for(const p of ar){
+      const e2 = document.createElement("div");
+      e2.className = "pitem arch";
+      e2.innerHTML = '<div class="pname">' + esc(p.nombre) + '</div>' +
+        '<div class="pmeta"><span class="vd">' + p.videos + ' vid</span>' +
+        '<span class="pn">' + p.notas + ' nota' + (p.notas===1?'':'s') + '</span></div>' +
+        '<button class="parch" title="Sacar de archivados" data-tip="Desarchivar">' +
+          '<svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>';
+      e2.onclick = (ev) => {
+        if(ev.target.closest(".parch")){ archivarProyecto(p.slug, false); return; }
+        openProject(p.slug);
+      };
+      h.appendChild(e2);
+    }
+  }
+}
+
+/* Archivar / desarchivar. No borra nada: solo cambia el estado. */
+async function archivarProyecto(slug, archivar){
+  const p = st.proyectos.find(x => x.slug === slug) || (st.archivados||[]).find(x => x.slug === slug);
+  const nombre = p ? p.nombre : slug;
+  if(archivar && st.slug === slug){
+    if(!confirm("Archivar \u00ab" + nombre + "\u00bb?\n\nSe saca de la lista de trabajo y no se abrir\u00e1 al recargar.\nNo se borra nada: siempre puedes recuperarlo.")) return;
+  }
+  try{
+    const r = await api(P(slug) + "/archivar", {method:"POST",
+      body: JSON.stringify({archivado: archivar})});
+    if(r && r.ok === false){ toast("No se pudo archivar: " + (r.error||""), 3000); return; }
+    // si se archivó el proyecto abierto, mover a otro para no dejar la UI colgada
+    if(archivar && st.slug === slug){
+      st.slug = null; st.vid = null; guardarSesion();
+      const otro = st.proyectos.find(x => x.slug !== slug);
+      if(otro) await openProject(otro.slug);
+      else { renderProyectos(); toast("Proyecto archivado", 2000); }
+    }
+    await pull(true);
+    toast(archivar ? ("\u00ab" + nombre + "\u00bb archivado") : ("\u00ab" + nombre + "\u00bb devuelto al trabajo"), 2200);
+  }catch(e){ toast("No se pudo archivar: " + e.message, 3400); }
+}
+async function openProject(slug, opts){
+  opts = opts || {};
+  st.slug = slug; st.vid = null; st.filterVid = "";
+  st.vidAVolver = opts.vid || null;
+  await pullDetail();
+  // si pullDetail fallo (servidor caido), st.videos puede no traer nada: sin esto
+  // `st.videos[0]` reventaba la funcion y el proyecto no se abria nunca mas
+  guardarSesion();
+  // si venia con un video concreto, ese; si no, el primero
+  const pv = (st.videos || []).find(x => x.id === st.vidAVolver) || (st.videos || [])[0];
+  if(pv) await openVideo(pv.id);
+  else { st.vid = null; v.removeAttribute("src"); v.load(); $("#fw").classList.remove("on"); st.pend=null; setDirty(false); }
+  // el selector "Filtrar por video" solo se rellenaba en el arranque, cuando aun no
+  // habia ningun proyecto cargado: estaba siempre vacio.
+  renderFilter();
+  renderProyectos(); renderVideos(); renderList(); updateEditor(); updateUI();
+}
+async function openVideo(vid){
+  st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
+  guardarSesion();
+  st.undo=[]; st.uPos=-1; actualizarBotonUndo();
+  st.tl = {zoom:1, off:0};              // vista del timeline: siempre empieza entera
+  _railSig = null;                      // otro video: el carril se repinta entero
+  const w0 = $("#tlWin"); if(w0) w0.classList.remove("on");   // y sin ventana de zoom
+  pintarRail();
+  const m = vmeta();
+  if(!m) return;
+  // cambiar de video invalida lo medido: si no, las muestras del clip anterior
+  // contaminan la mediana del nuevo
+  resetFpsProbe(); detFps = 0; setFps();
+  $("#ta").value = "";
+  $("#fw").classList.add("on");
+  $("#nocodec").classList.toggle("on", !m.reproducible);
+  if(m.reproducible === false){
+    $("#ncMsg").textContent = m.nombre + " — " + m.codec + ". El navegador no lo abre; pedile a Claude un H.264 para poder verlo aquí.";
+  }
+  v.src = "/media/" + encodeURIComponent(st.slug) + "/" + vid + "/" + m.archivo;
+  v.load();
+  fit(); renderVideos(); renderList(); updateEditor();
+}
+
+/* ═══ videos ═══ */
+function renderVideos(){
+  const h = $("#vlist"); h.innerHTML = "";
+  const p = pro();
+  $("#vcolName").textContent = p ? p.nombre : "—";
+  // el corte mas reciente va ARRIBA: es el que se esta revisando. Antes salia abajo.
+  const vids = p ? (st.videos||[]).slice().sort((a,b) => String(b.created||"").localeCompare(String(a.created||""))) : [];
+  if(!vids.length){
+    h.innerHTML = '<div class="empty" style="padding:18px 10px">Sin videos.<br>Pide a Claude que suba el corte.</div>';
+    return;
+  }
+  for(const x of vids){
+    const ns = st.notas.filter(n => n.video === x.id);
+    const pend = ns.filter(n => !n.resolved).length;
+    const el = document.createElement("div");
+    el.className = "vitem" + (x.id===st.vid ? " on" : "");
+    const pct = ns.length ? Math.round(100*pend/ns.length) : 0;
+    el.innerHTML = '<div class="vn"><svg viewBox="0 0 24 24" style="width:11px;height:11px;opacity:.6;flex:0 0 11px"><use href="#i-film"/></svg>' +
+      esc(x.nombre) + (x.reproducible===false ? ' <span class="badge no">no</span>' : '') + '</div>' +
+      '<div class="vc"><span>' + (x.codec||"?") + '</span>' +
+      (x.duracion ? '<span>' + x.duracion.toFixed(1) + 's</span>' : '') +
+      (x.fps ? '<span>' + x.fps + 'fps</span>' : '') + '</div>' +
+      '<div class="vrow"><span class="vn2">' + ns.length + ' notas</span>' +
+      '<span class="bar"><i style="width:' + pct + '%"></i></span>' +
+      '<span class="vn2">' + (ns.length ? pct + '%' : '—') + '</span></div>';
+    el.onclick = () => openVideo(x.id);
+    h.appendChild(el);
+  }
+}
+
+/* ═══ notas ═══ */
+function askDelete(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  const previo = (n.text||"(solo dibujo)").slice(0,160);
+  openModal("Eliminar nota",
+    '<p style="color:var(--fg-dim);font-size:12.5px;line-height:1.8;margin-bottom:12px">' +
+      'Se borra la nota de <b>' + n.timecode + '</b> (fotograma ' + n.frame + ')' +
+      (n.end_frame != null ? ', intervalo hasta ' + n.end_timecode : '') + '.</p>' +
+    '<div class="copybox" style="max-height:120px">' + esc(previo) + '</div>' +
+    '<p style="color:var(--fg-mute);font-size:12px;margin-top:12px">Puedes deshacerlo con el botón <b>deshacer</b> (arriba).</p>',
+    '<span style="flex:1"></span><button class="btn" id="delNo">Cancelar</button>' +
+    '<button class="btn danger" id="delYes">Eliminar</button>');
+  $("#delNo").onclick = closeModal;
+  $("#delYes").onclick = async () => {
+    closeModal();
+    if(st.selId === id) st.selId = null;
+    if(editingId === id){ editingId = null; $("#bCancel").style.display = "none"; }
+    if(st.pend && st.pend.frame === n.frame){ st.pend = null; $("#ta").value = ""; setDirty(false); }
+    await delNote(id);
+    pushUndo("eliminar nota de " + n.timecode, {tipo:"borrar", antes:snapNota(n), despues:null});
+    drawCanvas(); updateEditor(); updateMarks();
+    toast("Nota eliminada — se puede deshacer");
+  };
+}
+
+function startEdit(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  if(n.video !== st.vid) openVideo(n.video);
+  st.pend = {frame:n.frame, time:n.frame/fps};
+  seek(n.frame/fps);
+  editingId = n.id;
+  st.selId = n.id;
+  $("#ta").value = n.text || "";
+  setDirty(false);
+  $("#bCancel").style.display = "";
+  $("#ta").focus();
+  drawCanvas(); renderList(); updateEditor();
+  toast("Editando la nota de " + n.timecode, 1800);
+}
+/* ── RESPONDER EN EL HILO ──
+   Cristian: "si claude dejo un comentario yo le comento en ese comentario y asi se va
+   viendo el hilo de lo que se va hablando."
+   El cuadro de abajo no cambia de sitio: cambia de MODO. Mientras hay un hilo apuntado,
+   Enter manda una respuesta a ese hilo en vez de crear una nota nueva en el fotograma
+   del cursor. El hilo apuntado se marca en la lista (fondo + barra inferior) para que
+   nunca se responda a ciegas. */
+function startReply(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  const raiz = raizDe(n);
+  if(raiz.kind === "cambio"){ toast("Un marcador de cambio no lleva conversación"); return; }
+  if(raiz.video !== st.vid) openVideo(raiz.video);
+  st.replyTo = raiz.id;
+  st.selId = raiz.id;
+  st.plegados[raiz.id] = false;           // responder abre el hilo: hay que ver a que
+  editingId = null;
+  st.pend = {frame:raiz.frame, time:raiz.frame/fps};
+  seek(raiz.frame/fps);
+  $("#ta").value = "";
+  setDirty(false);
+  $("#bCancel").style.display = "";
+  renderList(); updateEditor(); drawCanvas();
+  $("#ta").focus();
+}
+function cancelReply(){
+  if(!st.replyTo) return false;
+  st.replyTo = null;
+  $("#ta").value = "";
+  setDirty(false);
+  $("#bCancel").style.display = "none";
+  renderList(); updateEditor();
+  return true;
+}
+function selectNoteById(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  if(n.video !== st.vid) openVideo(n.video);
+  st.pend = {frame:n.frame, time:n.frame/fps};
+  st.selId = n.id;
+  seek(n.frame/fps);
+  editingId = null;
+  $("#ta").value = "";
+  setDirty(false);
+  drawCanvas(); renderList(); updateEditor();
+  setTimeout(() => { if($("#bMove") && !$("#bMove").disabled) $("#bMove").click(); }, 80);
+}
+
+/* Orden de notas: TOTAL (siempre devuelve -1, 0 o 1) y ESTABLE (desempata por id).
+   El comparador anterior no devolvia 0 para notas con el mismo video+frame, asi que
+   el resultado del sort dependia del orden de llegada del array. Con dos notas en el
+   mismo fotograma, el poll de 2200ms podia intercambiarlas de posicion. */
+function cmpNotas(x, y){
+  const xv = String(x.video ?? ""), yv = String(y.video ?? "");
+  if(xv !== yv) return xv < yv ? -1 : 1;               // 1 o -1, nunca 0
+  const xf = Number(x.frame) || 0, yf = Number(y.frame) || 0;
+  if(xf !== yf) return xf < yf ? -1 : 1;               // 1 o -1, nunca 0
+  const xi = String(x.id ?? ""), yi = String(y.id ?? "");
+  if(xi !== yi) return xi < yi ? -1 : 1;                // DESEMPATE por id
+  return 0;                                            // misma nota
+}
+function visibleNotes(){
+  // SOLO RAICES. Una respuesta no es una fila de la lista ni un marcador: viaja
+  // dentro de su hilo. Si entrara aqui, "nota siguiente" pararia dos veces en el
+  // mismo fotograma y la barra pintaria dos marcas encima de la misma marca.
+  let a = st.notas.filter(n => !esRespuesta(n));
+  if(st.filterVid) a = a.filter(n => n.video === st.filterVid);
+  else if(st.vid) a = a.filter(n => n.video === st.vid);
+  if(st.onlyPend) a = a.filter(n => !n.resolved);
+  // orden TOTAL y determinista: desempata por id, nunca devuelve "incomparable"
+  a.sort(cmpNotas);
+  return a;
+}
+// las respuestas comparten fotograma con su raiz: si entraran aqui, "ya hay una nota
+// en este fotograma" se disparararia por una respuesta y bloquearia mover la raiz.
+function noteAt(vid, frame){
+  return st.notas.find(n => !esRespuesta(n) && n.video === vid && n.frame === frame) || null;
+}
+// notas que caen en un fotograma (puede haber varias: la app permite duplicadas)
+function notesAt(vid, frame){
+  return st.notas.filter(n => !esRespuesta(n) && n.video === vid && n.frame === frame);
+}
+// la nota "activa": por id si estamos editando/moviendo una, si no la primera del frame
+function curNote(){
+  if(!st.vid) return null;
+  if(st.selId){ const byId = st.notas.find(n => n.id === st.selId); if(byId) return byId; }
+  if(st.pend) return noteAt(st.vid, st.pend.frame);
+  return null;
+}
+function renderFilter(){
+  const s = $("#vfilter"); const pv = pro();
+  s.innerHTML = '<option value="">Todos los videos</option>';
+  if(pv) for(const x of (st.videos||[])) s.innerHTML += '<option value="' + x.id + '">' + esc(x.nombre) + '</option>';
+  s.value = st.filterVid;
+}
+/* Un bloque de hilo: la raiz + sus respuestas colgando de una linea vertical. */
+function htmlRespuesta(r){
+  const quien = r.author === "claude" ? "Claude" : "Tú";   // el chip va con mayuscula
+  const cuando = (r.created || "").slice(11, 16);
+  return '<div class="rep' + (st.replyTo === r.parent ? "" : "") + '" data-rid="' + r.id +
+    '" data-who="' + quien + '">' +
+    '<div class="rbody"><div class="rmeta">' +
+      '<span class="rwho">' + esc(quien) + (cuando ? " · " + cuando : "") + '</span></div>' +
+      '<div class="rtxt">' + esc(r.text || "") + '</div></div>' +
+    '<div class="racts">' +
+      '<button class="ed has-tip" data-ed="' + r.id + '" data-tip="Editar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
+      '<button class="del has-tip" data-del="' + r.id + '" data-tip="Eliminar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button>' +
+    '</div></div>';
+}
+function renderList(){
+  const L = $("#list"), list = visibleNotes().filter(n => n.kind !== "cambio");
+  const todos = (st.filterVid ? st.notas : st.notas.filter(n => !st.vid || n.video === st.vid))
+                  .filter(n => !esRespuesta(n));
+  // los marcadores de cambio no son notas: no cuentan en el total ni en "pendientes"
+  const cambios = todos.filter(n => n.kind === "cambio").length;
+  const all = todos.filter(n => n.kind !== "cambio");
+  const pend = all.filter(n => !n.resolved).length;
+  $("#cnt").textContent = all.length ? all.length + " · " + pend + " pend." + (cambios ? " · " + cambios + " cambios" : "") : "0";
+  if(!list.length){
+    L.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>' +
+      (all.length ? "Todo resuelto." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
+    return;
+  }
+  const ph = st.playhead;
+  L.innerHTML = list.map(n => {
+    const on = n.id === st.selId;
+    const bajo = n.video === st.vid && n.frame === ph;   // el cursor de play esta aqui
+    // el intervalo mostraba n.timecode, o sea el INICIO otra vez ("00:01 → 00:01").
+    // El final es end_timecode; si una nota vieja no lo trae, se calcula del frame.
+    const rng = n.end_frame != null
+      ? '<span class="rng">→ ' + esc(n.end_timecode || tc(null, n.end_frame)) + '</span>' : '';
+    /* El chip de autor va SIEMPRE, con TEXTO. Antes tus notas no llevaban nada y se
+   distinguian de las de Claude solo por una barra de 3px negra contra gris — eso no
+   es un estado, es adivinar. Y "hermes" era un resto muerto de una version vieja. */
+const who = n.author === "claude" ? '<span class="who c">Claude</span>'
+            : n.author === "cristian" ? '<span class="who y">Tú</span>'
+            : '';
+    const th = st.thumbs && n.thumb ? '<img class="thumb" src="/thumbs/' + st.slug + '/' + n.thumb + '" alt="">' : '';
+    const txt = n.text ? esc(n.text) :
+      (n.drawing && n.drawing.strokes && n.drawing.strokes.length ? '<span style="color:var(--fg-mute);font-style:italic">[dibujo]</span>' :
+       '<span style="color:var(--fg-mute);font-style:italic">[vacía]</span>');
+    // ── estado del hilo: la pastilla solo aparece cuando dice algo ──
+    const reps = respuestasDe(n.id);
+    const est = estadoHilo(n);
+    const plegado = !!st.plegados[n.id];
+    let pastilla = "";
+    if(est === EST.CERR){
+      pastilla = '<span class="hst cerrado has-tip" data-fold="' + n.id + '" data-tip="Hilo cerrado — pulsa el check para reabrirlo">' +
+        '<span class="cv"></span>cerrada' + (reps.length ? " · " + reps.length : "") + '</span>';
+    }else if(reps.length){
+      pastilla = '<span class="hst abierto has-tip' + (plegado ? " plegado" : "") + '" data-fold="' + n.id +
+        '" data-tip="' + (plegado ? "Mostrar" : "Esconder") + ' las respuestas">' +
+        '<span class="cv"></span>' + reps.length + (reps.length === 1 ? " respuesta" : " respuestas") + '</span>';
+    }
+    const deOtra = n.from_video
+      ? '<span class="vfrom has-tip" data-tip="Este hilo viene de la versión anterior">heredado</span>' : '';
+    const cuerpoReps = (reps.length && !plegado) ? reps.map(htmlRespuesta).join("") : "";
+    return '<div class="hilo-b" data-hilo="' + n.id + '">' +
+      '<div class="note raiz' + (on?" on":"") + (bajo?" ph":"") + (n.resolved?" res":"") +
+      (st.replyTo === n.id ? " respondiendo" : "") +
+      '" data-v="' + n.video + '" data-f="' + n.frame + '" data-id="' + n.id + '" data-who="' + (n.author === "claude" ? "claude" : "cristian") + '">' +
+      '<span class="phdot" title="Aqui esta el cursor del video"></span>' +
+      '<div class="body"><div class="meta"><span class="tcx">' + n.timecode + '</span>' +
+      rng + who + pastilla + deOtra + '</div>' +
+      '<div class="txt">' + txt + '</div></div>' + th +
+      '<div class="acts">' +
+      '<button class="rp has-tip" data-rp="' + n.id + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
+      '<button class="ed has-tip" data-ed="' + n.id + '" data-tip="Editar el texto"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
+      '<button class="ok has-tip" data-res="' + n.id + '" data-tip="' + (n.resolved?"Reabrir el hilo":"Cerrar el hilo") + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></button>' +
+      '<button class="mv has-tip" data-mv="' + n.id + '" data-tip="Mover a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg></button>' +
+      '<button class="del has-tip" data-del="' + n.id + '" data-tip="Eliminar' + (reps.length ? " el hilo entero" : "") + '"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button></div></div>' +
+      cuerpoReps +
+      '</div>';
+  }).join("");
+  /* UN solo oyente por bloque de hilo: la raiz y sus respuestas comparten la misma
+     decision (que boton se pulso, o si fue el cuerpo). Antes era un oyente por nota;
+     con respuestas serian el doble de cierres por repintado. */
+  for(const el of L.querySelectorAll(".hilo-b")){
+    el.onclick = ev => {
+      const d = ev.target.closest("[data-del]"), r = ev.target.closest("[data-res]"),
+            m = ev.target.closest("[data-mv]"), ed = ev.target.closest("[data-ed]"),
+            rp = ev.target.closest("[data-rp]"), fo = ev.target.closest("[data-fold]");
+      if(d){ askDelete(d.dataset.del); return; }
+      if(r){ toggleRes(r.dataset.res); return; }
+      if(m){ selectNoteById(m.dataset.mv); return; }
+      if(ed){ startEdit(ed.dataset.ed); return; }
+      if(rp){ startReply(rp.dataset.rp); return; }
+      if(fo){ st.plegados[fo.dataset.fold] = !st.plegados[fo.dataset.fold]; renderList(); return; }
+      // el cuerpo — raiz o respuesta — lleva al momento del HILO, que es uno solo
+      const raiz = el.querySelector(".note.raiz");
+      if(!raiz) return;
+      st.selId = raiz.dataset.id || null;
+      const vid = raiz.dataset.v, f = +raiz.dataset.f;
+      if(vid !== st.vid) openVideo(vid);
+      st.pend = {frame:f, time:f/fps};
+      seek(f/fps);
+      // modo chat: saltar a la nota NO llena el cuadro. Para editarla, boton de lapiz.
+      editingId = null;
+      $("#ta").value = "";
+      setDirty(false);
+      drawCanvas(); renderList(); updateEditor();
+    };
+  }
+}
+async function delNote(id){
+  await withBusyNote(async ()=>{
+    try{
+      await api(P(st.slug) + "/notas/" + id, {method:"DELETE"});
+      st.notas = st.notas.filter(n => n.id !== id);
+      if(st.selId === id) st.selId = null;
+      if(editingId === id) editingId = null;
+      // si la nota borrada era la del cursor, soltar la referencia: nada se mueve
+      if(st.pend && !noteAt(st.vid, st.pend.frame)){ st.pend = null; st.hist=[]; st.hpos=-1; }
+      await pullDetail();
+      renderList(); renderVideos(); updateMarks(); updateEditor(); drawCanvas();
+    }catch(e){ toast(e.message); }
+  });
+}
+async function toggleRes(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  await withBusyNote(async ()=>{
+    const antesRes = snapNota(n);
+  try{ await api(P(st.slug) + "/notas/" + id, {method:"PATCH", body: JSON.stringify({resolved: !n.resolved})})
+    pushUndo(n.resolved ? "marcar pendiente" : "marcar como hecha",
+      {tipo:"campo", antes:antesRes, despues:Object.assign({}, antesRes, {resolved: !n.resolved}), cambios:["resolved"]});;
+         await pullDetail(); renderList(); renderVideos(); updateMarks(); }
+    catch(e){ toast(e.message); }
+  });
+}
+
+/* ═══ reproductor ═══ */
+v.addEventListener("loadedmetadata", () => {
+  const m = vmeta(); if(!m) return;
+  vdur = v.duration || 0; vw = v.videoWidth; vh = v.videoHeight;
+  const patch = { duracion: vdur, ancho: vw, alto: vh };
+  // NO escribir el fps por defecto (24) en la meta del video: eso lo convertiria en
+  // "dato del archivo" y contaminaria todas las notas nuevas. El fps medido se
+  // manda aparte, desde tickFps, solo cuando el contenedor no lo trae.
+  if(!okFps(m.fps) && okFps(detFps)) patch.fps = detFps;
+  api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify(patch)})
+    .then(()=>pull()).catch(()=>{});
+  setFps();
+  fit(); updateUI(); renderVideos();
+});
+/* El dibujo pertenece a UN fotograma. Al movernos hay que repintar el canvas:
+   antes el listener solo llamaba updateUI(), asi que el trazo de la nota anterior se
+   quedaba dibujado encima durante todo el video — de ahi "se queda en todo el video". */
+let _fDibujo = -1, _fUltimoReply = null;
+function alCambiarFotograma(){
+  updateUI();                                   // el timecode y los botones, siempre
+  const f = st.vid ? snap(v.currentTime) : -1;
+  /* Si estabamos respondiendo a un hilo y el video se movio a OTRO fotograma, salimos
+     del modo respuesta. Antes no se soltaba y Enter iba al hilo viejo — de ahi que
+     "no me deja crear y tengo que hacer clic en otro comentario". */
+  if(st.replyTo && _fUltimoReply!==null && f !== _fUltimoReply){
+    const r = st.notas.find(n => n.id === st.replyTo);
+    const rf = r ? (r.frame!=null ? r.frame : snap(r.time||0)) : null;
+    const rf2 = (r && r.end_frame!=null) ? r.end_frame : rf;
+    const dentro = (rf!=null && f>=rf && (rf2==null || f<=rf2));
+    if(!dentro && f !== rf2){ st.replyTo = null; editingId = null;
+      $("#bCancel").style.display = "none"; renderList(); updateEditor(); }
+  }
+  _fUltimoReply = f;
+  if(f === _fDibujo) return;                    // el canvas solo si cambio el frame
+  _fDibujo = f;
+  drawCanvas();
+}
+v.addEventListener("timeupdate", alCambiarFotograma);
+v.addEventListener("seeking", alCambiarFotograma);
+v.addEventListener("seeked", alCambiarFotograma);
+v.addEventListener("play",  () => setIcon("#bPlay","#i-pause"));
+v.addEventListener("pause", () => setIcon("#bPlay","#i-play"));
+v.addEventListener("ended", () => setIcon("#bPlay","#i-play"));
+v.addEventListener("error", () => { $("#nocodec").classList.add("on"); });
+/* Cambia el icono de un boton. Antes insertaba un <use> SUELTO, sin su <svg>:
+   al Reproducir por primera vez el boton se quedaba VACIO y el glifo desaparecia
+   para siempre ("el boton de reproducir no se ve"). Ahora se reconstruye el <svg>. */
+function setIcon(sel, id){
+  const b = $(sel); if(!b) return;
+  b.innerHTML = '<svg viewBox="0 0 24 24"><use href="#'+id+'"/></svg>';
+}
+
+/* El UNICO sitio que escribe `fps`. Precedencia: archivo > medido > 24. */
+function setFps(){
+  const m = vmeta();
+  let next = FPS_DEFAULT, src = "defecto";
+  if(m && okFps(m.fps)){ next = +m.fps; src = "archivo"; }
+  else if(okFps(detFps)){ next = detFps; src = "medido"; }
+  const cambio = (next !== fps);
+  fps = next; fpsSrc = src;
+  showFps();
+  return cambio;
+}
+function showFps(){
+  const e = $("#fpsLbl"); if(!e) return;
+  e.textContent = fps.toFixed(fps % 1 ? 2 : 0) + " fps · " + fpsSrc;
+}
+// todo lo que se pinta a partir del fps
+function refreshFpsDeps(){
+  if(!st.slug || !st.vid) return;
+  renderVideos(); renderList(); updateMarks(); updateUI(); updateEditor();
+}
+
+let _lMT=null,_lPF=null,_fs=[];
+function resetFpsProbe(){ _lMT = null; _lPF = null; _fs = []; }
+v.addEventListener("seeking", resetFpsProbe);
+v.addEventListener("pause", resetFpsProbe);
+
+function tickFps(now, meta){
+  const again = () => { if(v.requestVideoFrameCallback) v.requestVideoFrameCallback(tickFps); };
+  // Solo se mide REPRODUCIENDO. Un seek (o frame-step, o la pestaña oculta) deja un
+  // hueco largo de mediaTime con un solo frame presentado, y dF/dT da cosas como
+  // 1/0.2915 = 3.43 o 1/0.125 = 8.0 — exactamente los fps rotos de los datos reales.
+  if(v.paused || v.seeking){ resetFpsProbe(); return again(); }
+  if(_lPF!==null && meta.presentedFrames!==_lPF){
+    const dT = meta.mediaTime-_lMT, dF = meta.presentedFrames-_lPF;
+    // ventana corta y pocos frames: descarta huecos de seek / stall / tab oculta
+    if(dT>0.002 && dT<0.25 && dF>0 && dF<=4){
+      const i = dF/dT;
+      if(i>=FPS_MIN && i<=FPS_MAX){ _fs.push(i); if(_fs.length>40) _fs.shift(); }
+    }
+  }
+  _lMT = meta.mediaTime; _lPF = meta.presentedFrames;
+  if(st.det && _fs.length>=12){
+    const s = _fs.slice().sort((a,b)=>a-b), med = s[s.length>>1];
+    const g = guess(med);
+    if(g && g !== detFps){
+      detFps = g;
+      // si el contenedor no traia fps, dejarlo escrito para que la nota y el
+      // servidor usen el mismo numero
+      const m = vmeta();
+      if(m && !okFps(m.fps) && st.slug && st.vid){
+        m.fps = g;
+        api(P(st.slug) + "/videos/" + st.vid + "/meta", {method:"POST", body: JSON.stringify({fps:g})}).catch(()=>{});
+      }
+      if(setFps()) refreshFpsDeps();
+    }
+  }
+  again();
+}
+if(v.requestVideoFrameCallback) v.requestVideoFrameCallback(tickFps);
+/* Devuelve null si la medicion no cae en una cadencia de video conocida.
+   Antes devolvia Math.round(x*100)/100 y por eso un numero inventado (3.43, 8.0)
+   terminaba guardado en las notas. */
+function guess(x){
+  const c=[23.976,24,25,29.97,30,48,50,59.94,60,119.88,120];
+  for(const k of c) if(Math.abs(x-k)<0.14) return k;
+  return null;
+}
+function snap(t){ return Math.round(t*fps); }
+function frameT(f){ return f/fps; }
+// mismo redondeo que tc_from() en server.py: el campo de fotogramas usa round(fps)
+function tc(t,f){ f = f==null ? snap(t) : f;
+  const r = Math.max(1, Math.round(fps));
+  const ff = Math.floor(f % r), tot = Math.floor(f/r);
+  return pad(Math.floor(tot/3600))+":"+pad(Math.floor(tot/60)%60)+":"+pad(tot%60)+":"+pad(ff); }
+
+function play(){ v.play().catch(()=>toast("No se pudo reproducir")); }
+function pause(){ v.pause(); }
+/* updateUI() ya decide si basta mover el cursor o hay que repintar la ventana.
+   Antes seek() llamaba ademas a tlFollow(), que repintaba por su cuenta: dos
+   pintados por cada salto, con dos listas de marcadores creadas y destruidas. */
+function seek(t){ pause(); v.currentTime = clamp(t,0,vdur||0); updateUI(); }
+function stepF(d){ pause(); seek(frameT(snap(v.currentTime)+d)); }
+function stepS(d){ pause(); seek(v.currentTime+d); }
+
+/* ═══ dibujo ═══ */
+function fit(){
+  if(!vw) return;
+  const r = v.getBoundingClientRect();
+  if(!r.width) return;
+  const dpr = Math.min(window.devicePixelRatio||1, 2.5);
+  cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.height*dpr);
+  drawCanvas();
+}
+window.addEventListener("resize", fit);
+new ResizeObserver(()=>fit()).observe($("#fw"));
+
+let drawing=false, cur=null;
+/* Gesto de dibujo: la nota se crea al SOLTAR un trazo real, no al empezar. Asi un
+   clic sueltito con el lapiz encima nunca deja una nota vacia (habia 7 en los datos). */
+let _inicioX=0, _inicioY=0, _dibujandoEnNota=null, _gestoReal=false;
+/* OJO: aqui habia una segunda definicion de curNote() que pisaba la de arriba y
+   ignoraba st.selId. Con dos notas en el mismo fotograma, "mover" y "borrar"
+   actuaban sobre la primera, no sobre la seleccionada. */
+function ensurePend(){ if(st.pend && st.pend.frame === snap(v.currentTime)) return;
+  st.pend = {frame:snap(v.currentTime), time:v.currentTime}; st.hist=[]; st.hpos=-1; drawCanvas(); }
+
+function pushHist(){ st.hist = st.hist.slice(0, st.hpos+1);
+  const n = curNote(); st.hist.push(n && n.drawing ? JSON.parse(JSON.stringify(n.drawing)) : null);
+  if(st.hist.length>60) st.hist.shift(); st.hpos = st.hist.length-1; }
+function undo(){ if(st.hpos<0) return;
+  const n = curNote(); const s = st.hist[st.hpos]; st.hpos--;
+  if(n) n.drawing = s ? JSON.parse(JSON.stringify(s)) : null;
+  st.hist.length = st.hpos+1; drawCanvas(); saveDrawing(); renderList(); }
+function redo(){ if(st.hpos+1>=st.hist.length) return;
+  st.hpos++; const n = curNote();
+  if(n){ const s = st.hist[st.hpos]; n.drawing = s ? JSON.parse(JSON.stringify(s)) : null; }
+  drawCanvas(); saveDrawing(); renderList(); }
+async function saveDrawing(){
+  const n = curNote(); if(!n) return;
+  try{ await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({drawing: n.drawing})}); }
+  catch(e){}
+}
+function pt(ev){
+  const r = cv.getBoundingClientRect();
+  return {x: clamp((ev.clientX-r.left)/r.width,0,1), y: clamp((ev.clientY-r.top)/r.height,0,1)};
+}
+cv.addEventListener("pointerdown", e => {
+  /* ── Sin herramienta activa, el clic es play/pausa. ──
+     Fable, leyendo los datos reales: "cualquier clic sobre el video, el gesto
+     universal de pausar, crea una nota vacia... 7 notas vacias en rafaga y 4 trazos
+     de 1 punto". El lapiz ya no viene activo y el canvas no se come el clic. */
+  if(!st.tool){
+    if(v.paused) play(); else pause();
+    return;
+  }
+  e.preventDefault();
+  try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+  ensurePend();
+  /* La nota se resuelve YA, en el pointerdown, y de forma optimista: se pinta en
+     el instante para que el trazo tenga donde agarrarse. Crearla al soltar hacia
+     perder siempre el primer trazo. */
+  let n = curNote();
+  if(!n) n = crearNotaParaDibujar();
+  if(!n) return;
+  _inicioX = e.clientX; _inicioY = e.clientY; _gestoReal = false;
+  if(!n.drawing) n.drawing = {strokes:[]};
+  pushHist();
+  cur = {tool:st.tool, color:st.color, size:st.size, pts:[pt(e)]};
+  n.drawing.strokes.push(cur);
+  drawing = true; _dibujandoEnNota = n;
+  drawCanvas();
+});
+cv.addEventListener("pointermove", e => {
+  if(!drawing || !cur) return;
+  if(Math.hypot(e.clientX - _inicioX, e.clientY - _inicioY) > 4) _gestoReal = true;
+  const p = pt(e), l = cur.pts[cur.pts.length-1];
+  if(Math.hypot(p.x-l.x, p.y-l.y) < 0.0015) return;
+  cur.pts.push(p); drawCanvas();
+});
+function endDraw(e){
+  if(!drawing) return;
+  /* Un clic suelto con el lapiz encima NO es un dibujo: se descarta entero,
+     incluida la nota creada para el gesto. Antes dejaba 7 notas vacias y 4 trazos
+     de un solo punto en los datos de Cristian. */
+  if(!_gestoReal || !cur || cur.pts.length < 2){
+    const n = _dibujandoEnNota;
+    cur = null; drawing = false; _dibujandoEnNota = null;
+    if(n && n.drawing && n.drawing.strokes && n.drawing.strokes.length) n.drawing.strokes.pop();
+    const vacia = n && !(n.text||"").trim() && !(n.drawing.strokes||[]).length;
+    if(n && vacia){
+      const i2 = st.notas.findIndex(x => x.id === n.id);
+      if(i2 >= 0) st.notas.splice(i2, 1);
+      if(st.selId === n.id) st.selId = null;
+    }
+    drawCanvas(); renderList(); updateMarks(); updateEditor();
+    return;
+  }
+  drawing=false; cur=null; _dibujandoEnNota=null;
+  saveDrawing(); renderList();
+}
+
+cv.addEventListener("pointerup", endDraw);
+cv.addEventListener("pointercancel", endDraw);
+
+/* Dibujar sin nota previa: crea la nota vacia en el fotograma del cursor.
+   Sin esto, dibujar encima de un frame sin nota no hacia nada y parecia un bug. */
+function crearNotaParaDibujar(){
+  /* Crea la nota vacia en el fotograma del cursor, de forma OPTIMISTA: se pinta al
+     instante para que el trazo tenga donde agarrarse, y se sincroniza despues.
+     Antes era async y el handler hacia return, asi que el primer trazo se perdia
+     siempre — de ahi que "las herramientas no funcionan". */
+  if(!st.slug || !st.vid) return null;
+  const f = snap(v.currentTime);
+  const ya = noteAt(st.vid, f);
+  if(ya){ st.pend = {frame:f, time:f/fps}; return ya; }
+  const nota = {
+    id: "tmp_" + Date.now().toString(36),
+    video: st.vid, frame: f, fps: fps,
+    timecode: tc(f/fps, f), time: Math.round(f/fps*1000)/1000,
+    end_frame: null, text: "", kind: "nota", resolved: false,
+    author: "cristian", drawing: {strokes:[]}, pendiente_sync: true
+  };
+  st.notas.push(nota);
+  st.notas.sort(cmpNotas);
+  st.pend = {frame:f, time:f/fps};
+  st.selId = nota.id;
+  pushHist();
+  drawCanvas(); renderList(); updateMarks(); updateEditor();
+  // sincronizar en segundo plano: si falla, se quita la nota temporal
+  api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
+    video: st.vid, frame: f, text: "", author: "cristian", fps: fps})})
+  .then(r => {
+    const real = r.nota;
+    if(!real) return;
+    /* El poll (cada 2,2 s) puede haber reemplazado la nota temporal por la lista del
+       servidor mientras el usuario dibuja: entonces la temporal ya no esta y, con el
+       codigo de antes, la nota real se descartaba en silencio — el trazo se perdia.
+       Por eso, si la temporal desaparecio, se busca la real por video+fotograma. */
+    let local = st.notas.find(n => n.id === nota.id);
+    if(!local){
+      local = st.notas.find(n => n.id === real.id)
+           || st.notas.find(n => n.video === real.video && n.frame === real.frame
+                && n.author === real.author && !(n.text||"").trim() && !(n.drawing.strokes||[]).length);
+    }
+    if(local){
+      // el dibujo que se hizo mientras sincronizaba viaja con la nota real
+      const dib = local.drawing;
+      delete local.pending_sync;
+      const trazos = (dib && dib.strokes && dib.strokes.length) ? dib : (real.drawing || null);
+      // si el trazo se hizo sobre la temporal y esta ya no existe, se reconstruye
+      // en la nota real para que no se pierda.
+      Object.assign(local, real, {drawing: trazos});
+      local.id = real.id;
+      if(drawing && cur && _dibujandoEnNota && _dibujandoEnNota.id === nota.id){
+        _dibujandoEnNota = local;
+      }
+      if(st.selId === nota.id) st.selId = real.id;
+      renderList(); updateMarks(); drawCanvas();
+      if(local.drawing && local.drawing.strokes && local.drawing.strokes.length) saveDrawing();
+    } else {
+      // no hay sitio local: se inserta la real para no perderla
+      st.notas.push(real); st.notas.sort(cmpNotas);
+      renderList(); updateMarks();
+    }
+  })
+  .catch(e => {
+    const i2 = st.notas.findIndex(n => n.id === nota.id);
+    if(i2 >= 0) st.notas.splice(i2, 1);
+    if(st.selId === nota.id) st.selId = null;
+    drawCanvas(); renderList(); updateMarks();
+    toast("No se pudo crear la nota para el dibujo: " + e.message, 3600);
+  });
+  return nota;
+}
+
+function eraseFrame(){
+  /* El borrador limpia el dibujo DEL FOTOGRAMA ACTUAL, no el de la nota seleccionada.
+     Antes usaba curNote(), asi que desde otro frame borraba el dibujo equivocado. */
+  ensurePend();
+  const n = notaVisibleEnElFrameActual();
+  if(!n || !n.drawing || !n.drawing.strokes.length) return;
+  pushHist(); n.drawing = {strokes:[]}; drawCanvas(); saveDrawing(); renderList();
+}
+function drawCanvas(){
+  if(!cv.width){ return; }
+  ctx.clearRect(0,0,cv.width,cv.height);
+  /* Un dibujo SOLO se ve en su fotograma. Antes se pintaba la nota seleccionada
+     durante todo el video, porque curNote() la devolvia sin mirar donde estabamos.
+     Ahora: si el frame actual no es el de la nota, el canvas queda limpio. */
+  const n = notaVisibleEnElFrameActual();
+  if(!n || !n.drawing || !n.drawing.strokes || !n.drawing.strokes.length) return;
+  for(const s of n.drawing.strokes) drawStroke(s, cv.width, cv.height);
+}
+
+/* Devuelve la nota cuyo dibujo debe verse AHORA: la del fotograma actual.
+   Si no hay ninguna, null. No mira la seleccion. */
+function notaVisibleEnElFrameActual(){
+  if(!st.vid || !cv.width) return null;
+  const f = snap(v.currentTime);
+  // rango primero (notas con duracion)
+  for(const n of st.notas){
+    if(n.video !== st.vid || !n.drawing || !n.drawing.strokes || !n.drawing.strokes.length) continue;
+    const ini = (n.frame!=null) ? n.frame : snap(n.time||0);
+    const fin = (n.end_frame!=null) ? n.end_frame
+              : (n.frame_range!=null) ? n.frame_range[1] : null;
+    if(fin==null){ if(f === ini) return n; }
+    else if(f >= ini && f <= fin) return n;
+  }
+  return null;
+}
+function drawStroke(s,W,H){
+  if(!s.pts || !s.pts.length) return;
+  ctx.strokeStyle = s.color; ctx.fillStyle = s.color;
+  ctx.lineWidth = s.size*(W/1000)*1.15; ctx.lineCap="round"; ctx.lineJoin="round";
+  if(s.tool==="pen"){
+    ctx.beginPath();
+    if(s.pts.length===1){ const p=s.pts[0]; ctx.arc(p.x*W,p.y*H,ctx.lineWidth/2,0,7); ctx.fill(); return; }
+    ctx.moveTo(s.pts[0].x*W, s.pts[0].y*H);
+    for(let i=1;i<s.pts.length-1;i++){ const a=s.pts[i],b=s.pts[i+1];
+      ctx.quadraticCurveTo(a.x*W,a.y*H,(a.x+b.x)/2*W,(a.y+b.y)/2*H); }
+    const l=s.pts[s.pts.length-1]; ctx.lineTo(l.x*W,l.y*H); ctx.stroke();
+  } else if(s.tool==="arrow"){
+    const a=s.pts[0],b=s.pts[s.pts.length-1];
+    const x1=a.x*W,y1=a.y*H,x2=b.x*W,y2=b.y*H;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    const ang=Math.atan2(y2-y1,x2-x1), hd=ctx.lineWidth*4.2;
+    ctx.beginPath(); ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-hd*Math.cos(ang-0.42), y2-hd*Math.sin(ang-0.42));
+    ctx.lineTo(x2-hd*Math.cos(ang+0.42), y2-hd*Math.sin(ang+0.42));
+    ctx.closePath(); ctx.fill();
+  } else if(s.tool==="rect" || s.tool==="ellipse"){
+    const a=s.pts[0],b=s.pts[s.pts.length-1];
+    const x=Math.min(a.x,b.x)*W, y=Math.min(a.y,b.y)*H;
+    const w=Math.abs(b.x-a.x)*W, h=Math.abs(b.y-a.y)*H;
+    ctx.beginPath();
+    if(s.tool==="rect") ctx.rect(x,y,w,h); else ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,7);
+    ctx.stroke();
+  }
+}
+
+/* ═══ editor: Enter envia (modo chat), mover, borrar ═══ */
+let dirty = false;          // hay texto escrito que aun no se ha enviado
+let editingId = null;       // id de la nota en edicion; null = crear nueva (modo chat)
+
+function setDirty(on){
+  dirty = !!on;
+  $("#edDirty").classList.toggle("on", dirty);
+  $("#bSave").disabled = !dirty;
+}
+function editorFrame(){
+  // modo chat: la nota va SIEMPRE al fotograma del cursor
+  return snap(v.currentTime);
+}
+
+/* Mandar una RESPUESTA al hilo apuntado. Camino aparte del de crear nota:
+   no elige fotograma (lo hereda la respuesta en el servidor), no avanza el cursor y
+   no toca st.pend — el hilo se queda donde esta y la conversacion crece hacia abajo. */
+async function saveReply(){
+  const raiz = st.notas.find(x => x.id === st.replyTo);
+  if(!raiz){ st.replyTo = null; return; }
+  const val = $("#ta").value;
+  if(!val.trim()){ setDirty(false); toast("Escribe la respuesta", 1600); return; }
+  $("#ta").value = ""; setDirty(false); $("#bSave").disabled = true;
+  try{
+    let saved = null;
+    await withBusyNote(async ()=>{
+      const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
+        parent: raiz.id, text: val, author:"cristian" })});
+      saved = r.nota || null;
+    });
+    if(saved) upsertNote(saved);
+    else { const d = await api(P(st.slug)); absorbDetail(d); }
+    if(saved) pushUndo("responder en " + raiz.timecode,
+      {tipo:"crear", antes:snapNota(saved), despues:snapNota(saved)});
+    st.plegados[raiz.id] = false;
+    renderList(); renderVideos(); updateMarks(); updateEditor();
+    toast("Respuesta enviada en " + raiz.timecode);
+  }catch(e){
+    $("#ta").value = val; setDirty(true);
+    toast("No se pudo responder: " + e.message, 4000);
+  }
+}
+
+async function saveNote(){
+  if(!st.slug || !st.vid) return;
+  if(st.replyTo) return saveReply();      // el cuadro esta en modo respuesta
+  const val = $("#ta").value;
+  const f = editorFrame();
+  // sin texto y sin edicion activa: nada que enviar
+  if(!val.trim() && !editingId){
+    setDirty(false); toast("Escribe algo para guardar", 1600); return;
+  }
+  // inmediata: el cuadro se limpia al instante y la UI deja de esperar
+  const existing = editingId ? st.notas.find(x => x.id === editingId) : null;
+  const antesDeGuardar = existing ? snapNota(existing) : null;   // para deshacer la edicion
+  $("#ta").value = "";
+  setDirty(false);
+  $("#bSave").disabled = true;
+  try{
+    let saved = null;
+    await withBusyNote(async ()=>{
+      if(existing){
+        const r = await api(P(st.slug)+"/notas/"+existing.id, {method:"PATCH", body:JSON.stringify({text: val})});
+        saved = r.nota || null;
+        if(saved) saved.video = st.vid;
+      }else{
+        const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
+          video: st.vid, frame: f, text: val, author:"cristian", fps: fps })});
+        saved = r.nota || null;
+      }
+    });
+    editingId = null;
+    // la nota entra a la lista sin refetch (el PATCH ya la devuelve)
+    if(saved){
+      if(existing) upsertNote(saved); else upsertNote(saved);
+    }else{
+      const d = await api(P(st.slug));
+      absorbDetail(d);
+    }
+    // ── HISTORIAL: registrar la accion para poder deshacerla ──
+    if(saved){
+      if(existing){
+        if(antesDeGuardar && antesDeGuardar.text !== saved.text){
+          pushUndo("editar nota en " + saved.timecode,
+            {tipo:"campo", antes:antesDeGuardar, despues:snapNota(saved), cambios:["text"]});
+        }
+      }else{
+        pushUndo("crear nota en " + saved.timecode,
+          {tipo:"crear", antes:snapNota(saved), despues:snapNota(saved)});
+      }
+    }
+    /* El cursor SE QUEDA donde estaba. Antes saltaba al proximo fotograma libre, y
+       como el dibujo solo se pinta en su fotograma exacto, el trazo que acababas de
+       hacer desaparecia de pantalla al pulsar Enter — parecia que se habia perdido.
+       Fable 2.2. La app ya admite varias notas en el mismo fotograma, asi que no
+       hay nada que proteger. */
+    st.pend = {frame: f, time: frameT(f)};
+    // si ya hay una nota tuya en este fotograma, Enter responde en su hilo en vez de
+    // crear otra nota (asi no se duplican: habia un par duplicado en los datos)
+    const miaAqui = st.notas.find(n => n.video === st.vid && n.frame === f
+      && n.author !== "claude" && !n.parent && !esRespuesta(n));
+    if(miaAqui && !existing){ setTimeout(() => startReply(miaAqui.id), 120); }
+    $("#bCancel").style.display = "none";
+    renderList(); renderVideos(); updateMarks(); updateEditor();
+    toast((existing ? "Nota actualizada en " : "Nota enviada en ") + tc(null, f));
+  }catch(e){
+    // si fallo, devolver el texto al cuadro para no perderlo
+    $("#ta").value = val;
+    setDirty(true);
+    toast("No se pudo guardar: " + e.message, 4000);
+  }
+}
+
+// inserta o actualiza una nota en st.notas sin perder el orden
+function upsertNote(n){
+  const i = st.notas.findIndex(x => x.id === n.id);
+  if(i >= 0) st.notas[i] = Object.assign(st.notas[i], n);
+  else st.notas.push(n);
+  st.notas.sort(cmpNotas);
+}
+
+$("#ta").addEventListener("input", () => {
+  if(!st.slug || !st.vid) return;
+  // en modo respuesta NO se toca st.pend: el momento es el del hilo, no el del cursor.
+  // ensurePend() lo movia al fotograma actual y la respuesta habria perdido su ancla.
+  if(!st.replyTo) ensurePend();
+  setDirty(true);          // no se envia nada hasta Enter o Guardar
+});
+$("#ta").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault(); saveNote();          // Enter = guardar
+  }
+  // Shift+Enter = salto de linea normal
+});
+$("#bSave").onclick = saveNote;
+$("#bCancel").onclick = () => {
+  if(cancelReply()){ toast("Respuesta cancelada", 1500); return; }
+  editingId = null;
+  $("#bCancel").style.display = "none";
+  $("#ta").value = "";
+  setDirty(false);
+  updateEditor();
+  toast("Edicion cancelada", 1500);
+};
+$("#bDel").onclick = () => { const n = curNote(); if(!n){ toast("No hay ninguna nota en este fotograma"); return; } askDelete(n.id); };
+$("#bGo").onclick = () => { if(st.pend) seek(frameT(st.pend.frame)); };
+/* Al elegir cualquier nota de la lista, se suelta el modo respuesta: si estabas
+   respondiendo a un hilo y ahora seleccionas otra nota, la intencion es crear/editar
+   esa, no seguir contestando al anterior. */
+function soltarReplySiCambiaDeNota(id){
+  if(!st.replyTo) return;
+  const r = st.notas.find(n => n.id === st.replyTo);
+  const raiz = r ? raizDe(r) : null;
+  if(!raiz || raiz.id !== id){ st.replyTo = null; editingId = null;
+    $("#bCancel").style.display = "none"; }
+}
+/* ── Mover nota: NO se pide un numero de fotograma ──
+   El bug de uso: obligaba a calcular "a que fotograma" a mano, y el numero cambia
+   con cada tecla. Ahora se elige el MOMENTO: hay una vista previa del video, se navega
+   con los mismos controles del reproductor, y se muestran puntos de referencia. */
+const _mov = {frame: 0, t: 0, paused: true, raf: 0};
+
+function _movTick(){
+  const v2 = $("#mvPreview");
+  if(!v2){ _mov.raf = 0; return; }
+  /* ESTABA AL REVES: con la vista previa en PAUSA avanzaba `_mov.t += 1/30` en cada
+     frame de animacion (60 fps x 1/30 = el doble de velocidad real) y al llegar al
+     final volvia a 0. O sea: abrias "mover la nota" y el momento de destino se iba
+     solo, en bucle; lo que elegias ya no era lo que confirmabas. En pausa el destino
+     no se mueve: solo lo mueven los botones, el campo de segundos o la barra. */
+  if(!_mov.paused) _mov.t = v2.currentTime;
+  const f = Math.round(_mov.t * fps);
+  const el = $("#mvTc");
+  if(el) el.textContent = tc(_mov.t, f) + "   f" + f;
+  const bar = $("#mvBar");
+  if(bar) bar.style.left = clamp((_mov.t/(_mov.dur||1))*100, 0, 100) + "%";
+  const mk = $("#mvMarks");
+  if(mk && !mk.dataset.done){
+    mk.dataset.done = "1";
+    // solo las notas de ESTE video: antes se pintaban las de todo el proyecto, en
+    // una barra que representa la duracion de este clip
+    for(const nn of st.notas){
+      if(nn.id === _mov.notaId || nn.video !== st.vid) continue;
+      const d2 = document.createElement("div");
+      d2.className = "mark2";
+      d2.style.left = clamp((nn.frame/fps/(_mov.dur||1))*100, 0, 100) + "%";
+      d2.title = (nn.text||"").slice(0,50);
+      mk.appendChild(d2);
+    }
+  }
+  // el handle nuevo se guarda: antes se llamaba a requestAnimationFrame sin recoger
+  // el id, asi que cancelAnimationFrame(_mov.raf) cancelaba uno viejo y el bucle
+  // seguia vivo para siempre (y se acumulaba otro en cada apertura del dialogo)
+  if(_mov.raf) _mov.raf = requestAnimationFrame(_movTick);
+}
+
+$("#bMove").onclick = () => {
+  const n = curNote();
+  if(!n){ toast("No hay ninguna nota que mover"); return; }
+  const maxF = Math.max(0, Math.round((vdur||0)*fps));
+  const m = vmeta();
+  _mov.frame = n.frame; _mov.t = n.frame/fps; _mov.notaId = n.id; _mov.dur = vdur || 1;
+  _mov.paused = true;
+
+  openModal("Mover la nota a otro momento",
+    '<p style="color:var(--fg-dim);font-size:12.5px;line-height:1.7;margin-bottom:12px">' +
+      'Esta nota está en <b>' + n.timecode + '</b> (f' + n.frame + '). ' +
+      'Lleva el clip hasta donde la quieres y confirma.</p>' +
+
+    '<div class="mvprev">' +
+      '<video id="mvPreview" muted playsinline preload="metadata" src="' +
+        "/media/" + encodeURIComponent(st.slug) + "/" + st.vid + "/" + (m?m.archivo:"") + '"></video>' +
+      '<div class="mvtc" id="mvTc">' + tc(n.frame/fps, n.frame) + '</div>' +
+    '</div>' +
+
+    '<div class="mvbar" id="mvBarWrap">' +
+      '<div class="mvtrack"></div><div class="mvhead" id="mvBar"></div><div class="mvmarks" id="mvMarks"></div>' +
+    '</div>' +
+
+    // "1 s" se media en 24 fotogramas fijos: en un clip de 30 fps saltaba 0,8 s.
+    // Ahora el paso de segundo se declara en SEGUNDOS y lo convierte el handler.
+    '<div class="mvrow">' +
+      '<button class="btn" data-mv-sec="-1">⏮ 1 s atrás</button>' +
+      '<button class="btn" data-mv-step="-1">◀ 1 f</button>' +
+      '<button class="btn" id="mvPlay">▶ reproducir</button>' +
+      '<button class="btn" data-mv-step="1">1 f ▶</button>' +
+      '<button class="btn" data-mv-sec="1">1 s ⏭</button>' +
+    '</div>' +
+    '<div class="mvrow" style="margin-top:6px">' +
+      '<label class="lbl" style="display:inline-block;margin:0 6px 0 0">O escribe el segundo exacto</label>' +
+      '<input class="fld mvsec" id="mvSec" type="text" inputmode="decimal" value="' + (n.frame/fps).toFixed(2) + '">' +
+    '</div>' +
+    '<p style="color:var(--fg-mute);font-size:11.5px;line-height:1.7;margin-top:8px">' +
+      'Los puntos grises en la barra son las otras notas. Mover aqui no cambia nada hasta que confirmes.</p>',
+
+    '<span style="flex:1"></span><button class="btn" id="mvCancel">Cancelar</button>' +
+    '<button class="btn pri" id="mvOk">Mover aqui</button>');
+
+  const pv = $("#mvPreview");
+  pv.currentTime = _mov.t;
+
+  // scrub de la vista previa (nombre propio: `drag` ya es la variable del arrastre
+  // de marcadores en la barra principal, y tlCongelado() la consulta)
+  const wrap = $("#mvBarWrap");
+  let mvDrag = false;
+  const toT = ev => {
+    const r = wrap.getBoundingClientRect();
+    _mov.t = clamp((ev.clientX - r.left)/r.width, 0, 1) * (_mov.dur||1);
+    pv.currentTime = _mov.t;      // la imagen sigue al dedo: antes la barra se movia sola
+  };
+  wrap.addEventListener("pointerdown", ev => { mvDrag = true; wrap.setPointerCapture(ev.pointerId); toT(ev); });
+  wrap.addEventListener("pointermove", ev => { if(mvDrag) toT(ev); });
+  wrap.addEventListener("pointerup",   () => mvDrag = false);
+  wrap.addEventListener("pointercancel",() => mvDrag = false);
+
+  const mvSaltar = seg => { _mov.t = clamp(_mov.t + seg, 0, _mov.dur); pv.currentTime = _mov.t; };
+  for(const b of $$("#mBody [data-mv-step]")) b.onclick = () => mvSaltar((+b.dataset.mvStep)/fps);
+  for(const b of $$("#mBody [data-mv-sec]"))  b.onclick = () => mvSaltar(+b.dataset.mvSec);
+  $("#mvPlay").onclick = e => {
+    _mov.paused = !_mov.paused;
+    e.currentTarget.textContent = _mov.paused ? "▶ reproducir" : "⏸ pausar";
+    if(!_mov.paused){ pv.currentTime = _mov.t; pv.play().catch(()=>{}); }
+    else pv.pause();
+  };
+  $("#mvSec").oninput = e => {
+    const s = parseFloat(e.target.value.replace(",", "."));
+    if(!isNaN(s)){ _mov.t = clamp(s, 0, _mov.dur); pv.currentTime = _mov.t; }
+  };
+  // la limpieza (parar el video y el bucle de animacion) vive en closeModal(), que
+  // es el unico sitio por el que se cierra: boton, Escape y clic fuera incluidos.
+  // Antes "Cancelar" cerraba sin parar nada y el rAF se quedaba corriendo.
+  $("#mvCancel").onclick = closeModal;
+  $("#mClose").onclick = closeModal;
+
+  if(_mov.raf) cancelAnimationFrame(_mov.raf);
+  _mov.raf = requestAnimationFrame(_movTick);
+
+  $("#mvOk").onclick = async () => {
+    pv.pause();
+    if(_mov.raf) cancelAnimationFrame(_mov.raf);
+    const nf = clamp(Math.round(_mov.t * fps), 0, maxF);
+    closeModal();
+    if(nf === n.frame){ toast("Sigue en el mismo momento"); return; }
+    const dup = noteAt(st.vid, nf);
+    if(dup && dup.id !== n.id){ toast("Ya hay una nota en " + tc(null,nf) + " — muevela o borrala"); return; }
+    const old = n.frame;
+    await withBusyNote(async ()=>{
+      n.frame = nf;
+      try{
+        const antesMov = snapNota(n);
+        await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({frame: nf})});
+        pushUndo("mover nota de " + antesMov.timecode + " a " + tc(null,nf),
+          {tipo:"campo", antes:antesMov, despues:snapNota(n), cambios:["frame"]});
+        st.pend = {frame:nf, time:frameT(nf)};
+        seek(frameT(nf));
+        await pullDetail();
+        drawCanvas(); renderList(); renderVideos(); updateMarks(); updateEditor();
+        toast("Movida de " + n.timecode + " a " + tc(null,nf), 2800);
+      }catch(e){
+        n.frame = old;
+        toast("No se pudo mover: " + e.message, 4000);
+      }
+    });
+  };
+};
+
+$("#bEnd").onclick = () => {
+  const n = curNote(); if(!n) return;
+  const f = snap(v.currentTime);
+  if(n.end_frame != null && n.end_frame === f){ n.end_frame = null; toast("Intervalo quitado"); }
+  else if(f > n.frame){ n.end_frame = f; toast("Hasta " + tc(null,f)); }
+  else { toast("Mueve el cursor más allá del inicio"); return; }
+  withBusyNote(async ()=>{
+    try{ await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({end_frame: n.end_frame})});
+         await pullDetail(); renderList(); updateMarks(); updateEditor(); }
+    catch(e){ toast(e.message); }
+  });
+};
+$("#bErase").onclick = eraseFrame;
+$("#bUndo").onclick = undo;
+$("#bRedo").onclick = redo;
+$("#bPlay").onclick = () => v.paused ? play() : pause();
+$("#bPrev").onclick = () => stepF(-1);
+$("#bNext").onclick = () => stepF(1);
+$("#bBack").onclick = () => stepS(-1);
+$("#bFwd").onclick = () => stepS(1);
+$("#bMax").onclick = () => { (v.requestFullscreen||v.webkitRequestFullscreen||function(){}).call(v); };
+$("#cPend").onchange = e => { st.onlyPend = e.target.checked; renderList(); };
+/* Dos casillas para el MISMO ajuste (la de la barra superior y la del panel de
+   notas). Solo una de las dos sincronizaba a la otra, asi que marcar la de abajo
+   dejaba la de arriba desmarcada diciendo lo contrario. Un solo handler. */
+function setThumbs(on){
+  st.thumbs = !!on;
+  $("#cThumb").checked = st.thumbs;
+  $("#cThumbs").checked = st.thumbs;
+  renderList();
+}
+$("#cThumb").onchange  = e => setThumbs(e.target.checked);
+$("#cThumbs").onchange = e => setThumbs(e.target.checked);
+$("#cDet").onchange = e => {
+  st.det = e.target.checked;
+  resetFpsProbe();
+  if(!st.det) detFps = 0;        // apagar la medicion vuelve al fps del archivo
+  if(setFps()) refreshFpsDeps();
+};
+
+/* ═══ etiquetas al pasar el mouse ═══
+   Una sola capa fixed para TODO [data-tip], incluidos los botones que se pintan
+   despues (los de cada nota): la delegacion en document los cubre sin re-enganchar. */
+const TIP_GAP = 8, TIP_MARGIN = 6;
+const tipEl = document.createElement("div");
+tipEl.id = "tipLayer";
+tipEl.setAttribute("role", "tooltip");
+document.body.appendChild(tipEl);
+let tipFor = null;
+
+function tipText(el){
+  const t = (el.dataset.tip || "").trim();
+  const k = (el.getAttribute("title") || "").trim();
+  if(!t) return "";
+  // el atajo vivia en title= y abria ADEMAS el tooltip nativo del navegador:
+  // se absorbe en la etiqueta propia y se quita el title
+  if(k && k !== t){ el.dataset.key = k; el.removeAttribute("title"); }
+  const key = el.dataset.key;
+  return key ? t + ' <kbd>' + esc(key) + '</kbd>' : t;
+}
+function hideTip(){
+  if(!tipFor) return;
+  tipFor = null;
+  tipEl.classList.remove("on");
+}
+function showTip(el){
+  const html = tipText(el);
+  if(!html){ hideTip(); return; }
+  tipFor = el;
+  tipEl.innerHTML = html;
+  tipEl.classList.add("on");
+  // medir con la capa ya visible: si no, el rect sale vacio y la posicion se va a (0,0)
+  const r = el.getBoundingClientRect(), t = tipEl.getBoundingClientRect();
+  let x = r.left + r.width/2 - t.width/2;
+  x = clamp(x, TIP_MARGIN, Math.max(TIP_MARGIN, window.innerWidth - t.width - TIP_MARGIN));
+  // ARRIBA por defecto; si no cabe, ABAJO; y si tampoco, pegado al borde inferior.
+  // (antes: y podia quedar por fuera de la ventana y la etiqueta no se veia)
+  let y = r.top - t.height - TIP_GAP;
+  if(y < TIP_MARGIN) y = r.bottom + TIP_GAP;
+  y = Math.min(y, Math.max(TIP_MARGIN, window.innerHeight - t.height - TIP_MARGIN));
+  tipEl.style.left = Math.round(x) + "px";
+  tipEl.style.top  = Math.round(y) + "px";
+}
+document.addEventListener("pointerover", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if(el === tipFor) return;
+  if(el) showTip(el); else hideTip();
+}, true);
+document.addEventListener("pointerdown", hideTip, true);
+document.addEventListener("pointerleave", hideTip);
+document.addEventListener("focusin", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if(el) showTip(el); else hideTip();
+});
+document.addEventListener("focusout", hideTip);
+window.addEventListener("scroll", hideTip, true);
+window.addEventListener("resize", hideTip);
+window.addEventListener("blur", hideTip);
+$("#vfilter").onchange = e => { st.filterVid = e.target.value; renderList(); };
+
+/* ── ATajos: una sola tabla, un solo dueñо por tecla ──
+   Antes habia DOS cadenas if en paralelo comparando contra la misma tecla, asi que
+   Shift+N saltaba AL MISMO TIEMPO al siguiente cambio y a la siguiente nota, y
+   Shift+P iba al cambio anterior Y activaba el lapiz. Una tecla, un dueñо. */
+const ATAJOS = {
+  // transporte
+  " ":              () => v.paused ? play() : pause(),
+  "ArrowLeft":      e => e.shiftKey ? stepS(-1) : stepF(-1),
+  "ArrowRight":     e => e.shiftKey ? stepS( 1) : stepF( 1),
+  "Backspace":      () => eraseFrame(),
+  // timeline (el ancla 50 = el centro de la ventana se queda quieto)
+  "+":              () => tlZoom(TL_ZOOM_PASO, 50),
+  "=":              () => tlZoom(TL_ZOOM_PASO, 50),
+  "-":              () => tlZoom(1/TL_ZOOM_PASO, 50),
+  "_":              () => tlZoom(1/TL_ZOOM_PASO, 50),
+  "0":              () => tlReset(),
+  "]":              () => tlIrANota(1),
+  "[":              () => tlIrANota(-1),
+  // Shift+N / Shift+P recorren SOLO los cambios de Claude: el flujo de revision
+  // sin ver el video entero. Mayusculas = cambios, minusculas = notas.
+  "N":              () => irACambio(1),
+  "P":              () => irACambio(-1),
+  "n":              () => jumpNote(1),
+  "p":              () => jumpNote(-1),
+  // dibujo (minusculas y mayusculas, sin shift = misma herramienta)
+  "f":              () => $('[data-tool=arrow]').click(),
+  "F":              () => $('[data-tool=arrow]').click(),
+  "r":              () => $('[data-tool=rect]').click(),
+  "R":              () => $('[data-tool=rect]').click(),
+  "c":              () => $("#swBtn").click(),
+  "C":              () => $("#swBtn").click(),
+  // nota
+  "e":              () => { ensurePend(); $("#ta").focus(); },
+  "E":              () => { ensurePend(); $("#ta").focus(); },
+  "s":              () => saveNote(),
+  "S":              () => saveNote(),
+};
+// el lapiz es la herramienta por defecto: "p" minúscula era ambiguo, asi que va en "b"
+ATAJOS["b"] = () => $('[data-tool=pen]').click();
+ATAJOS["B"] = () => $('[data-tool=pen]').click();
+delete ATAJOS["p"];   // "p" minúscula = nota anterior (jumpNote). El lapiz es "b".
+
+document.addEventListener("keydown", e => {
+  if($("#modal").classList.contains("on")){ if(e.key==="Escape") closeModal(); return; }
+  const tag = (e.target.tagName||"").toLowerCase();
+  if(tag==="textarea"||tag==="input"||tag==="select") return;
+  if(!st.vid) return;
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase() === "z"){
+    e.preventDefault();
+    e.shiftKey ? rehacer() : deshacer();
+    return;
+  }
+  if(e.altKey || e.metaKey || e.ctrlKey) return;
+  const fn = ATAJOS[e.key];
+  if(!fn) return;
+  e.preventDefault();
+  fn(e);
+});
+
+
+/* saltar a la nota anterior/siguiente (orden del video actual) */
+function jumpNote(dir){
+  if(!st.vid) return;
+  const list = visibleNotes().filter(n => n.video === st.vid);
+  if(!list.length) return;
+  const cur = st.pend ? st.pend.frame : -1;
+  let target = null;
+  if(dir > 0){
+    target = list.find(n => n.frame > cur) || list[0];       //: vuelve a la primera
+  }else{
+    const prev = list.filter(n => n.frame < cur);
+    target = prev.length ? prev[prev.length-1] : list[list.length-1];
+  }
+  if(!target) return;
+  st.selId = target.id;
+  st.pend = {frame:target.frame, time:target.frame/fps};
+  seek(target.frame/fps);
+  editingId = null; $("#ta").value = ""; setDirty(false);
+  drawCanvas(); renderList(); updateEditor(); updateMarks();
+  const el = $("#list").querySelector(".note[data-id=\""+target.id+"\"]");
+  if(el) el.scrollIntoView({block:"nearest"});
+  toast("f"+target.frame+" · "+target.timecode, 1200);
+}
+
+/* scrub */
+const scrub = $("#scrub");
+let sdrag = false;
+function scrubTo(e){ const r = scrub.getBoundingClientRect();
+  // con zoom, el ancho de la barra es solo una ventana: hay que pasar por tlTime()
+  const pct = clamp((e.clientX-r.left)/r.width,0,1)*100;
+  seek(tlTime(pct)); }
+scrub.addEventListener("pointerdown", e => {
+  /* Arrastrar un MARCADOR no es arrastrar la barra. Los dos gestos estaban
+     enganchados al mismo pointerdown de #scrub: el de arrastrar la nota hacia
+     stopPropagation(), que no detiene a los demas oyentes del MISMO elemento, asi
+     que cada pointermove llamaba a dos seek() con cuentas distintas. Decidir aqui,
+     mirando el objetivo, no depende del orden en que se registraron los oyentes. */
+  if(e.target.closest && e.target.closest(".mark")) return;
+  sdrag=true; scrub.setPointerCapture(e.pointerId); scrubTo(e);
+});
+scrub.addEventListener("pointermove", e => { if(sdrag) scrubTo(e); });
+scrub.addEventListener("pointerup", () => sdrag=false);
+scrub.addEventListener("pointercancel", () => sdrag=false);
+
+/* ═══ UI ═══ */
+function updateUI(){
+  if(!st.vid) return;
+  const ct = v.currentTime, f = snap(ct);
+  $("#tcTC").textContent = tc(ct, f);
+  // el fotograma actual se fija ANTES de colocar el cursor: tlNowT() lo lee
+  let cambioNota = false;
+  if(f !== st.playhead){
+    st.playhead = f;
+    // no repintar toda la lista por cada frame: solo si la nota resaltada cambia
+    const bajoAntes = st.phNote;
+    st.phNote = (notesAt(st.vid, f).map(n => n.id).join(","));
+    cambioNota = st.phNote !== bajoAntes;
+  }
+  /* EL BUG DEL CURSOR QUE SALTABA: aqui se escribia
+         $("#fill").style.width = (ct/duracion)*100 + "%"
+     es decir coordenada ABSOLUTA del video entero, mientras tlPaint() escribia la
+     misma propiedad en coordenada de la VENTANA visible (tlPct). Con zoom, cada
+     `timeupdate` (4 veces por segundo) devolvia el cursor al sistema absoluto y el
+     siguiente pintado lo traia de vuelta: el cursor parpadeaba entre dos sitios.
+     Ahora hay UN solo sistema — la ventana — y un solo escritor por caso:
+     tlHead() si la ventana no se mueve, tlPaint() si hay que recolocarla. */
+  const off0 = st.tl.off;
+  tlFollow();
+  if(st.tl.off !== off0) tlPaint(); else tlHead();
+  if(cambioNota){ renderList(); scrollToPlayhead(); }
+}
+// lleva a la vista la nota que esta bajo el cursor, sin mover la pagina entera
+function scrollToPlayhead(){
+  if(v.paused) return;              // solo al reproducir: al pausar no queremos saltos
+  const L = $("#list");
+  const el = L.querySelector(".note.ph");
+  if(!el) return;
+  const lb = L.getBoundingClientRect(), eb = el.getBoundingClientRect();
+  if(eb.top < lb.top + 4 || eb.bottom > lb.bottom - 4){
+    L.scrollTop += (eb.top - lb.top) - (lb.height / 2) + (eb.height / 2);
+  }
+}
+
+/* tlPaint / tlHead / tlFollow / updateMarks viven ahora en la seccion
+   «LINEA DE TIEMPO» (mas abajo, todo junto). Aqui no queda nada del timeline:
+   antes el pintado estaba partido en tres sitios del archivo y dos de ellos
+   escribian las MISMAS propiedades con coordenadas distintas. */
+
+
+/* ── indice del vecino anterior / siguiente ──
+   Las DOS cuentas de recorrido estaban mal, cada una a su manera:
+   · "nota anterior" hacia `vis.indexOf(antes[antes.length-1]) - 1`, o sea se saltaba
+     una nota: desde la nota 5 se iba a la 3.
+   · "cambio anterior" hacia `cs.indexOf(antes[...]) + 1`, que es el cambio SIGUIENTE:
+     Shift+P devolvia al mismo sitio y parecia que no hacia nada.
+   Una sola funcion, probada contra los dos extremos, y da la vuelta al llegar al fin. */
+function idxVecino(lista, t, dir){
+  if(!lista.length) return -1;
+  if(dir > 0){
+    const i = lista.findIndex(n => n.frame/fps > t);
+    return i >= 0 ? i : 0;                     // no hay nada mas adelante: al primero
+  }
+  for(let i = lista.length - 1; i >= 0; i--) if(lista[i].frame/fps < t) return i;
+  return lista.length - 1;                     // no hay nada antes: al ultimo
+}
+
+/* ── "ir a nota": salta a la nota siguiente y la deja AGARRABLE ──
+   El problema real no es que no se pueda zoomear: es que hay que saber DONDE esta la
+   nota. Este boton te lleva a la siguiente (no a la mas cercana cualquiera) y calcula
+   el zoom justo para que si hay otra pegada a 1-2 frames, ambas se puedan agarrar. */
+function tlIrANota(direccion){
+  const vis = st.notas.filter(n => n.video === st.vid)
+                    .sort((a,b) => a.frame - b.frame);
+  if(!vis.length){ toast("Este video no tiene notas"); return; }
+  const dir = direccion === -1 ? -1 : 1;
+  const t = v.currentTime + (dir > 0 ? 0.001 : -0.001);
+  const idx = idxVecino(vis, t, dir);
+  const mejor = vis[idx];
+  if(!mejor) return;
+
+  const dur = tlDur();
+  if(!dur) return;
+  const anchoPx = tlAnchoPx();
+
+  // la nota pegada mas cercana (para decidir el zoom)
+  let gap = 0;
+  for(const n of vis){
+    if(n.id === mejor.id) continue;
+    const g = Math.abs(n.frame - mejor.frame);
+    if(g < fps * 2 && (gap === 0 || g < gap)) gap = g;
+  }
+  let framesVisibles;
+  if(gap > 0){
+    // que el hueco entre las dos notas mida al menos TL_GRAB_PX*3 pixeles en pantalla
+    framesVisibles = anchoPx * gap / (TL_GRAB_PX * 3);
+  }else{
+    framesVisibles = 6 * fps;             // sola: 6 s de contexto
+  }
+  framesVisibles = clamp(framesVisibles, 8, dur * fps);
+  const span = framesVisibles / fps;
+
+  tlSetView(dur / span, mejor.frame/fps - span/2);
+
+  st.selId = mejor.id;
+  st.pend = {frame:mejor.frame, time:mejor.frame/fps};
+  seek(mejor.frame/fps);
+  $("#ta").value = mejor.text || "";
+  tlPaint();
+  drawCanvas(); renderList(); updateEditor();
+  toast("Nota " + (idx+1) + "/" + vis.length + " · " + mejor.timecode +
+        (gap > 0 ? "  ·  pegada, vista a " + Math.round(st.tl.zoom) + "×" : ""), 2400);
+}
+
+/* ── zoom del timeline: botones y atajos ── */
+
+/* ── Saltar entre CAMBIOS ──
+   Shift+N / Shift+P recorren solo los puntos donde Claude toco algo.
+   Es lo que sirve para revisar un corte sin ver los 16 minutos:
+   saltas de cambio en cambio y revisas. */
+function soloCambios(){
+  return st.notas.filter(n => n.video === st.vid && n.kind === "cambio")
+                 .sort((a,b) => a.frame - b.frame);
+}
+function irACambio(dir){
+  const cs = soloCambios();
+  if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
+  const t = v.currentTime + (dir > 0 ? 0.001 : -0.001);
+  const idx = idxVecino(cs, t, dir);
+  const c = cs[idx];
+  if(!c) return;
+  // el cambio queda CENTRADO en la ventana, con el zoom que ya tenia el usuario.
+  // Antes se escribia off = frame/fps - 1.5 recortado contra `dur - 3`, un limite
+  // que no tiene nada que ver con el ancho de la ventana: con zoom alto la ventana
+  // acababa en un sitio y el cambio en otro.
+  // marcar cual es el cambio actual: el carril lo rodea con el anillo .sel y asi se
+  // ve por donde va la revision. Antes Shift+N movia el cursor sin dejar rastro.
+  st.selId = c.id;
+  st.pend = {frame:c.frame, time:c.frame/fps};
+  marcarCambioVisto(c);           // aterrizar aqui = ya lo miraste
+  tlCenter(c.frame/fps);          // centra la ventana ANTES de mover el cursor
+  seek(c.frame/fps);
+  drawCanvas(); renderList(); updateEditor();
+  toast("Cambio " + (idx+1) + "/" + cs.length + " · " + c.timecode, 2400);
+}
+$("#tlChg").onclick = () => {
+  const cs = soloCambios();
+  if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
+  irACambio(1);
+};
+
+
+/* ── Plegar / desplegar los paneles de proyectos y tomas ──
+   Cristian: "quizas las columnas proyectos y tomas se pueda minimizar para ocupar
+   menos espacio". Plegadas quedan en un asa de 30px que conserva lo accionable:
+   cuantas notas tiene el proyecto y si hay cambios de Claude sin revisar.
+   La decision se recuerda entre sesiones. */
+const NAV_KEY = "openframe:nav";
+function navPlegado(){ return document.body.classList.contains("nav-plegado"); }
+function plegarNav(v){
+  const plegar = (v === undefined) ? !navPlegado() : v;
+  document.body.classList.toggle("nav-plegado", plegar);
+  try{ localStorage.setItem(NAV_KEY, plegar ? "plegado" : "abierto"); }catch(e){}
+  if(!plegar && st.vid){ requestAnimationFrame(() => { fit(); tlPaint(); pintarRail(); }); }
+}
+function actualizarAsaNav(){
+  /* Las notas cuentan con la regla comun; los cambios son los SIN VER, no todos:
+     antes el contador se quedaba en 37 para siempre porque un cambio nunca pasaba
+     a "visto", asi que el asa decia "37 sin revisar" ya con todo revisado. */
+  const notas = pendientesDe();
+  const chg = cambiosSinVer();
+  const totalChg = st.notas.filter(n => n.kind === "cambio").length;
+  const a = $("#navNotas"), b = $("#navChg");
+  if(a){ a.textContent = notas; a.title = notas + (notas===1 ? " nota pendiente" : " notas pendientes"); }
+  if(b){ b.textContent = chg; b.title = chg + (chg===1 ? " cambio sin ver" : " cambios sin ver")
+           + (chg < totalChg ? " (de " + totalChg + ")" : "");
+         b.style.display = chg ? "" : "none"; }
+}
+$("#bNavFold").onclick = () => plegarNav(true);
+$("#navOpen").onclick  = () => plegarNav(false);
+try{ if(localStorage.getItem(NAV_KEY) === "plegado") document.body.classList.add("nav-plegado"); }catch(e){}
+
+/* ── CARRIL NAVEGADOR: coordenada pura frame/duracionTotal ──
+   Los .mark del scrub se mueven con el zoom (tlPct depende de la ventana). Este carril
+   NO: usa frame/duracionTotal, que no depende de nada. Navegar o hacer zoom aqui no
+   altera ni un pixel de un marcador. Clic = saltar ahi y ver el fotograma exacto. */
+let _railSig = null;    // firma de lo ultimo pintado en el carril
+function pintarRail(){
+  const rail = $("#tlrail");
+  if(!rail) return;
+  const m = vmeta();
+  const dur = m ? (m.duracion || vdur || 0) : 0;
+  if(!dur){
+    // sin video (o sin duracion todavia) el carril se VACIA. Antes se volvia sin
+    // tocar nada y quedaban los marcadores del video anterior.
+    if(_railSig !== ""){ _railSig = ""; $$(".rnote", rail).forEach(e => e.remove()); }
+    const l0 = $("#rlLbl"); if(l0) l0.textContent = "";
+    return;
+  }
+  const totalFrames = Math.max(1, Math.round(dur * fps));
+  const cambios = st.notas.filter(n => n.video === st.vid && n.kind === "cambio");
+  const notas   = st.notas.filter(n => n.video === st.vid && n.kind !== "cambio");
+  /* El carril NO depende del zoom, pero se reconstruia entero en cada updateMarks()
+     — y updateMarks() corre desde updateEditor(), que tiene un setInterval de 500 ms.
+     O sea: cientos de nodos creados y destruidos dos veces por segundo mientras el
+     video se reproduce, perdiendo el foco del teclado y cortando los tooltips.
+     Con la firma solo se repinta cuando cambia algo que el carril muestra. */
+  const sig = [st.vid, st.selId, fps, totalFrames,
+               [...notas, ...cambios].map(n => n.id + ":" + n.frame + ":" +
+                 (n.resolved ? 1 : 0) + ":" + n.kind + ":" + n.author).join("|")].join("#");
+  if(sig === _railSig) return;
+  _railSig = sig;
+  $$(".rnote", rail).forEach(e => e.remove());
+  // notas primero (abajo), cambios encima (arriba): los cambios son lo que se revisa
+  {
+    for(const n of [...notas, ...cambios]){
+      const e = document.createElement("div");
+      e.className = "rnote" + (n.kind === "cambio" ? " cambio" : "") + (n.resolved ? " done" : "");
+      e.style.left = clamp(n.frame / totalFrames * 100, 0, 100) + "%";     // <-- coordenada pura
+      e.style.setProperty("--own", n.author === "claude" ? "var(--claude)" : "var(--yo)");
+      if(n.id === st.selId) e.classList.add("sel");
+      e.dataset.nid = n.id;
+      e.tabIndex = 0;
+      e.setAttribute("role", "button");
+      const et = n.kind === "cambio" ? "Cambio de Claude" : (n.author === "claude" ? "claude" : "tú");
+      e.setAttribute("aria-label", et + " en " + n.timecode);
+      e.title = et + " · " + n.timecode + " · f" + n.frame + (n.kind === "cambio" ? "" : "\n" + (n.text||"").slice(0,70));
+      e.onclick = ev => { ev.stopPropagation(); saltarANota(n.id); };
+      e.onkeydown = ev => { if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); saltarANota(n.id); } };
+      rail.appendChild(e);
+    }
+  }
+  const lbl = $("#rlLbl");
+  if(lbl) lbl.textContent = cambios.length
+    ? (cambios.length + (cambios.length === 1 ? " cambio" : " cambios"))
+    : (notas.length + " notas");
+}
+/* Clic en un marcador: saltar ahi y dejar el fotograma a la vista, con su drawing. */
+async function saltarANota(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  if(n.video !== st.vid) openVideo(n.video);
+  st.selId = n.id;
+  st.pend = {frame:n.frame, time:n.frame/fps};
+  editingId = null;
+  seek(n.frame/fps);
+  $("#ta").value = (n.kind === "cambio") ? "" : (n.text||"");
+  setDirty(false);
+  pintarRail(); drawCanvas(); renderList(); updateMarks(); updateEditor(); updateUI();
+  if(n.kind !== "cambio") toast("Nota de " + n.timecode + " · f" + n.frame, 2200);
+  else toast("Cambio en " + n.timecode + " · f" + n.frame, 2200);
+}
+
+/* Clic en el FONDO del carril = ir a ese punto del video COMPLETO.
+   Faltaba la otra mitad del zoom: con la barra de abajo acercada, el scrub solo
+   cubre la ventana visible, asi que no habia manera de llegar al resto del video
+   sin alejar primero. El carril es el mapa — y un mapa se usa pinchandolo. */
+(function(){
+  const rail = $("#tlrail");
+  if(!rail) return;
+  rail.addEventListener("pointerdown", ev => {
+    if(ev.target.closest && ev.target.closest(".rnote")) return;   // manda el marcador
+    if(!st.vid) return;
+    const r = rail.getBoundingClientRect();
+    if(!r.width) return;
+    const t = clamp((ev.clientX - r.left) / r.width, 0, 1) * tlDur();
+    tlCenter(t);   // conserva el zoom y centra la ventana ahi; luego el cursor
+    seek(t);       // (en este orden tlFollow() ya lo encuentra dentro y no repinta)
+  });
+})();
+
+/* ── deshacer: ⌘Z (o Ctrl+Z) y el boton ── */
+$("#bUndoAccion").onclick = () => deshacer();
+$("#bRedoAccion").onclick = () => rehacer();
+actualizarBotonUndo();
+/* OJO con los nombres heredados: #tlZout es el boton [+] (ACERCAR) y #tlZin es
+   el [−] (ALEJAR). Los ids estan al reves de lo que hacen; se conservan porque
+   los usa el CSS y los tooltips, pero el ancla 50 = centro de la ventana. */
+$("#tlZout").onclick = () => tlZoom(TL_ZOOM_PASO, 50);      // [+] acercar
+$("#tlZin").onclick  = () => tlZoom(1/TL_ZOOM_PASO, 50);    // [−] alejar
+$("#tlZfit").onclick = () => tlReset();
+$("#tlNear").onclick = () => tlIrANota(1);
+$("#tlPrev").onclick = () => tlIrANota(-1);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LINEA DE TIEMPO — modelo temporal, pintado y marcadores, TODO en un sitio
+   ═══════════════════════════════════════════════════════════════════════════
+
+   EL DEFECTO DE RAIZ que arregla esta seccion: el zoom estaba acoplado a la
+   GEOMETRIA de la barra, no al tiempo. En concreto, tres acoplamientos:
+
+   1. `tlSeg()` era un getter que MUTABA `st.tl.off` (lo recortaba). Lo llamaban
+      tlPct, tlTime, tlFollow y pos2frame, o sea se llamaba desde dentro de los
+      pintados y desde los manejadores de eventos. El resultado de preguntar
+      "¿donde va este marcador?" dependia de cuantas veces se habia preguntado antes.
+
+   2. `updateMarks()` escribia `host.style.minHeight` con la altura de la pila de
+      marcadores apilados. Y `tlPct()` recortaba a 0 % / 100 % todo lo que caia
+      FUERA de la ventana, asi que al acercar, casi todas las notas del video se
+      apilaban en los dos extremos: la pila llegaba a N-1 filas y la barra crecia
+      200 px. Al crecer la barra crecia el transporte, se encogia la pantalla del
+      video, el ResizeObserver disparaba fit() y se re-rasterizaba el lienzo.
+      ESO era «si acerco el timeline se descuadra la pantalla y se vuelve un desastre».
+
+   3. El ancla del zoom se recalculaba DESPUES de recortar el offset nuevo
+      (`rel = (antes - s.ini)/(s.fin - s.ini)`), no con la fraccion pedida, asi que
+      el punto bajo el cursor se iba desplazando en cada paso de rueda.
+
+   EL MODELO AHORA: la ventana visible es un dato puro — un instante de inicio y una
+   duracion, en SEGUNDOS. Nadie mide el DOM para decidir una posicion, ningun pintado
+   cambia el tamano de una caja (el alto de la barra es fijo, en CSS), y solo una
+   funcion escribe `st.tl`. La geometria se obtiene del modelo, nunca al contrario.   */
+
+const TL_ZOOM_MIN = 1, TL_ZOOM_MAX = 20000;
+const TL_ZOOM_PASO = 2.4;      // un clic de boton
+const TL_ZOOM_RUEDA = 1.5;     // un paso de rueda
+const TL_LANES = 2;            // filas de marcadores que CABEN en el alto fijo de la barra
+const TL_GRAB_PX = 13;         // dos marcadores a menos de esto se estorban: suben de fila
+const TL_FOLLOW_EDGE = 0.12;   // margen en el que el cursor arrastra la ventana
+const TL_ANCHO_FALLBACK = 480; // ancho de la barra si aun no esta en pantalla
+
+/* ── 1. El modelo (puro: lee st.tl, no lo escribe) ── */
+
+function tlDur(){
+  const m = vmeta();
+  return ((m ? (m.duracion || vdur) : vdur) || 0) || 1;
+}
+function tlSpan(){
+  // el piso es 1 fotograma visible: mas alla no tiene sentido ni se puede
+  return clamp(tlDur() / st.tl.zoom, 1/Math.max(1, fps), tlDur());
+}
+function tlSeg(){                            // {ini, fin, span, dur} — sin efectos
+  const span = tlSpan(), dur = tlDur();
+  const ini = clamp(st.tl.off, 0, Math.max(0, dur - span));
+  return {ini:ini, fin:ini + span, span:span, dur:dur};
+}
+function tlFrac(t){ const s = tlSeg(); return (t - s.ini) / s.span; }   // 0..1, SIN recortar
+function tlPct(t){ return clamp(tlFrac(t), 0, 1) * 100; }               // para pintar
+function tlVisible(t){ const f = tlFrac(t); return f >= -0.001 && f <= 1.001; }
+function tlTime(pct){ const s = tlSeg(); return s.ini + (pct/100) * s.span; }
+
+/* ── 2. El UNICO escritor de st.tl ── */
+function tlSetView(zoom, off){
+  st.tl.zoom = clamp(+zoom || 1, TL_ZOOM_MIN, TL_ZOOM_MAX);
+  const span = tlSpan();                     // ya con el zoom nuevo
+  st.tl.off = clamp(+off || 0, 0, Math.max(0, tlDur() - span));
+}
+
+/* ── 3. Gestos de zoom ──
+   `ancla` es la fraccion de la barra que debe quedarse quieta (0 = izquierda,
+   1 = derecha). Se conserva exactamente: es el dato que pide el gesto, no algo
+   que haya que deducir de la geometria despues de mover la ventana. */
+function tlZoom(factor, anclaPct){
+  const a = clamp((anclaPct == null ? 50 : anclaPct) / 100, 0, 1);
+  const tAncla = tlTime(a * 100);            // el instante bajo el cursor, ANTES
+  st.tl.zoom = clamp(st.tl.zoom * factor, TL_ZOOM_MIN, TL_ZOOM_MAX);
+  tlSetView(st.tl.zoom, tAncla - a * tlSpan());   // y ahi se queda
+  tlPaint();
+}
+function tlReset(){ tlSetView(1, 0); tlPaint(); }
+function tlCenter(t){ tlSetView(st.tl.zoom, t - tlSpan()/2); tlPaint(); }
+
+/* ── 4. Seguimiento del cursor: ajusta el MODELO, no pinta ──
+   Antes tlFollow() llamaba a tlPaintSinFollow(), que repintaba y volvia a crear
+   todos los marcadores: cada tlPaint() acababa pintando dos veces. */
+function tlNowT(){
+  // tras un seek, v.currentTime puede ir un instante por detras del fotograma real
+  const phT = (st.playhead != null && st.playhead >= 0) ? st.playhead / fps : null;
+  return (phT != null && Math.abs(phT - v.currentTime) > 0.05) ? phT : v.currentTime;
+}
+/* mientras el usuario arrastra (la barra o un marcador) la ventana NO se mueve sola:
+   si se recentrara a mitad del gesto, el instante que hay bajo el dedo cambiaria y
+   arrastrar hacia el borde se volveria una fuga — cada salto reposiciona el puntero
+   y el siguiente movimiento vuelve a saltar. */
+function tlCongelado(){ return sdrag || drag != null; }
+function tlFollow(){
+  if(tlCongelado()) return;
+  if(st.tl.zoom <= 1.02){ tlSetView(1, 0); return; }   // video entero: nada que seguir
+  const s = tlSeg(), t = tlNowT();
+  const m = s.span * TL_FOLLOW_EDGE;
+  if(t >= s.ini + m && t <= s.fin - m) return;         // comodo donde esta: no mover
+  tlSetView(st.tl.zoom, t - s.span/2);
+}
+
+/* ── 5. Pintado. Dos entradas y nada mas:
+       tlHead()  — solo mueve el cursor (lo barato, 4 veces por segundo al reproducir)
+       tlPaint() — recoloca la ventana entera (al hacer zoom, saltar o cambiar notas) */
+function tlAnchoPx(){
+  const s = $("#scrub");
+  return (s && s.clientWidth) || TL_ANCHO_FALLBACK;
+}
+function tlHead(){
+  if(!st.vid) return;
+  const p = tlPct(tlNowT()) + "%";
+  $("#fill").style.width = p;
+  $("#head").style.left  = p;
+}
+function tlEtiqueta(s){
+  if(st.tl.zoom <= 1.02) return "todo el video";
+  // fotogramas visibles: dato del modelo. Antes aqui se media #scrub.clientWidth
+  // DESPUES de que updateMarks() hubiera tocado el DOM (lectura forzada de layout),
+  // y la cuenta (`dur / fps / span * ancho`) mezclaba segundos con fotogramas:
+  // el "N f/pixel" que salia no era ninguna magnitud real.
+  const fr = Math.max(1, Math.round(s.span * fps));
+  // corto a proposito: #tlInfo tiene ANCHO FIJO en el CSS. Si el texto hiciera crecer
+  // su caja, la fila de transporte se recolocaria en cada paso de zoom — el mismo
+  // tipo de descuadre que este arreglo elimina, por la puerta de atras.
+  return tc(null, Math.round(s.ini * fps)) + " – " + tc(null, Math.round(s.fin * fps)) +
+         "  ·  " + Math.round(st.tl.zoom) + "×  ·  " + fr + " f";
+}
+/* tlPaint() DIBUJA el modelo y nada mas: no decide la ventana.
+   Antes terminaba con tlFollow(true), que podia recolocar la ventana recien elegida
+   y repintar otra vez. Resultado visible: acercabas con la rueda sobre un punto
+   alejado del cursor de reproduccion y la vista se escapaba de vuelta al cursor —
+   literalmente «si acerco… todo se mueve». Quien sigue al cursor es updateUI(),
+   que es donde el cursor se mueve de verdad. */
+function tlPaint(){
+  if(!st.vid) return;
+  const s = tlSeg();
+  tlHead();
+  const lbl = $("#tlInfo");
+  if(lbl){
+    const txt = tlEtiqueta(s);
+    lbl.textContent = txt;
+    lbl.title = txt;        // la caja es de ancho fijo: el texto completo, al pasar
+  }
+  tlPintarVentana(s);
+  updateMarks();
+}
+/* el rectangulo del carril que dice QUE trozo del video es la barra de abajo */
+function tlPintarVentana(s){
+  const w = $("#tlWin");
+  if(!w) return;
+  const on = st.tl.zoom > 1.02 && s.dur > 0;
+  w.classList.toggle("on", on);
+  if(!on) return;
+  w.style.left  = (clamp(s.ini / s.dur, 0, 1) * 100) + "%";
+  w.style.width = (clamp(s.span / s.dur, 0, 1) * 100) + "%";
+}
+
+/* ── MOVER ARRASTRANDO el marcador sobre la barra ──
+   Esto es lo que faltaba: adivinar un numero de fotograma es una odisea. Con esto,
+   agarras la nota en la barra y la dejas donde quieres. Sola operacion, sin adivinar.
+   El frame sigue siendo el dato real por debajo, pero TUNO nunca lo escribe a mano. */
+let drag = null;
+(function(){
+  const scrub = $("#scrub"), head = $("#head");
+  if(!scrub || !head) return;
+  const pos2frame = ev => {
+    const r = scrub.getBoundingClientRect();
+    const p = clamp((ev.clientX - r.left) / r.width, 0, 1);
+    const s = tlSeg();
+    const t = s.ini + p * (s.fin - s.ini);
+    const d = s.dur;
+    return clamp(Math.round(t * fps), 0, Math.max(0, Math.round(d * fps)));
+  };
+  // rueda del raton = acercar/alejar, anclado donde esta el puntero (como un editor normal)
+  scrub.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const r = scrub.getBoundingClientRect();
+    const pct = clamp((ev.clientX - r.left) / r.width, 0, 1) * 100;
+    tlZoom(ev.deltaY < 0 ? TL_ZOOM_RUEDA : 1/TL_ZOOM_RUEDA, pct);
+  }, {passive:false});
+  scrub.addEventListener("pointerdown", ev => {
+    const mk = ev.target.closest(".mark");
+    if(!mk) return;                       // en la barra vacia: scrub normal
+    ev.stopPropagation(); ev.preventDefault();
+    const n = st.notas.find(x => x.id === mk.dataset.nid);
+    if(!n) return;
+    drag = {id:n.id, nota:n, el:mk, desde:pos2frame(ev), movido:false};
+    scrub.setPointerCapture(ev.pointerId);
+    document.body.style.cursor = "grabbing";
+  });
+  scrub.addEventListener("pointermove", ev => {
+    if(!drag) return;
+    const f = pos2frame(ev);
+    if(f !== drag.desde) drag.movido = true;
+    drag.f = f;
+    // previsualizar: el cursor del video va detras del raton
+    seek(f / fps);
+    st.pend = {frame:f, time:f / fps};
+    const pct = tlPct(f / fps) + "%";
+    head.style.left = pct;
+    $("#fill").style.width = pct;
+    // el marcador agarrado se mueve con el dedo. Antes se quedaba clavado en su
+    // sitio original mientras el cursor viajaba: parecia que el arrastre no cogia.
+    if(drag.el) drag.el.style.left = pct;
+    updateEditor();
+  });
+  const soltar = async ev => {
+    if(!drag) return;
+    const d2 = drag; drag = null;
+    document.body.style.cursor = "";
+    const f = d2.f != null ? d2.f : d2.desde;
+    // en TODAS las salidas sin cambio hay que repintar: el marcador se arrastro en
+    // pantalla (style.left) y si no se reconstruye se queda donde lo soltaste,
+    // mintiendo sobre el fotograma de la nota.
+    if(!d2.movido || f === d2.nota.frame){
+      drawCanvas(); updateMarks(); return;    // fue un clic, no un arrastre
+    }
+    const dup = noteAt(st.vid, f);
+    if(dup && dup.id !== d2.id){
+      toast("Ya hay otra nota ahí — muévela o bórrala primero");
+      drawCanvas(); renderList(); updateMarks(); return;
+    }
+    const viejo = d2.nota.frame;
+    await withBusyNote(async () => {
+      d2.nota.frame = f;
+      try{
+        const antesArr = snapNota(d2.nota);
+        await api(P(st.slug) + "/notas/" + d2.id, {method:"PATCH", body: JSON.stringify({frame:f})});
+        pushUndo("mover nota a " + tc(null,f), {tipo:"campo", antes:antesArr, despues:snapNota(d2.nota), cambios:["frame"]});
+        st.pend = {frame:f, time:f / fps};
+        seek(f / fps);
+        await pullDetail();
+        drawCanvas(); renderList(); updateMarks(); updateEditor();
+        toast("Movida de " + tc(null, viejo) + " a " + tc(null, f), 2600);
+      }catch(e){
+        d2.nota.frame = viejo;
+        toast("No se pudo mover: " + e.message, 4000);
+        drawCanvas(); renderList(); updateMarks();
+      }
+    });
+  };
+  scrub.addEventListener("pointerup", soltar);
+  scrub.addEventListener("pointercancel", soltar);
+})();
+
+/* ── 6. Marcadores agarrables de la barra ──
+   Tres reglas, y las tres son el arreglo del bug:
+   a) Solo se crean los marcadores que caen DENTRO de la ventana. Antes se creaban
+      todos y los de fuera se recortaban a 0 % / 100 % con tlPct(), asi que al
+      acercar se apilaban decenas de notas en los dos extremos.
+   b) La colision se mide en PIXELES reales (TL_GRAB_PX), no en "0.6 % del ancho".
+      Un umbral en % cambia de significado con el zoom y con el ancho de la ventana;
+      lo que importa es si caben dos dedos, y eso son pixeles.
+   c) El numero de filas esta ACOTADO (TL_LANES) y aqui no se escribe ningun tamano.
+      La pila ya no puede empujar la barra, el transporte ni la pantalla del video.
+      La geometria de cada fila la pone el CSS, leyendo la variable --fila. */
+function updateMarks(){
+  const host = $("#head").parentElement;
+  // el ancho se mide ANTES de tocar el DOM: medir despues de pintar fuerza al
+  // navegador a recalcular el layout a mitad del pintado
+  const anchoPx = (host && host.clientWidth) || TL_ANCHO_FALLBACK;
+  pintarRail();                       // el carril navegador se actualiza con la barra
+  actualizarAsaNav();
+  if(!host) return;
+  // a mitad de un arrastre NO se reconstruyen: el elemento que el usuario tiene
+  // agarrado se destruiria. updateEditor() llama aqui dentro del propio pointermove.
+  if(drag) return;
+  $$(".mark", host).forEach(e => e.remove());
+  if(!vmeta()) return;
+  const puestos = [];
+  for(const n of st.notas){
+    if(n.video !== st.vid) continue;
+    const t = n.frame / fps;
+    if(!tlVisible(t)) continue;              // fuera de la ventana: no se dibuja
+    const frac = clamp(tlFrac(t), 0, 1);
+    const px = frac * anchoPx;
+    let fila = 0;
+    while(fila < TL_LANES - 1 &&
+          puestos.some(p => p.fila === fila && Math.abs(p.px - px) < TL_GRAB_PX)) fila++;
+    puestos.push({px:px, fila:fila});
+
+    const e = document.createElement("div");
+    e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "");
+    e.style.left = (frac * 100) + "%";
+    e.style.setProperty("--fila", String(fila));
+    // el marcador hereda el color del autor: mismo mecanismo que la tarjeta
+    e.style.setProperty("--own", n.author === "claude" ? "var(--claude)" : "var(--yo)");
+    e.dataset.nid = n.id;   // para arrastrarlo sobre la barra
+    e.dataset.t = t;
+    e.title = n.kind === "cambio"
+      ? "Cambio de Claude · " + n.timecode + " · clic para ver"
+      : (n.author === "claude" ? "claude" : "tú") + " · " + n.timecode + " — " + (n.text||"");
+    e.onclick = ev => { ev.stopPropagation();
+      st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
+      if(n.kind === "cambio"){ editingId = null; setDirty(false); }
+      $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor(); };
+    host.appendChild(e);
+  }
+}
+function updateEditor(){
+  const enEdicion = editingId ? st.notas.find(x => x.id === editingId) : null;
+  const f = snap(v.currentTime);
+  $("#edAt").textContent = enEdicion ? enEdicion.timecode : tc(v.currentTime, f);
+  $("#edLbl").textContent = enEdicion ? ("editando " + enEdicion.timecode) : ("fotograma " + f);
+  const ta = $("#ta");
+  /* ── Modo respuesta: el cuadro DEBE_DECIRLO ──
+     Cristian: "a veces se buggea y no me deja crear". La causa era que st.replyTo se
+     quedaba pegado y Enter respondia al hilo viejo en silencio. Ahora, mientras haya
+     un hilo apuntado, el rotulo, el placeholder y el boton lo dicen en grande; y si
+     la nota apuntada ya no existe (borrada por el poll), se suelta solo. */
+  if(st.replyTo && !st.notas.find(x => x.id === st.replyTo)){ st.replyTo = null; editingId = null; }
+  const replying = !!st.replyTo;
+  const rNota = replying ? st.notas.find(x => x.id === st.replyTo) : null;
+  const lbl = $("#edLbl");
+  if(lbl){
+    if(replying){
+      lbl.textContent = "respondiendo en " + (rNota ? rNota.timecode : "el hilo");
+      lbl.classList.add("respondiendo");
+    } else {
+      lbl.textContent = enEdicion ? ("editando " + enEdicion.timecode) : ("fotograma " + f);
+      lbl.classList.remove("respondiendo");
+    }
+  }
+  const ed = $("#edAt");
+  if(ed && replying && rNota) ed.textContent = rNota.timecode;
+  ta.placeholder = replying
+    ? "Escribe tu respuesta al hilo…  Enter envía al hilo, no crea otra nota"
+    : "Escribe la nota y pulsa Enter para enviarla. Shift+Enter = nueva linea.";
+  const bc = $("#bCancel");
+  if(bc) bc.style.display = (replying || editingId) ? "" : "none";
+  const bs2 = $("#bSave");
+  if(bs2) bs2.title = replying
+    ? "Enviar la respuesta al hilo de " + (rNota ? rNota.timecode : "arriba")
+    : (enEdicion ? ("Actualizar la nota de " + enEdicion.timecode)
+                 : ("Enviar la nota nueva al fotograma " + f));
+  // modo chat: el cuadro NUNCA se rellena solo. Solo si hay edicion explicita.
+  if(document.activeElement !== ta && !editingId && !replying) ta.value = "";
+  const nCursor = curNote();
+  $("#bDel").disabled = !nCursor;
+  $("#bMove").disabled = !nCursor;
+  if(!editingId) $("#bCancel").style.display = "none";
+  // el boton Guardar dice a donde va la nota, para no sobrescribir sin querer
+  const atajos = "Enter enviar · Shift+Enter nueva linea · N siguiente nota · ⇧N anterior · E editar";
+  const bs = $("#bSave");
+  if(bs) bs.title = (enEdicion
+    ? ("Actualizar la nota de " + enEdicion.timecode)
+    : ("Enviar la nota nueva al fotograma " + f)) + "\n" + atajos;
+  if(bs) bs.dataset.tipLong = atajos;
+  updateMarks();
+}
+function openModal(title, body, foot){
+  $("#mTitle").textContent = title; $("#mBody").innerHTML = body; $("#mFoot").innerHTML = foot;
+  $("#modal").classList.add("on");
+}
+function closeModal(){
+  // punto unico de limpieza: lo usan el boton, Escape y el clic en el fondo.
+  // Si queda abierta la vista previa de "mover", se para su video y su bucle rAF.
+  if(_mov.raf){ cancelAnimationFrame(_mov.raf); _mov.raf = 0; }
+  const pv = $("#mvPreview");
+  if(pv){ try{ pv.pause(); }catch(e){} }
+  $("#modal").classList.remove("on");
+}
+$("#mClose").onclick = closeModal;
+$("#modal").onclick = e => { if(e.target.id==="modal") closeModal(); };
+
+/* ═══ subir video ═══ */
+$("#bHer").onclick = heredarHilos;
+$("#bUp").onclick = () => $("#file").click();
+$("#bDel").disabled = true; $("#bMove").disabled = true;
+$("#file").onchange = async e => {
+  const fs = [...e.target.files]; e.target.value = "";
+  if(!st.slug){ toast("Crea un proyecto primero"); return; }
+  for(const f of fs){
+    toast("Subiendo " + f.name + "…", 30000);
+    try{
+      const r = await fetch(P(st.slug) + "/videos", {
+        method:"POST", headers:{"Content-Type": f.type||"application/octet-stream","X-Filename": f.name},
+        body: f });
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      const dj = await r.json();
+      await pullDetail();
+      /* El corte nuevo hereda los hilos ABIERTOS del anterior, igual que `visor.sh
+         subir`. Antes habia que pulsarlos a mano, en un boton que ademas estaba muerto. */
+      if(dj.video && dj.video.id){
+        const k2 = await heredarDesdeAnterior(dj.video.id);
+        if(k2 > 0) toast("Traidos " + k2 + (k2===1 ? " hilo abierto" : " hilos abiertos") + " del corte anterior", 3200);
+      }
+      renderVideos(); renderFilter();
+    }catch(err){ toast("Fallo " + f.name + ": " + err.message, 4000); }
+  }
+  toast("Listo");
+};
+
+/* ═══ proyecto nuevo ═══ */
+async function nuevoProyecto(){
+  openModal("Nuevo proyecto",
+    '<label class="lbl">Nombre</label><input class="fld" id="pn" placeholder="Ej: Animales Sueltos — Trailer 2">' +
+    '<label class="lbl">Cliente (opcional)</label><input class="fld" id="pc" placeholder="Ej: Perspectiva">' +
+    '<label class="lbl">Nota para Claude (opcional)</label><textarea class="fld" id="pnt" placeholder="Qué hay que lograr en este proyecto"></textarea>',
+    '<span style="flex:1"></span><button class="btn" id="mCancel">Cancelar</button><button class="btn pri" id="mOk">Crear</button>');
+  $("#pn").focus();
+  $("#mCancel").onclick = closeModal;
+  $("#mOk").onclick = async () => {
+    const nombre = $("#pn").value.trim();
+    if(!nombre){ toast("Ponle un nombre"); return; }
+    const d = await api("/api/proyectos", {method:"POST", body: JSON.stringify({
+      nombre, cliente: $("#pc").value.trim(), nota: $("#pnt").value.trim() })});
+    closeModal(); await pull(true); openProject(d.slug); toast("Proyecto " + nombre + " creado");
+  };
+}
+$("#bProj").onclick = nuevoProyecto;
+$("#bProj2").onclick = nuevoProyecto;
+
+/* ═══ export ═══ */
+function payloadAll(){
+  const p = pro();
+  const notes = st.notas.slice().sort(cmpNotas)
+    .map(n => {
+      const o = {video:n.video, frame:n.frame, timecode:n.timecode, time:n.time,
+                 end_frame:n.end_frame!=null?n.end_frame:null,
+                 end_timecode:n.end_timecode||null, text:n.text, resolved:!!n.resolved, author:n.author};
+      if(n.fps) o.fps = n.fps;
+      if(n.drawing && n.drawing.strokes && n.drawing.strokes.length) o.drawing = n.drawing;
+      if(st.thumbs && n.thumb) o.thumbnail_url = "/thumbs/" + st.slug + "/" + n.thumb;
+      return o; });
+  return { tool:"visor-notas", version:2, exported_at:new Date().toISOString(),
+           proyecto:{slug:st.slug, nombre:p?p.nombre:"", cliente:p?p.cliente:"", nota:p?p.nota:""},
+           videos:(st.videos||[]).map(x => ({id:x.id, nombre:x.nombre, codec:x.codec,
+             duracion:x.duracion, fps:x.fps, ancho:x.ancho, alto:x.alto, bytes:x.bytes})),
+           counts:{total:notes.length, pending:notes.filter(n=>!n.resolved).length},
+           notes };
+}
+function asMD(){
+  const p = pro(); if(!p) return "";
+  const d = payloadAll();
+  let s = "# Notas de revisión — " + p.nombre + "\n\n";
+  if(p.cliente) s += "Cliente: " + p.cliente + "\n";
+  s += "Videos: " + d.videos.length + " · Notas: " + d.counts.total + " (" + d.counts.pending + " pendientes)\n\n";
+  const byV = {};
+  for(const n of d.notes) (byV[n.video] = byV[n.video] || []).push(n);
+  for(const vid of Object.keys(byV)){
+    const vm = d.videos.find(x => x.id === vid);
+    s += "## " + (vm ? vm.nombre : vid) + (vm && vm.fps ? "  ·  " + vm.fps + " fps · " + vm.duracion.toFixed(2) + " s" : "") + "\n\n";
+    for(const n of byV[vid]){
+      s += "### " + n.timecode + "  (fotograma " + n.frame + ", " + n.time + " s" +
+        (n.end_frame!=null ? " → " + n.end_timecode + ", " + n.end_time + " s" : "") + ")\n";
+      s += (n.resolved ? "[resuelto] " : "") + (n.text || "_(nota sin texto)_") + "\n";
+      if(n.drawing) s += "_Tiene un dibujo en el fotograma._\n";
+      s += "\n";
+    }
+  }
+  return s;
+}
+$("#bOut").onclick = () => {
+  if(!st.slug){ openModal("Exportar","<p style='color:var(--fg-dim)'>Abre un proyecto primero.</p>",""); return; }
+  openModal("Exportar", `
+    <h4>Archivo</h4>
+    <div class="srow">
+      <button class="btn" data-x="md"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Markdown</button>
+      <button class="btn" data-x="json"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>JSON</button>
+      <button class="btn" data-x="csv"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>CSV</button>
+    </div>
+    <h4>Al portapapeles</h4>
+    <div class="srow">
+      <button class="btn" data-cp="md"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Markdown</button>
+      <button class="btn" data-cp="json"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>JSON</button>
+    </div>
+    <h4>O que Claude ve</h4>
+    <p style="color:var(--fg-dim);font-size:12px;line-height:1.8">
+      Claude no necesita esto: lee las notas directo por la API en <code>http://127.0.0.1:8477</code>.
+      Esto es para tú, o para pasarlo a otro chat.</p>`,
+    '<span style="flex:1"></span><button class="btn" id="mClose2">Cerrar</button>');
+  $("#mClose2").onclick = closeModal;
+  for(const b of $$("#mBody [data-x]")) b.onclick = () => {
+    const k = b.dataset.x, p = pro();
+    if(k==="md") download(base(p.nombre)+".notas.md", asMD(), "text/markdown");
+    if(k==="csv") download(base(p.nombre)+".notas.csv", asCSV(), "text/csv");
+    if(k==="json") download(base(p.nombre)+".notas.json", JSON.stringify(payloadAll(),null,2));
+    toast("Descargado");
+  };
+  for(const b of $$("#mBody [data-cp]")) b.onclick = async () => {
+    const ok = await copyText(b.dataset.cp==="json" ? JSON.stringify(payloadAll(),null,2) : asMD());
+    toast(ok ? "Copiado" : "No se pudo copiar");
+  };
+};
+function download(n,t,ty="application/json"){
+  const bl = new Blob([t],{type:ty}); const u = URL.createObjectURL(bl);
+  const a = document.createElement("a"); a.href=u; a.download=n; a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+function asCSV(){
+  const q = s => '"'+String(s==null?"":s).replace(/"/g,'""')+'"';
+  let s = "proyecto,video,timecode,frame,time_seconds,end_timecode,end_frame,resolved,author,text\n";
+  const p = pro();
+  for(const n of st.notas.slice().sort((a,b)=>a.frame-b.frame))
+    s += [p?p.nombre:"", n.video, n.timecode, n.frame, n.time, n.end_timecode||"", n.end_frame!=null?n.end_frame:"",
+          n.resolved?"si":"no", n.author||"", n.text].map(q).join(",") + "\n";
+  return s;
+}
+
+/* ═══ copiar para Claude ═══ */
+$("#bCopy").onclick = async () => {
+  if(!st.slug){ toast("Abre un proyecto primero"); return; }
+  const ok = await copyText(asMD());
+  toast(ok ? "Copiado — pégalo en Claude" : "No se pudo copiar", ok?2000:3200);
+};
+
+/* ═══ para Claude ═══ */
+$("#bClaude").onclick = () => {
+  const p = pro();
+  const brief = [
+    "Soy Cristian, edito video. Uso un visor local (http://127.0.0.1:8477) donde dejo notas ancladas al fotograma exacto, y tu las lees por API.",
+    "",
+    "CÓMO HABLO CONTIGO (usa la CLI):",
+    "  visor.sh proyectos                      — lista proyectos y cuántos videos/notas tiene",
+    "  visor.sh nuevo <nombre>                — crea un proyecto",
+    "  visor.sh subir <slug> <archivo-video>  — sube un corte al proyecto",
+    "  visor.sh notas <slug> [todas]          — trae las notas (timecode, frame, texto, si está resuelta)",
+    "  visor.sh nota <slug> <video-id> <frame> \"texto\" [fin-frame]   — deja una nota",
+    "  visor.sh resolver <slug> <nota-id>     — marca una nota como resuelta",
+    "  visor.sh estado <slug>                 — resumen: videos, fps, duración, notas",
+    "",
+    "REGLAS:",
+    '- El "frame" es el dato real. No saques el fotograma del segundo: el video puede ser de 24 o 30 fps.',
+    "- Si una nota trae end_frame, aplica el cambio a todo ese tramo.",
+    "- Cuando termines un cambio, márcala resuelta con visor.sh resolver.",
+    "- Si el codec que subo no lo reproduce el navegador (ProRes, etc.), el visor lo marca y no puedo verlo: en ese caso descríbeme en texto o sube una versión H.264.",
+    "- Si una nota es ambigua, pregúntame antes de editar.",
+    "",
+    "Proyecto actual: " + (p ? p.nombre + " (" + p.slug + ")" : "ninguno abierto") +
+      (p && p.nota ? "\nObjetivo: " + p.nota : "")
+  ].join("\n");
+  openModal("Para Claude", '<div class="copybox" id="brief">' + esc(brief) + '</div>' +
+    '<div class="srow" style="margin-top:13px"><button class="btn pri" id="cpB"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar</button>' +
+    '<button class="btn" id="dlB"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Guardar</button></div>' +
+    '<h4>El servidor</h4><p style="color:var(--fg-dim);font-size:12px;line-height:1.8">' +
+    'Corre solo en tu Mac (127.0.0.1:8477). Los videos se quedan en tu disco: nada sale a internet.</p>',
+    '<span style="flex:1"></span><button class="btn" id="mClose3">Cerrar</button>');
+  $("#mClose3").onclick = closeModal;
+  $("#cpB").onclick = async () => toast(await copyText($("#brief").textContent) ? "Copiado" : "No se pudo copiar");
+  $("#dlB").onclick = () => { download("para-claude.md", brief, "text/markdown"); toast("Guardado en Descargas"); };
+};
+
+/* ═══ arranque ═══ */
+/* Color: un circulito con el color actual; al clic se despliega el resto.
+   Fuera del popover = se cierra. Escape = se cierra. */
+(function(){
+  const btn = $("#swBtn"), pop = $("#swPop"), dot = $("#swDot");
+  if(!btn || !pop) return;
+  const pintar = () => {
+    dot.style.background = st.color;
+    btn.setAttribute("aria-label", "Color del pincel: " + st.color);
+    pop.innerHTML = PALETTE.map(c =>
+      '<span class="sw'+(c===st.color?" on":"")+'" data-c="'+c+'" title="'+c+'" style="background:'+c+'"></span>').join("");
+    for(const el of $$("#swPop .sw")) el.onclick = (ev) => {
+      ev.stopPropagation();
+      st.color = el.dataset.c; pintar(); cerrar();
+    };
+  };
+  /* Colocar el popover midiendo el boton, en coordenadas de ventana. Se voltea
+     hacia abajo si arriba no cabe, y se corrige en horizontal para que nunca
+     se salga — que era lo que pasaba con el panel plegado (x = -56). */
+  const colocar = () => {
+    if(pop.hidden) return;
+    const b = btn.getBoundingClientRect();
+    const M = 8, GAP = 10;
+    pop.classList.remove("arriba","abajo");
+    // medir con las dos propiedades en auto
+    pop.style.left = "0px"; pop.style.top = "0px"; pop.style.bottom = "auto";
+    const p = pop.getBoundingClientRect();
+    const H = p.height, W = p.width;
+    const cabeArriba = (b.top - H - GAP) >= M;
+    const cabeAbajo  = (b.bottom + GAP + H) <= (innerHeight - M);
+    let top;
+    if(cabeArriba) top = b.top - H - GAP;
+    else if(cabeAbajo) top = b.bottom + GAP;
+    else {
+      // no cabe ni arriba ni abajo (ventana muy baja): se ancla al borde visible
+      top = Math.max(M, Math.min(b.bottom + GAP, innerHeight - H - M));
+      if(top + H > innerHeight - M) top = Math.max(M, b.top - H - GAP);
+      if(top < M) top = M;
+    }
+    pop.classList.add(top < b.top ? "arriba" : "abajo");
+    let x = b.left + b.width/2 - W/2;
+    x = Math.max(M, Math.min(x, innerWidth - W - M));
+    pop.style.left = Math.round(x) + "px";
+    pop.style.top = Math.round(top) + "px";
+    pop.style.bottom = "auto";
+  };
+  const abrir = () => { pop.hidden = false; btn.setAttribute("aria-expanded","true"); colocar();
+    setTimeout(colocar, 0); };
+  const cerrar = () => { pop.hidden = true; btn.setAttribute("aria-expanded","false"); };
+  btn.onclick = ev => { ev.stopPropagation(); pop.hidden ? abrir() : cerrar(); };
+  document.addEventListener("click", ev => {
+    if(!pop.hidden && !pop.contains(ev.target) && ev.target !== btn) cerrar();
+  });
+  document.addEventListener("keydown", ev => { if(ev.key === "Escape" && !pop.hidden) cerrar(); });
+  window.addEventListener("resize", () => { if(!pop.hidden) colocar(); });
+  window.addEventListener("scroll", () => { if(!pop.hidden) colocar(); }, true);
+  /* Recolocar cuando el boton se mueva. Un MutationObserver con subtree:true sobre
+     todo el body se disparaba en bucle (colocar cambia el estilo del popover -> vuelve
+     a disparar -> cuelga la pagina entera y todo devuelve null). Se sustituye por
+     recolocar en los momentos donde el boton SI puede moverse. */
+  const recolocar = () => { if(!pop.hidden) colocar(); };
+  if(typeof requestAnimationFrame !== "undefined"){
+    // tras el plegado del panel y tras cualquier cambio de layout relevante
+    document.addEventListener("click", ev => {
+      if(ev.target && ev.target.closest && (ev.target.closest("#bNavFold,#navOpen"))) setTimeout(recolocar, 260);
+    }, true);
+  }
+  pintar();
+  window.__colocarPopover = colocar;
+  window.__cerrarPopover = cerrar;
+})();
+$("#ws").innerHTML = SIZES.map(s => '<button data-s="'+s+'" class="'+(s===st.size?"on":"")+'" style="width:'+(3+s)+'px;height:'+(3+s)+'px"></button>').join("");
+for(const el of $$("#ws button")) el.onclick = () => { st.size = +el.dataset.s; $$("#ws button").forEach(x => x.classList.toggle("on", x===el)); };
+for(const el of $$("[data-tool]")) el.onclick = () => { st.tool = el.dataset.tool; $$("[data-tool]").forEach(x => x.classList.toggle("on", x===el)); };
+
+(function init(){
+  renderFilter(); renderList();
+  pull(true).then(() => {
+    if(st.slug || !st.proyectos.length) return;
+    const ses = leerSesion();
+    const sigue = st.proyectos.find(p => p.slug === ses.slug && !p.archivado);
+    // si el guardado ya no esta (archivado o borrado), se abre el primero activo
+    openProject(sigue ? sigue.slug : st.proyectos[0].slug, {vid: sigue ? ses.vid : null});
+  });
+  setInterval(() => { if(st.vid && !v.paused) updateEditor(); }, 500);
+// Enter / Guardar envian al instante: no queda nada "en el aire" al cerrar.
+})();
+</script>
+</body>
+</html>
