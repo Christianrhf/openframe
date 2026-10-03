@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenFrame</title>
+<!-- icono vacio en linea: sin el, el navegador pide /favicon.ico y el servidor responde 404 (ruido en consola) -->
+<link rel="icon" href="data:,">
 <style>
   /* ═══ TEMA CLARO (por defecto) ═══ */
 
@@ -776,9 +778,9 @@
   .shst-line i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--fg-dim);flex:0 0 7px}
   .shst-line.abierta i{background:var(--fg);border-color:var(--fg)}
   .shform{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
-  .shform select,.shform input{height:26px;padding:0 7px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px}
+  .shform select,.shform input:not([type=checkbox]){height:26px;padding:0 7px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:11.5px}
   .shform select{flex:0 0 auto}
-  .shform input{flex:1 1 110px;min-width:90px}
+  .shform input:not([type=checkbox]){flex:1 1 110px;min-width:90px}
   .shform .chk{font-size:11px;flex:0 0 auto}
   .shform .btn.sm{flex:0 0 auto}
   .shnuevo{display:none;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:11px}
@@ -1708,6 +1710,9 @@ function startEdit(id){
   const n = st.notas.find(x => x.id === id); if(!n) return;
   if(esInvitado && (!esMia(n) || !puedeEscribir())) return;   // solo SUS notas
   if(n.video !== st.vid) openVideo(n.video);
+  // editar es explicito: suelta el modo respuesta (si no, Enter mandaba una
+  // RESPUESTA al hilo apuntado en vez de guardar el texto editado)
+  st.replyTo = null;
   st.pend = {frame:n.frame, time:n.frame/fps};
   seek(n.frame/fps);
   editingId = n.id;
@@ -2155,6 +2160,12 @@ cv.addEventListener("pointerdown", e => {
      perder siempre el primer trazo. */
   let n = curNote();
   if(esInvitado && n && !esMia(n)) n = null;   // nunca dibujar sobre la nota de otro
+  /* El dibujo pertenece a UN fotograma: la nota seleccionada (st.selId) solo sirve
+     si cubre el fotograma actual. Si no, el trazo iba a una nota de otro momento y
+     no se veia (drawCanvas solo pinta la nota del fotograma). */
+  if(n){ const f0 = snap(v.currentTime);
+    const dentro = f0 === n.frame || (n.end_frame != null && f0 >= n.frame && f0 <= n.end_frame);
+    if(!dentro) n = null; }
   if(!n) n = crearNotaParaDibujar();
   if(!n) return;
   _inicioX = e.clientX; _inicioY = e.clientY; _gestoReal = false;
@@ -3955,6 +3966,9 @@ if(shBtn && shPop){
   $("#shCrear").onclick = shCrear;
   $("#shEtq").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); shCrear(); } });
   document.addEventListener("click", ev => {
+    // un boton del popover que se repinto durante su propio clic ya no esta en el DOM:
+    // no es «clic fuera»
+    if(!ev.target || !ev.target.isConnected) return;
     if(shAbierto() && !shPop.contains(ev.target) && !shBtn.contains(ev.target)) shCerrar();
   });
   document.addEventListener("keydown", ev => { if(ev.key === "Escape" && shAbierto()){ shCerrar(); } });
