@@ -674,6 +674,22 @@ def decorate(notes):
     No se escriben en notes.json: se calculan al leer. Asi no hay dos verdades.
     """
     out = []
+    # Numeracion estable por fecha de creacion (id como desempate). Las respuestas
+    # no consumen numero: pertenecen al hilo de su raiz. Los campos son derivados y
+    # opcionales, por lo que un notes.json antiguo no necesita migracion.
+    # sorted() es estable: si varias entradas nacen en el mismo segundo conserva el
+    # orden de notes.json (el orden real de creacion), en vez de barajarlas por UUID.
+    ordered = sorted((n for n in notes if not is_reply(n)),
+                     key=lambda n: n.get("created", ""))
+    note_no, change_no = {}, {}
+    nn = cn = 0
+    for item in ordered:
+        if item.get("kind") == "cambio":
+            cn += 1
+            change_no[item.get("id")] = cn
+        else:
+            nn += 1
+            note_no[item.get("id")] = nn
     for n in notes:
         c = dict(n)
         if is_reply(n):
@@ -683,6 +699,10 @@ def decorate(notes):
             rs = replies_of(notes, n["id"])
             c["respuestas"] = len(rs)
             c["estado"] = thread_state(notes, n)
+            if n.get("kind") == "cambio":
+                c["numero"] = "A%d" % change_no.get(n.get("id"), 0)
+            else:
+                c["numero"] = "Nota %d" % note_no.get(n.get("id"), 0)
         out.append(c)
     return out
 
@@ -703,6 +723,7 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
              resolved=False, drawing=None, thumb=None, fps=None, note_id=None,
              kind="nota", parent=None, created=None,
              from_note=None, from_video=None, resuelve=None, visto=False,
+             decision=None,
              autor_nombre=None, enlace_id=None):
     # R1b: un fotograma gigante (p. ej. 10**400) desbordaba `frame / fps` con OverflowError -> 500.
     for _nm, _v in (("fotograma", frame), ("fotograma de salida", end_frame)):
@@ -786,6 +807,8 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
         # `visto`: un cambio no se resuelve, se mira. Aterrizar en el lo marca.
         if visto:
             n["visto"] = True
+        if decision in ("approved", "adjust"):
+            n["decision"] = decision
         if end_frame not in (None, "", 0):
             n["end_timecode"] = tc_from(int(end_frame), eff_fps)
             n["end_time"] = round(int(end_frame) / eff_fps, 3)
@@ -1237,7 +1260,7 @@ class Handler(BaseHTTPRequestHandler):
                                  d.get("kind", "nota"), d.get("parent"),
                                  d.get("created"), d.get("from_note"),
                                  d.get("from_video"), d.get("resuelve"),
-                                 bool(d.get("visto")), nombre, enlace_id)
+                                 bool(d.get("visto")), d.get("decision"), nombre, enlace_id)
                 except ValueError as e:
                     return self._err(400, str(e))
                 return self._json({"nota": n}, 201)
@@ -1314,6 +1337,11 @@ class Handler(BaseHTTPRequestHandler):
                     for k in ("text", "resolved", "visto", "resuelve"):
                         if k in d:
                             n[k] = d[k]
+                    if "decision" in d:
+                        if d["decision"] in ("approved", "adjust"):
+                            n["decision"] = d["decision"]
+                        elif d["decision"] in (None, ""):
+                            n.pop("decision", None)
                     if d.get("kind") in ("nota", "cambio"):
                         n["kind"] = "cambio" if d.get("kind") == "cambio" else "nota"
                     if "end_frame" in d:

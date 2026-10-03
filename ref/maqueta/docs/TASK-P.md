@@ -1,0 +1,11 @@
+# TAREA P · Plan de portado a la app real (SOLO LECTURA; entregable = docs/PORTAR.md)   (modelo Fable)
+
+La maqueta (`src/`, ya fusionada A+B+C+D; ver `docs/reports/REPORT-*.md`) es el diseño aprobado. La app REAL de Cristian es `visor.html` (3 566 líneas) + `server.py` (1 134 líneas) + `visor.sh`, copiados SOLO PARA LEER en `/tmp/o8/port-ref/` (no toques nada fuera de tu clon; no ejecutes ni reinicies la app real; no escribas en `~/visornotas`).
+Lee la app real entera, la maqueta entera y los informes. Tu entregable es `docs/PORTAR.md` (≤ 1 200 palabras, escaneable, español STE imperativo, cajas/tablas compactas): un plan que otro agente pueda ejecutar sin preguntar nada.
+Debe contener:
+1. **Inventario real:** cómo guarda hoy la app notas, dibujos, cambios del agente, respuestas, resueltos y revisados (formato exacto en `data/<proyecto>/`, campos, endpoints de `server.py`, cómo se enlaza el CLI/agente). Cita archivo:línea.
+2. **Mapa maqueta → real**, una fila por función: A (dibujo por fotograma, tramo `data-out`), B (agrupar marcadores, vista previa), C (filtros, búsqueda, cierre de ronda, estados «En revisión / Con el Agente / Aprobado»), D (aprobar / pedir ajuste con `resolves`, comparar v01·v02), atajos y a11y. Para cada una: qué ya existe en la app real, qué falta, **cambio de datos** (campos nuevos, retrocompatibles con los proyectos que ya existen: v01-hoover-dam, v02-golden-gate, v03-empire-state), **cambio de API** (endpoints/verbos), **cambio de UI** (qué bloques de la maqueta se reutilizan casi tal cual) y riesgo (bajo/medio/alto).
+3. **Cómo el Agente (Claude vía CLI) ve y usa lo nuevo:** formato legible de tramos, dibujos (¿SVG o imagen del fotograma con el trazo?), decisiones «pedir ajuste», y cómo el Agente marca «cambio aplicado» para que aparezca como entrada del tipo cambio.
+4. **Fases ordenadas** (cada una desplegable y reversible por separado), con: alcance, archivos tocados, prueba de aceptación medible por CDP, y plan de reversa (copias `.bak-<timestamp>` como ya hace Cristian). Prioriza por valor/esfuerzo; la fase 1 debe ser entregable en una sesión.
+5. **Riesgos y preguntas abiertas** que SOLO Cristian puede decidir (máx. 6; cada una con tu recomendación).
+Sé concreto y honesto: marca «verificado leyendo X» vs «supuesto». Commit de `docs/PORTAR.md`.

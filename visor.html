@@ -10,7 +10,7 @@
   /* ═══ TEMA CLARO (por defecto) ═══ */
 
   /* ── Color por AUTOR (mecanismo de Frame.io: el color identifica QUIEN, no QUE nota).
-     Tu violeta, Claude coral. El mismo color se repite en la tarjeta y en el marcador
+     Tu violeta, Agente coral. El mismo color se repite en la tarjeta y en el marcador
      de la linea de tiempo: sin leer, ves de quien es cada nota. ── */
 
   /* ── SELECCION visible ──
@@ -18,7 +18,7 @@
      nada. Ahora 5 canales a la vez: barra, fondo, borde, peso y tamano del icono. */
   /* ═══ BLANCO Y NEGRO ═══
      Cristian: "No uses el morado, usa negro. Que la app sea a blanco y negro."
-     No hay color: la distincion entre tu nota, la de Claude y los cambios de Claude
+     No hay color: la distincion entre tu nota, la de Agente y los cambios de Agente
      la carga la FORMA y el grosor, no el tono. Negro para lo activo y el cursor,
      gris para lo inactivo. El unico color que queda es el ambar del timecode,
      porque es el dato que hay que leer. */
@@ -47,7 +47,7 @@
     /* autores: se distinguen por TONO DE GRIS y por forma, no por color */
     --yo:#111111;        /* Cristian: negro solido, 3px */
     --yo-ring:#555555;
-    --claude:#8a8a8a;     /* Claude: gris medio */
+    --claude:#8a8a8a;     /* Agente: gris medio */
     --claude-ring:#b4b4b4;
     /* el ambar del chip se queda: es el dato, y a blanco y negro seria un gris mas */
     --tcf:#1a1a1a;--tcb:#f0f0f0;
@@ -306,6 +306,32 @@
   .note.on .phdot{display:block;background:var(--accent)}
   .note.res .txt{color:var(--fg-mute);text-decoration:line-through;text-decoration-color:var(--strike)}
   .note .body{flex:1;min-width:0}
+
+  /* X2 · decisiones + chat paginado. La lista nunca desplaza: cada pagina se
+     calcula con la altura disponible y solo monta las entradas que caben. */
+  .list{overflow:hidden}
+  .x2filters{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;padding:6px 9px;
+    border-bottom:1px solid var(--line-soft);background:var(--panel)}
+  .x2search,.x2select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);
+    padding:0 8px;font-size:11px;min-width:0}
+  .x2select{max-width:94px}
+  .x2checks{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:20px}
+  .x2pager{flex:0 0 34px;display:flex;align-items:center;justify-content:space-between;padding:3px 9px;
+    border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg-mute)}
+  .x2pager button{width:28px;height:28px;border:1px solid var(--line);border-radius:5px;display:grid;place-items:center}
+  .x2pager button:disabled{opacity:.3;cursor:default}
+  .x2round{font:10px var(--mono);color:var(--fg-dim);white-space:nowrap}
+  .note.change{border:1px solid var(--fg);border-left-width:3px;margin:6px 8px;padding:8px;border-radius:6px;background:var(--panel)}
+  .note.change::before{display:none}
+  .note.change .tcx{border-style:dashed}
+  .decision{font:10px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap}
+  .decision.adjust{border-style:dashed}
+  .decide{display:flex;gap:5px;margin-top:7px}
+  .decide button{min-height:28px;padding:0 7px;border:1px solid var(--line);border-radius:5px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
+  .decide button:hover{border-color:var(--fg);background:var(--hover)}
+  .decide svg{width:13px;height:13px}
+  .draft-badge{font:10px var(--mono);border:1px dashed var(--fg-dim);border-radius:4px;padding:1px 5px}
+  .editor.adjusting{border-top-style:dashed}
   .note .meta{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
   /* (la regla vieja de .tcx que pisaba el chip la borramos) */
   .note .frx,.note .rng{font-family:var(--mono);font-size:10px;color:var(--fg-mute)}
@@ -481,7 +507,7 @@
 
 
   /* ── Marcadores de CAMBIO (kind:"cambio") ──
-     Claude los pone donde toco algo. Punto verde, sin texto: solo una senal para
+     Agente los pone donde toco algo. Punto verde, sin texto: solo una senal para
      saltar directo al cambio y no ver el video entero. */
   .mark.cambio{background:var(--cambio) !important;border-color:var(--cambio) !important}
   /* el anillo del punto de cambio tambien es redondo: con inset:-2.5px -1px y
@@ -585,7 +611,7 @@
   .pitem.on .vn, .vitem.on .vn{color:var(--fg) !important}
   .pitem.on svg, .vitem.on svg{color:var(--sel-bar) !important;opacity:1 !important;width:13px;height:13px}
   .pitem:hover:not(.on), .vitem:hover:not(.on){background:var(--hover) !important}
-  /* el proyecto activo tiene ademas un punto verde si Claude marco cambios sin ver */
+  /* el proyecto activo tiene ademas un punto verde si Agente marco cambios sin ver */
   .pitem{position:relative}
   .vitem{position:relative}
   .pitem.on, .vitem.on{border-radius:7px}
@@ -730,7 +756,7 @@
   textarea.fld{min-height:62px;resize:vertical}
 
   /* ═══ INVITADOS ═══
-     Tres autores, tres FORMAS (cero color): Cristian barra negra solida, Claude gris,
+     Tres autores, tres FORMAS (cero color): Cristian barra negra solida, Agente gris,
      invitado barra A RAYAS y chip con borde discontinuo. Se lee a 9px sin leer el texto. */
   :root{--invitado:#3a3a3a;--invitado-ring:#8a8a8a}
   .note[data-who="invitado"],.rep[data-who="invitado"]{--own:var(--invitado);--own-ring:var(--invitado-ring)}
@@ -810,6 +836,11 @@
     .side{flex:0 0 300px;width:300px}
     /* sigue siendo fijo (no crece con el texto), solo mas estrecho */
     .tp-row .tlinfo{flex:0 0 150px;width:150px}
+  }
+  @media (max-width:1700px){
+    .tp-row{flex-wrap:wrap;row-gap:6px}
+    .tp-row .tlinfo{flex:1 1 150px;width:auto}
+    .x2checks{flex-wrap:wrap;gap:5px 10px}
   }
   @media (max-width:920px){
     .main{flex-wrap:wrap}
@@ -901,8 +932,8 @@
   <div class="spacer"></div>
   <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
   <label class="chk" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><span>Miniaturas</span></label>
-  <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Claude</button>
-  <button class="btn" id="bCopy" title="Copiar las notas de este proyecto"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar para Claude</button>
+  <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Agente</button>
+  <button class="btn" id="bCopy" title="Copiar las notas de este proyecto"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar para Agente</button>
   <button class="btn" id="bOut"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Exportar</button>
 </div>
 
@@ -910,7 +941,7 @@
     <div class="navhandle" id="navhandle">
     <button id="navOpen" data-tip="Mostrar proyectos y tomas">proyectos ▸</button>
     <span class="hb" id="navNotas" title="notas del proyecto">0</span>
-    <span class="hb chg" id="navChg" title="cambios de Claude sin revisar">0</span>
+    <span class="hb chg" id="navChg" title="cambios de Agente sin revisar">0</span>
   </div>
 
   <div class="rail">
@@ -1000,7 +1031,7 @@
            ocupan su propia fila abajo y la banda usa el ancho entero de lado a lado. -->
       <div class="tlctrls">
           <span class="rlbl" id="rlLbl" title="notas y cambios de este video"></span>
-          <button class="btn xs has-tip" id="tlChg" data-tip="Saltar al siguiente cambio de Claude" data-key="⇧N" title="Shift+N">solo cambios</button>
+          <button class="btn xs has-tip" id="tlChg" data-tip="Saltar al siguiente cambio de Agente" data-key="⇧N" title="Shift+N">solo cambios</button>
           <button class="btn xs icon has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="["><svg viewBox="0 0 24 24"><use href="#i-mkprev"/></svg></button>
           <button class="btn xs icon has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]"><svg viewBox="0 0 24 24"><use href="#i-mknext"/></svg></button>
           <button class="btn xs has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0">ver todo</button>
@@ -1037,7 +1068,7 @@
         <option value="1">1 día</option><option value="7" selected>7 días</option><option value="30">30 días</option>
       </select>
       <input id="shEtq" maxlength="60" placeholder="Etiqueta (opcional)" title="Para quién es este enlace" aria-label="Etiqueta del enlace">
-      <label class="chk" title="Si está marcado, el invitado ve también las notas tuyas y de Claude"><input type="checkbox" id="shVe"><span>ver las notas de otros</span></label>
+      <label class="chk" title="Si está marcado, el invitado ve también las notas tuyas y de Agente"><input type="checkbox" id="shVe"><span>ver las notas de otros</span></label>
       <button class="btn sm pri" id="shCrear" title="Crear un enlace secreto para este video">Crear enlace</button>
     </div>
     <div class="shnuevo" id="shNuevo"></div>
@@ -1048,14 +1079,26 @@
     <div class="side-head">
       <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
       <h2>Notas</h2>
+      <span class="x2round" id="roundStatus">Con el Agente</span>
       <span class="cnt" id="cnt">0</span>
     </div>
-    <div class="filter">
-      <select class="vfilter" id="vfilter" title="Filtrar por video"></select>
-      <label class="chk"><input type="checkbox" id="cPend"><span>Pendientes</span></label>
-      <label class="chk"><input type="checkbox" id="cThumb"><span>Miniaturas</span></label>
+    <div class="x2filters" aria-label="Filtros de conversación">
+      <input class="x2search" id="x2Search" type="search" placeholder="Buscar…" aria-label="Buscar en la conversación">
+      <select class="x2select" id="x2Type" aria-label="Filtrar por tipo"><option value="all">Todo</option><option value="nota">Notas</option><option value="cambio">Cambios</option></select>
+      <select class="x2select" id="x2Person" aria-label="Filtrar por persona"><option value="all">Todos</option><option value="cristian">Cristian</option><option value="claude">Agente</option><option value="invitado">Invitado</option></select>
+      <div class="x2checks">
+        <select class="vfilter" id="vfilter" title="Filtrar por video" aria-label="Filtrar por video"></select>
+        <label class="chk"><input type="checkbox" id="cPend"><span>Pendientes</span></label>
+        <label class="chk"><input type="checkbox" id="x2Drawing"><span>Con dibujo</span></label>
+        <label class="chk"><input type="checkbox" id="cThumb"><span>Miniaturas</span></label>
+      </div>
     </div>
     <div class="list" id="list"></div>
+    <nav class="x2pager" aria-label="Páginas de la conversación">
+      <button id="x2Prev" title="Página anterior" aria-label="Página anterior"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
+      <span id="x2Page">0 de 0</span>
+      <button id="x2Next" title="Página siguiente" aria-label="Página siguiente"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
+    </nav>
     <div class="editor">
       <div class="ed-head">
         <span class="at" id="edAt">00:00:00:00</span>
@@ -1120,6 +1163,8 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            tl:{zoom:1, off:0},
            tool:null, color:PALETTE[0], size:SIZES[1], pend:null, hist:[], hpos:-1,
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
+           x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
+           x2Page:0, adjustTo:null,
            selId:null,        // id de la nota activa (editar/mover/borrar)
            playhead:-1,      // fotograma bajo el cursor de reproduccion
            phNote:"",         // ids de las notas bajo el cursor (para no repintar de mas)
@@ -1146,10 +1191,10 @@ function quienEs(n){
   return n.author === "claude" ? "claude" : n.author === "invitado" ? "invitado" : "cristian";
 }
 // texto del chip de autor. El invitado SIEMPRE lleva «Invitado · Nombre»: no se
-// confunde ni con Cristian («Tú») ni con Claude.
+// confunde ni con Cristian («Tú») ni con Agente.
 function nombreAutor(n){
   const q = quienEs(n);
-  if(q === "claude") return "Claude";
+  if(q === "claude") return "Agente";
   if(q === "invitado") return "Invitado · " + String(n.autor_nombre || "sin nombre").slice(0, 40);
   return esInvitado ? "Cristian" : "Tú";
 }
@@ -1316,8 +1361,8 @@ async function pull(force){
          seguir dibujando o dejar el trazo de lado; el poll espera 2 s. */
       if(st.slug && !st.busyNote) await pullDetail();
       renderProyectos();
-      /* Repintar SIEMPRE. Antes el poll traia las notas de Claude al estado pero
-         nunca las pintaba: lo que Claude subia era invisible hasta que Cristian
+      /* Repintar SIEMPRE. Antes el poll traia las notas de Agente al estado pero
+         nunca las pintaba: lo que Agente subia era invisible hasta que Cristian
          hacia clic en algo. Ahora se ve solo, y se avisa si son cosas nuevas. */
       if(st.slug){
         // (antes decia `dibujando`, una variable que no existe: ReferenceError en cada
@@ -1360,8 +1405,8 @@ async function pullDetail(){
   }catch(e){ setConn(false); }
 }
 
-/* ── Aviso de que Claude subió algo ──
-   Fable: "Claude's uploads invisible until Cristian clicks something". Con el poll
+/* ── Aviso de que Agente subió algo ──
+   Fable: "Agente's uploads invisible until Cristian clicks something". Con el poll
    ya repintando, solo falta que Cristian entienda que algo llego sin que el脉冲
    loonsonara: un aviso corto, no una notificacion cada 2 segundos. */
 let _ultimoRevVisto = -1;
@@ -1377,7 +1422,7 @@ function avisarSiLlegoAlgoDeClaude(){
   const partes = [];
   if(respuestas) partes.push(respuestas + (respuestas===1 ? " respuesta" : " respuestas"));
   if(cambios)   partes.push(cambios   + (cambios===1   ? " cambio"   : " cambios"));
-  toast("Claude: " + partes.join(" y "), 3200);
+  toast("Agente: " + partes.join(" y "), 3200);
 }
 
 
@@ -1458,7 +1503,8 @@ function snapNota(n){
           // sin parent, "rehacer" una respuesta la recrearia como nota suelta en el
           // fotograma de la raiz: dos notas donde habia un hilo
           parent:n.parent || null, kind:n.kind || "nota", created:n.created || null,
-          from_note:n.from_note || null, from_video:n.from_video || null};
+          from_note:n.from_note || null, from_video:n.from_video || null,
+          resuelve:n.resuelve || null, visto:!!n.visto, decision:n.decision || null};
 }
 function pushUndo(etiqueta, acc){
   // si hay rehacer pendiente, se descarta: se esta haciendo una accion nueva
@@ -1488,7 +1534,9 @@ async function deshacer(){
   st.uPos--;
   const P_ = st.slug;
   try{
-    if(a.tipo === "crear"){
+    if(a.tipo === "multi"){
+      for(const x of [...a.acciones].reverse()) await aplicarAccionHist(x, false, P_);
+    }else if(a.tipo === "crear"){
       await api(P(P_)+"/notas/"+a.antes.id, {method:"DELETE"});
     }else if(a.tipo === "borrar"){
       // volver a crear la nota tal cual estaba (el id se conserva si el servidor lo acepta)
@@ -1515,7 +1563,9 @@ async function rehacer(){
   const a = st.undo[st.uPos];
   const P_ = st.slug;
   try{
-    if(a.tipo === "crear"){
+    if(a.tipo === "multi"){
+      for(const x of a.acciones) await aplicarAccionHist(x, true, P_);
+    }else if(a.tipo === "crear"){
       await api(P(P_)+"/notas", {method:"POST", body:JSON.stringify(a.despues)});
     }else if(a.tipo === "borrar"){
       await api(P(P_)+"/notas/"+a.antes.id, {method:"DELETE"});
@@ -1534,11 +1584,25 @@ async function rehacer(){
   }
 }
 
+async function aplicarAccionHist(a, rehaciendo, slug){
+  if(a.tipo === "crear"){
+    if(rehaciendo) await api(P(slug)+"/notas", {method:"POST", body:JSON.stringify(a.despues)});
+    else await api(P(slug)+"/notas/"+a.antes.id, {method:"DELETE"});
+  }else if(a.tipo === "borrar"){
+    if(rehaciendo) await api(P(slug)+"/notas/"+a.antes.id, {method:"DELETE"});
+    else await api(P(slug)+"/notas", {method:"POST", body:JSON.stringify(a.antes)});
+  }else if(a.tipo === "campo"){
+    const src = rehaciendo ? a.despues : a.antes, patch = {};
+    for(const k of a.cambios) patch[k] = src[k];
+    await api(P(slug)+"/notas/"+a.antes.id, {method:"PATCH", body:JSON.stringify(patch)});
+  }
+}
+
 /* ═══ proyectos ═══ */
 function renderProyectos(){
   const h = $("#plist"); h.innerHTML = "";
   if(!st.proyectos.length){
-    h.innerHTML = '<div class="empty" style="padding:20px 10px">Sin proyectos.<br>Crea uno o pídele a Claude.</div>';
+    h.innerHTML = '<div class="empty" style="padding:20px 10px">Sin proyectos.<br>Crea uno o pídele a Agente.</div>';
     return;
   }
   for(const p of st.proyectos){
@@ -1643,7 +1707,7 @@ async function openVideo(vid){
   $("#fw").classList.add("on");
   $("#nocodec").classList.toggle("on", !m.reproducible);
   if(m.reproducible === false){
-    $("#ncMsg").textContent = m.nombre + " — " + m.codec + ". El navegador no lo abre; pedile a Claude un H.264 para poder verlo aquí.";
+    $("#ncMsg").textContent = m.nombre + " — " + m.codec + ". El navegador no lo abre; pedile a Agente un H.264 para poder verlo aquí.";
   }
   v.src = "/media/" + encodeURIComponent(st.slug) + "/" + vid + "/" + m.archivo;
   v.load();
@@ -1658,7 +1722,7 @@ function renderVideos(){
   // el corte mas reciente va ARRIBA: es el que se esta revisando. Antes salia abajo.
   const vids = p ? (st.videos||[]).slice().sort((a,b) => String(b.created||"").localeCompare(String(a.created||""))) : [];
   if(!vids.length){
-    h.innerHTML = '<div class="empty" style="padding:18px 10px">Sin videos.<br>Pide a Claude que suba el corte.</div>';
+    h.innerHTML = '<div class="empty" style="padding:18px 10px">Sin videos.<br>Pide a Agente que suba el corte.</div>';
     return;
   }
   for(const x of vids){
@@ -1792,7 +1856,7 @@ function visibleNotes(){
   let a = st.notas.filter(n => !esRespuesta(n));
   if(st.filterVid) a = a.filter(n => n.video === st.filterVid);
   else if(st.vid) a = a.filter(n => n.video === st.vid);
-  if(st.onlyPend) a = a.filter(n => !n.resolved);
+  if(st.onlyPend) a = a.filter(n => n.kind === "cambio" ? !n.decision : !n.resolved);
   // orden TOTAL y determinista: desempata por id, nunca devuelve "incomparable"
   a.sort(cmpNotas);
   return a;
@@ -1821,10 +1885,10 @@ function renderFilter(){
 }
 /* Un bloque de hilo: la raiz + sus respuestas colgando de una linea vertical. */
 function htmlRespuesta(r){
-  const quien = nombreAutor(r);            // «Tú» / «Claude» / «Invitado · Nombre»
+  const quien = nombreAutor(r);            // «Tú» / «Agente» / «Invitado · Nombre»
   const cuando = (r.created || "").slice(11, 16);
   // data-who en minusculas: es lo que leen los selectores .rep[data-who=...] del CSS
-  // (antes llevaba «Claude»/«Tú» y ninguna regla de color de autor casaba)
+  // (antes llevaba «Agente»/«Tú» y ninguna regla de color de autor casaba)
   const acts = esInvitado
     ? (esMia(r) ? '<button class="ed has-tip" data-ed="' + esc(r.id) + '" data-tip="Editar tu respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' : '')
     : '<button class="ed has-tip" data-ed="' + esc(r.id) + '" data-tip="Editar esta respuesta"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' +
@@ -1835,8 +1899,44 @@ function htmlRespuesta(r){
       '<div class="rtxt">' + esc(r.text || "") + '</div></div>' +
     '<div class="racts">' + acts + '</div></div>';
 }
+
+function x2Numero(n){
+  if(n.numero) return n.numero;
+  const kind = n.kind === "cambio" ? "cambio" : "nota";
+  const a = st.notas.filter(x => !esRespuesta(x) && (x.kind === "cambio" ? "cambio" : "nota") === kind)
+    .sort((x,y) => String(x.created||"").localeCompare(String(y.created||"")) || String(x.id).localeCompare(String(y.id)));
+  const k = Math.max(0, a.findIndex(x => x.id === n.id)) + 1;
+  return kind === "cambio" ? "A" + k : "Nota " + k;
+}
+function x2Normaliza(s){ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+function x2Filtradas(){
+  const q = x2Normaliza(st.x2Search);
+  return visibleNotes().filter(n => {
+    const kind = n.kind === "cambio" ? "cambio" : "nota";
+    if(st.x2Type !== "all" && st.x2Type !== kind) return false;
+    if(st.x2Person !== "all" && quienEs(n) !== st.x2Person) return false;
+    if(st.x2Drawing && !(n.drawing && n.drawing.strokes && n.drawing.strokes.length)) return false;
+    if(q && !x2Normaliza([x2Numero(n), nombreAutor(n), n.text, n.timecode].join(" ")).includes(q)) return false;
+    return true;
+  });
+}
+function x2DecisionCard(n){
+  const linked = n.resuelve ? st.notas.find(x => x.id === n.resuelve) : null;
+  const estado = n.decision === "approved" ? '<span class="decision">aprobado</span>' :
+    n.decision === "adjust" ? '<span class="decision adjust">ajuste pedido</span>' : '';
+  const reps = respuestasDe(n.id);
+  const cuerpoReps = reps.length ? reps.map(htmlRespuesta).join("") : "";
+  const acciones = esInvitado ? "" : n.decision ?
+    '<div class="decide"><button data-redecide="' + esc(n.id) + '" title="Cambiar esta decisión" aria-label="Cambiar decisión sobre ' + esc(x2Numero(n)) + '">Cambiar decisión</button></div>' :
+    '<div class="decide"><button class="approve-btn" data-approve="' + esc(n.id) + '" title="Aprobar el cambio y cerrar la nota vinculada" aria-label="Aprobar ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Aprobar</button>' +
+    '<button class="adjust-btn" data-adjust="' + esc(n.id) + '" title="Pedir otro ajuste y reabrir la nota vinculada" aria-label="Pedir ajuste sobre ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg>Pedir ajuste</button></div>';
+  return '<div class="hilo-b" data-hilo="' + esc(n.id) + '"><div class="note raiz change" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="claude">' +
+    '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span><span class="who c">Agente</span><strong>' + esc(x2Numero(n)) + '</strong>' + estado + '</div>' +
+    '<div class="txt">' + esc(n.text || "Cambio sin descripción") + '</div>' +
+    (linked ? '<div class="rng">Responde a ' + esc(x2Numero(linked)) + '</div>' : '') + acciones + '</div></div>' + cuerpoReps + '</div>';
+}
 function renderList(){
-  const L = $("#list"), list = visibleNotes().filter(n => n.kind !== "cambio");
+  const L = $("#list"), filtradas = x2Filtradas();
   const todos = (st.filterVid ? st.notas : st.notas.filter(n => !st.vid || n.video === st.vid))
                   .filter(n => !esRespuesta(n));
   // los marcadores de cambio no son notas: no cuentan en el total ni en "pendientes"
@@ -1844,13 +1944,23 @@ function renderList(){
   const all = todos.filter(n => n.kind !== "cambio");
   const pend = all.filter(n => !n.resolved).length;
   $("#cnt").textContent = all.length ? all.length + " · " + pend + " pend." + (cambios ? " · " + cambios + " cambios" : "") : "0";
-  if(!list.length){
+  const rs = $("#roundStatus");
+  // La aprobacion del corte pertenece a la fase 5. En esta tanda, decidir cambios
+  // individuales nunca saca automaticamente el video de «Con el Agente».
+  if(rs) rs.textContent = "Con el Agente";
+  if(!filtradas.length){
     L.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>' +
-      (all.length ? "Todo resuelto." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
+      (todos.length ? "Nada coincide con los filtros." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
+    $("#x2Page").textContent = "0 de 0"; $("#x2Prev").disabled = $("#x2Next").disabled = true;
     return;
   }
   const ph = st.playhead;
+  let pageSize = (L.clientHeight || 360) < 330 ? 2 : (L.clientHeight || 360) < 490 ? 3 : 4;
+  const pages = Math.max(1, Math.ceil(filtradas.length / pageSize));
+  st.x2Page = clamp(st.x2Page, 0, pages - 1);
+  const ini = st.x2Page * pageSize, list = filtradas.slice(ini, ini + pageSize);
   L.innerHTML = list.map(n => {
+    if(n.kind === "cambio") return x2DecisionCard(n);
     const on = n.id === st.selId;
     const bajo = n.video === st.vid && n.frame === ph;   // el cursor de play esta aqui
     // el intervalo mostraba n.timecode, o sea el INICIO otra vez ("00:01 → 00:01").
@@ -1858,7 +1968,7 @@ function renderList(){
     const rng = n.end_frame != null
       ? '<span class="rng">→ ' + esc(n.end_timecode || tc(null, n.end_frame)) + '</span>' : '';
     /* El chip de autor va SIEMPRE, con TEXTO. Antes tus notas no llevaban nada y se
-   distinguian de las de Claude solo por una barra de 3px negra contra gris — eso no
+   distinguian de las de Agente solo por una barra de 3px negra contra gris — eso no
    es un estado, es adivinar. Y "hermes" era un resto muerto de una version vieja. */
 const quien = quienEs(n);
 const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitado" ? "i" : "y") + '">' +
@@ -1889,7 +1999,7 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="' + quien + '">' +
       '<span class="phdot" title="Aqui esta el cursor del video"></span>' +
       '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span>' +
-      rng + who + pastilla + deOtra + '</div>' +
+      rng + who + '<strong>' + esc(x2Numero(n)) + '</strong>' + (String(n.id).startsWith("tmp_") ? '<span class="draft-badge">borrador</span>' : '') + pastilla + deOtra + '</div>' +
       '<div class="txt">' + txt + '</div></div>' + th +
       '<div class="acts">' +
       '<button class="rp has-tip" data-rp="' + esc(n.id) + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
@@ -1910,7 +2020,12 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
     el.onclick = ev => {
       const d = ev.target.closest("[data-del]"), r = ev.target.closest("[data-res]"),
             m = ev.target.closest("[data-mv]"), ed = ev.target.closest("[data-ed]"),
-            rp = ev.target.closest("[data-rp]"), fo = ev.target.closest("[data-fold]");
+            rp = ev.target.closest("[data-rp]"), fo = ev.target.closest("[data-fold]"),
+            ap = ev.target.closest("[data-approve]"), ad = ev.target.closest("[data-adjust]"),
+            rd = ev.target.closest("[data-redecide]");
+      if(ap){ x2Aprobar(ap.dataset.approve); return; }
+      if(ad){ x2PedirAjuste(ad.dataset.adjust); return; }
+      if(rd){ x2Reconsiderar(rd.dataset.redecide); return; }
       if(d){ askDelete(d.dataset.del); return; }
       if(r){ toggleRes(r.dataset.res); return; }
       if(m){ selectNoteById(m.dataset.mv); return; }
@@ -1932,6 +2047,45 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       drawCanvas(); renderList(); updateEditor();
     };
   }
+  const fin = Math.min(filtradas.length, ini + list.length);
+  $("#x2Page").textContent = "Página " + (st.x2Page + 1) + " de " + pages + " · " + fin + " de " + filtradas.length;
+  $("#x2Prev").disabled = st.x2Page <= 0;
+  $("#x2Next").disabled = st.x2Page >= pages - 1;
+}
+async function x2Aprobar(id){
+  if(esInvitado) return;
+  const c = st.notas.find(n => n.id === id && n.kind === "cambio"); if(!c) return;
+  const linked = c.resuelve ? st.notas.find(n => n.id === c.resuelve) : null;
+  const antesC = snapNota(c), antesN = snapNota(linked);
+  await withBusyNote(async () => {
+    try{
+      await api(P(st.slug)+"/notas/"+c.id, {method:"PATCH", body:JSON.stringify({decision:"approved", visto:true})});
+      if(linked) await api(P(st.slug)+"/notas/"+linked.id, {method:"PATCH", body:JSON.stringify({resolved:true})});
+      const acciones = [{tipo:"campo", antes:antesC, despues:Object.assign({},antesC,{decision:"approved",visto:true}), cambios:["decision","visto"]}];
+      if(linked) acciones.push({tipo:"campo", antes:antesN, despues:Object.assign({},antesN,{resolved:true}), cambios:["resolved"]});
+      pushUndo(x2Numero(c)+" aprobado", {tipo:"multi", acciones:acciones});
+      await pullDetail(); renderList(); renderVideos(); updateMarks(); actualizarBotonUndo();
+      toast(x2Numero(c)+" aprobado");
+    }catch(e){ toast("No se pudo aprobar: "+e.message,4000); }
+  });
+}
+function x2PedirAjuste(id){
+  if(esInvitado) return;
+  const c = st.notas.find(n => n.id === id && n.kind === "cambio"); if(!c) return;
+  st.adjustTo = id; st.replyTo = null; editingId = null;
+  $("#ta").value = ""; $("#ta").placeholder = "Qué ajuste le pides al Agente sobre " + x2Numero(c) + "…";
+  $(".editor").classList.add("adjusting"); $("#edLbl").textContent = "pidiendo ajuste en " + x2Numero(c);
+  $("#bCancel").style.display = ""; setDirty(false); $("#ta").focus();
+}
+async function x2Reconsiderar(id){
+  if(esInvitado) return;
+  const c = st.notas.find(n => n.id === id && n.kind === "cambio"); if(!c) return;
+  const antes = snapNota(c);
+  try{
+    await api(P(st.slug)+"/notas/"+id, {method:"PATCH", body:JSON.stringify({decision:null})});
+    pushUndo("reconsiderar "+x2Numero(c), {tipo:"campo", antes:antes, despues:Object.assign({},antes,{decision:null}), cambios:["decision"]});
+    await pullDetail(); renderList(); updateMarks();
+  }catch(e){ toast("No se pudo cambiar la decisión: "+e.message,4000); }
 }
 async function delNote(id){
   if(esInvitado) return;
@@ -2214,10 +2368,8 @@ cv.addEventListener("pointercancel", endDraw);
 /* Dibujar sin nota previa: crea la nota vacia en el fotograma del cursor.
    Sin esto, dibujar encima de un frame sin nota no hacia nada y parecia un bug. */
 function crearNotaParaDibujar(){
-  /* Crea la nota vacia en el fotograma del cursor, de forma OPTIMISTA: se pinta al
-     instante para que el trazo tenga donde agarrarse, y se sincroniza despues.
-     Antes era async y el handler hacia return, asi que el primer trazo se perdia
-     siempre — de ahi que "las herramientas no funcionan". */
+  /* El trazo nace como BORRADOR local. No se crea una nota vacia en el servidor:
+     texto, dibujo, tramo y JPEG viajan juntos en el unico POST de Guardar. */
   if(!st.slug || !st.vid) return null;
   const f = snap(v.currentTime);
   // el invitado solo reutiliza una nota del fotograma si es SUYA
@@ -2237,50 +2389,6 @@ function crearNotaParaDibujar(){
   st.selId = nota.id;
   pushHist();
   drawCanvas(); renderList(); updateMarks(); updateEditor();
-  // sincronizar en segundo plano: si falla, se quita la nota temporal
-  api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify({
-    video: st.vid, frame: f, text: "", author: esInvitado ? "invitado" : "cristian", fps: fps})})
-  .then(r => {
-    const real = r.nota;
-    if(!real) return;
-    /* El poll (cada 2,2 s) puede haber reemplazado la nota temporal por la lista del
-       servidor mientras el usuario dibuja: entonces la temporal ya no esta y, con el
-       codigo de antes, la nota real se descartaba en silencio — el trazo se perdia.
-       Por eso, si la temporal desaparecio, se busca la real por video+fotograma. */
-    let local = st.notas.find(n => n.id === nota.id);
-    if(!local){
-      local = st.notas.find(n => n.id === real.id)
-           || st.notas.find(n => n.video === real.video && n.frame === real.frame
-                && n.author === real.author && !(n.text||"").trim() && !(n.drawing.strokes||[]).length);
-    }
-    if(local){
-      // el dibujo que se hizo mientras sincronizaba viaja con la nota real
-      const dib = local.drawing;
-      delete local.pending_sync;
-      const trazos = (dib && dib.strokes && dib.strokes.length) ? dib : (real.drawing || null);
-      // si el trazo se hizo sobre la temporal y esta ya no existe, se reconstruye
-      // en la nota real para que no se pierda.
-      Object.assign(local, real, {drawing: trazos});
-      local.id = real.id;
-      if(drawing && cur && _dibujandoEnNota && _dibujandoEnNota.id === nota.id){
-        _dibujandoEnNota = local;
-      }
-      if(st.selId === nota.id) st.selId = real.id;
-      renderList(); updateMarks(); drawCanvas();
-      if(local.drawing && local.drawing.strokes && local.drawing.strokes.length) saveDrawing();
-    } else {
-      // no hay sitio local: se inserta la real para no perderla
-      st.notas.push(real); st.notas.sort(cmpNotas);
-      renderList(); updateMarks();
-    }
-  })
-  .catch(e => {
-    const i2 = st.notas.findIndex(n => n.id === nota.id);
-    if(i2 >= 0) st.notas.splice(i2, 1);
-    if(st.selId === nota.id) st.selId = null;
-    drawCanvas(); renderList(); updateMarks();
-    toast("No se pudo crear la nota para el dibujo: " + e.message, 3600);
-  });
   return nota;
 }
 
@@ -2351,6 +2459,31 @@ function drawStroke(s,W,H){
   }
 }
 
+function x2Thumb(n){
+  if(!n || !n.drawing || !n.drawing.strokes || !n.drawing.strokes.length) return null;
+  const sw = v.videoWidth || cv.width || 1280, sh = v.videoHeight || cv.height || 720;
+  const scale = Math.min(1, 1280 / Math.max(sw, sh));
+  const out = document.createElement("canvas"); out.width = Math.max(1,Math.round(sw*scale)); out.height = Math.max(1,Math.round(sh*scale));
+  const g = out.getContext("2d");
+  try{ g.drawImage(v,0,0,out.width,out.height); }catch(_){ g.fillStyle="#000"; g.fillRect(0,0,out.width,out.height); }
+  for(const s of n.drawing.strokes){
+    g.strokeStyle=s.color;g.fillStyle=s.color;g.lineWidth=s.size*(out.width/1000)*1.15;g.lineCap="round";g.lineJoin="round";
+    if(!s.pts||!s.pts.length) continue;
+    if(s.tool==="pen"){
+      g.beginPath();g.moveTo(s.pts[0].x*out.width,s.pts[0].y*out.height);
+      for(let i=1;i<s.pts.length;i++) g.lineTo(s.pts[i].x*out.width,s.pts[i].y*out.height);g.stroke();
+    }else if(s.tool==="arrow"){
+      const a=s.pts[0],b=s.pts[s.pts.length-1],x1=a.x*out.width,y1=a.y*out.height,x2=b.x*out.width,y2=b.y*out.height;
+      g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();const ang=Math.atan2(y2-y1,x2-x1),hd=g.lineWidth*4.2;
+      g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-hd*Math.cos(ang-.42),y2-hd*Math.sin(ang-.42));g.lineTo(x2-hd*Math.cos(ang+.42),y2-hd*Math.sin(ang+.42));g.closePath();g.fill();
+    }else{
+      const a=s.pts[0],b=s.pts[s.pts.length-1],x=Math.min(a.x,b.x)*out.width,y=Math.min(a.y,b.y)*out.height,w=Math.abs(b.x-a.x)*out.width,h=Math.abs(b.y-a.y)*out.height;
+      g.beginPath();if(s.tool==="rect")g.rect(x,y,w,h);else g.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,7);g.stroke();
+    }
+  }
+  return out.toDataURL("image/jpeg",.82);
+}
+
 /* ═══ editor: Enter envia (modo chat), mover, borrar ═══ */
 let dirty = false;          // hay texto escrito que aun no se ha enviado
 let editingId = null;       // id de la nota en edicion; null = crear nueva (modo chat)
@@ -2394,20 +2527,54 @@ async function saveReply(){
   }
 }
 
+function x2SalirAjuste(){
+  st.adjustTo = null;
+  $(".editor").classList.remove("adjusting");
+  $("#ta").placeholder = "Escribe la nota y pulsa Enter para enviarla. Shift+Enter = nueva linea.";
+}
+async function x2GuardarAjuste(){
+  const c = st.notas.find(n => n.id === st.adjustTo && n.kind === "cambio");
+  if(!c){ x2SalirAjuste(); return; }
+  const val = $("#ta").value.trim();
+  if(!val){ toast("Escribe el ajuste que necesitas",1800); return; }
+  const linked = c.resuelve ? st.notas.find(n => n.id === c.resuelve) : null;
+  const antesC = snapNota(c), antesN = snapNota(linked);
+  let reply = null;
+  try{
+    await withBusyNote(async () => {
+      const rr = await api(P(st.slug)+"/notas", {method:"POST", body:JSON.stringify({parent:c.id,text:val,author:"cristian"})});
+      reply = rr.nota || null;
+      await api(P(st.slug)+"/notas/"+c.id, {method:"PATCH", body:JSON.stringify({decision:"adjust",visto:true})});
+      if(linked) await api(P(st.slug)+"/notas/"+linked.id, {method:"PATCH", body:JSON.stringify({resolved:false})});
+    });
+    const acciones = [];
+    if(reply) acciones.push({tipo:"crear",antes:snapNota(reply),despues:snapNota(reply)});
+    acciones.push({tipo:"campo",antes:antesC,despues:Object.assign({},antesC,{decision:"adjust",visto:true}),cambios:["decision","visto"]});
+    if(linked) acciones.push({tipo:"campo",antes:antesN,despues:Object.assign({},antesN,{resolved:false}),cambios:["resolved"]});
+    pushUndo("ajuste pedido en "+x2Numero(c), {tipo:"multi",acciones:acciones});
+    $("#ta").value=""; setDirty(false); x2SalirAjuste(); $("#bCancel").style.display="none";
+    await pullDetail(); renderList(); renderVideos(); updateMarks(); updateEditor();
+    toast("Ajuste pedido al Agente");
+  }catch(e){ toast("No se pudo pedir el ajuste: "+e.message,4000); }
+}
+
 async function saveNote(){
   if(!st.slug || !st.vid) return;
   if(!puedeEscribir()){ toast("Este enlace caducó: ya no se pueden enviar notas"); return; }
+  if(st.adjustTo) return x2GuardarAjuste();
   if(st.replyTo) return saveReply();      // el cuadro esta en modo respuesta
   const val = $("#ta").value;
   // invitado con tramo marcado: la nota nace en el INICIO del tramo y llega hasta «fin»
   const tramo = (esInvitado && st.invTramo) ? st.invTramo : null;
-  const f = tramo ? tramo.ini : editorFrame();
+  const draft = st.notas.find(n => String(n.id).startsWith("tmp_") && n.id === st.selId) || null;
+  const f = draft ? draft.frame : (tramo ? tramo.ini : editorFrame());
   // sin texto y sin edicion activa: nada que enviar
-  if(!val.trim() && !editingId){
+  if(!val.trim() && !editingId && !(draft && draft.drawing && draft.drawing.strokes.length)){
     setDirty(false); toast("Escribe algo para guardar", 1600); return;
   }
   // inmediata: el cuadro se limpia al instante y la UI deja de esperar
-  const existing = editingId ? st.notas.find(x => x.id === editingId) : null;
+  const existing = editingId ? st.notas.find(x => x.id === editingId) : draft;
+  const esBorrador = !!(existing && String(existing.id).startsWith("tmp_"));
   const antesDeGuardar = existing ? snapNota(existing) : null;   // para deshacer la edicion
   $("#ta").value = "";
   setDirty(false);
@@ -2415,13 +2582,18 @@ async function saveNote(){
   try{
     let saved = null;
     await withBusyNote(async ()=>{
-      if(existing){
+      if(existing && !esBorrador){
         const r = await api(NP(existing.id), {method:"PATCH", body:JSON.stringify({text: val})});
         saved = r.nota || null;
         if(saved) saved.video = st.vid;
       }else{
         const cuerpo = { video: st.vid, frame: f, text: val, author: esInvitado ? "invitado" : "cristian", fps: fps };
         if(tramo && tramo.fin > f) cuerpo.end_frame = tramo.fin;
+        if(esBorrador){
+          cuerpo.drawing = existing.drawing;
+          if(existing.end_frame != null) cuerpo.end_frame = existing.end_frame;
+          cuerpo.thumb = x2Thumb(existing);
+        }
         const r = await api(P(st.slug)+"/notas", {method:"POST", body: JSON.stringify(cuerpo)});
         saved = r.nota || null;
       }
@@ -2430,14 +2602,15 @@ async function saveNote(){
     st.invTramo = null;
     // la nota entra a la lista sin refetch (el PATCH ya la devuelve)
     if(saved){
-      if(existing) upsertNote(saved); else upsertNote(saved);
+      if(esBorrador) st.notas = st.notas.filter(n => n.id !== existing.id);
+      upsertNote(saved);
     }else{
       const d = await api(P(st.slug));
       absorbDetail(d);
     }
     // ── HISTORIAL: registrar la accion para poder deshacerla ──
     if(saved){
-      if(existing){
+      if(existing && !esBorrador){
         if(antesDeGuardar && antesDeGuardar.text !== saved.text){
           pushUndo("editar nota en " + saved.timecode,
             {tipo:"campo", antes:antesDeGuardar, despues:snapNota(saved), cambios:["text"]});
@@ -2460,7 +2633,7 @@ async function saveNote(){
     if(miaAqui && !existing){ setTimeout(() => startReply(miaAqui.id), 120); }
     $("#bCancel").style.display = "none";
     renderList(); renderVideos(); updateMarks(); updateEditor();
-    toast((existing ? "Nota actualizada en " : "Nota enviada en ") + tc(null, f));
+    toast((existing && !esBorrador ? "Nota actualizada en " : "Nota enviada en ") + tc(null, f));
   }catch(e){
     // si fallo, devolver el texto al cuadro para no perderlo
     $("#ta").value = val;
@@ -2481,7 +2654,7 @@ $("#ta").addEventListener("input", () => {
   if(!st.slug || !st.vid) return;
   // en modo respuesta NO se toca st.pend: el momento es el del hilo, no el del cursor.
   // ensurePend() lo movia al fotograma actual y la respuesta habria perdido su ancla.
-  if(!st.replyTo) ensurePend();
+  if(!st.replyTo && !st.adjustTo) ensurePend();
   setDirty(true);          // no se envia nada hasta Enter o Guardar
 });
 $("#ta").addEventListener("keydown", e => {
@@ -2492,6 +2665,7 @@ $("#ta").addEventListener("keydown", e => {
 });
 $("#bSave").onclick = saveNote;
 $("#bCancel").onclick = () => {
+  if(st.adjustTo){ x2SalirAjuste(); $("#ta").value=""; setDirty(false); updateEditor(); toast("Ajuste cancelado",1500); return; }
   if(cancelReply()){ toast("Respuesta cancelada", 1500); return; }
   editingId = null;
   $("#bCancel").style.display = "none";
@@ -2670,6 +2844,14 @@ $("#bEnd").onclick = () => {
   if(n.end_frame != null && n.end_frame === f){ n.end_frame = null; toast("Intervalo quitado"); }
   else if(f > n.frame){ n.end_frame = f; toast("Hasta " + tc(null,f)); }
   else { toast("Mueve el cursor más allá del inicio"); return; }
+  if(String(n.id).startsWith("tmp_")){
+    n.end_timecode = n.end_frame == null ? null : tc(null,n.end_frame);
+    // La miniatura se compone con el fotograma de INICIO, no con el punto donde se
+    // marco la salida. Volver al inicio tambien deja visible el dibujo al enviarlo.
+    st.pend = {frame:n.frame,time:n.frame/fps}; seek(n.frame/fps);
+    renderList(); updateMarks(); updateEditor();
+    return;
+  }
   withBusyNote(async ()=>{
     try{ await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({end_frame: n.end_frame})});
          await pullDetail(); renderList(); updateMarks(); updateEditor(); }
@@ -2685,7 +2867,14 @@ $("#bNext").onclick = () => stepF(1);
 $("#bBack").onclick = () => stepS(-1);
 $("#bFwd").onclick = () => stepS(1);
 $("#bMax").onclick = () => { (v.requestFullscreen||v.webkitRequestFullscreen||function(){}).call(v); };
-$("#cPend").onchange = e => { st.onlyPend = e.target.checked; renderList(); };
+$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; renderList(); };
+$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; renderList(); };
+$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; renderList(); };
+$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; renderList(); };
+$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; renderList(); };
+$("#x2Prev").onclick = () => { if(st.x2Page>0){ st.x2Page--; renderList(); } };
+$("#x2Next").onclick = () => { st.x2Page++; renderList(); };
+new ResizeObserver(() => renderList()).observe($("#list"));
 /* Dos casillas para el MISMO ajuste (la de la barra superior y la del panel de
    notas). Solo una de las dos sincronizaba a la otra, asi que marcar la de abajo
    dejaba la de arriba desmarcada diciendo lo contrario. Un solo handler. */
@@ -2762,7 +2951,7 @@ document.addEventListener("focusout", hideTip);
 window.addEventListener("scroll", hideTip, true);
 window.addEventListener("resize", hideTip);
 window.addEventListener("blur", hideTip);
-$("#vfilter").onchange = e => { st.filterVid = e.target.value; renderList(); };
+$("#vfilter").onchange = e => { st.filterVid = e.target.value; st.x2Page=0; renderList(); };
 
 /* ── ATajos: una sola tabla, un solo dueñо por tecla ──
    Antes habia DOS cadenas if en paralelo comparando contra la misma tecla, asi que
@@ -2782,7 +2971,7 @@ const ATAJOS = {
   "0":              () => tlReset(),
   "]":              () => tlIrANota(1),
   "[":              () => tlIrANota(-1),
-  // Shift+N / Shift+P recorren SOLO los cambios de Claude: el flujo de revision
+  // Shift+N / Shift+P recorren SOLO los cambios de Agente: el flujo de revision
   // sin ver el video entero. Mayusculas = cambios, minusculas = notas.
   "N":              () => irACambio(1),
   "P":              () => irACambio(-1),
@@ -2981,7 +3170,7 @@ function tlIrANota(direccion){
 /* ── zoom del timeline: botones y atajos ── */
 
 /* ── Saltar entre CAMBIOS ──
-   Shift+N / Shift+P recorren solo los puntos donde Claude toco algo.
+   Shift+N / Shift+P recorren solo los puntos donde Agente toco algo.
    Es lo que sirve para revisar un corte sin ver los 16 minutos:
    saltas de cambio en cambio y revisas. */
 function soloCambios(){
@@ -2989,7 +3178,7 @@ function soloCambios(){
                  .sort((a,b) => a.frame - b.frame);
 }
 function irACambio(dir){
-  if(esInvitado) return;                 // los cambios de Claude son flujo de Cristian
+  if(esInvitado) return;                 // los cambios de Agente son flujo de Cristian
   const cs = soloCambios();
   if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
   const t = v.currentTime + (dir > 0 ? 0.001 : -0.001);
@@ -3020,7 +3209,7 @@ $("#tlChg").onclick = () => {
 /* ── Plegar / desplegar los paneles de proyectos y tomas ──
    Cristian: "quizas las columnas proyectos y tomas se pueda minimizar para ocupar
    menos espacio". Plegadas quedan en un asa de 30px que conserva lo accionable:
-   cuantas notas tiene el proyecto y si hay cambios de Claude sin revisar.
+   cuantas notas tiene el proyecto y si hay cambios de Agente sin revisar.
    La decision se recuerda entre sesiones. */
 const NAV_KEY = "openframe:nav";
 function navPlegado(){ return document.body.classList.contains("nav-plegado"); }
@@ -3090,7 +3279,7 @@ function pintarRail(){
       e.dataset.nid = n.id;
       e.tabIndex = 0;
       e.setAttribute("role", "button");
-      const et = n.kind === "cambio" ? "Cambio de Claude" : nombreAutor(n);
+      const et = n.kind === "cambio" ? "Cambio de Agente" : nombreAutor(n);
       e.setAttribute("aria-label", et + " en " + n.timecode);
       e.title = et + " · " + n.timecode + " · f" + n.frame + (n.kind === "cambio" ? "" : "\n" + (n.text||"").slice(0,70));
       e.onclick = ev => { ev.stopPropagation(); saltarANota(n.id); };
@@ -3439,7 +3628,7 @@ function updateMarks(){
     e.dataset.nid = n.id;   // para arrastrarlo sobre la barra
     e.dataset.t = t;
     e.title = n.kind === "cambio"
-      ? "Cambio de Claude · " + n.timecode + " · clic para ver"
+      ? "Cambio de Agente · " + n.timecode + " · clic para ver"
       : nombreAutor(n) + " · " + n.timecode + " — " + (n.text||"");
     e.onclick = ev => { ev.stopPropagation();
       st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
@@ -3502,6 +3691,14 @@ function updateEditor(){
     ? ("Actualizar la nota de " + enEdicion.timecode)
     : ("Enviar la nota nueva al fotograma " + f)) + "\n" + atajos;
   if(bs) bs.dataset.tipLong = atajos;
+  if(st.adjustTo){
+    const c = st.notas.find(n => n.id === st.adjustTo);
+    $(".editor").classList.add("adjusting");
+    ta.placeholder = "Qué ajuste le pides al Agente sobre " + (c ? x2Numero(c) : "este cambio") + "…";
+    if(lbl) lbl.textContent = "pidiendo ajuste en " + (c ? x2Numero(c) : "el cambio");
+    if(bc) bc.style.display = "";
+    if(bs) bs.title = "Enviar el ajuste al Agente";
+  }
   updateMarks();
 }
 function openModal(title, body, foot){
@@ -3554,7 +3751,7 @@ async function nuevoProyecto(){
   openModal("Nuevo proyecto",
     '<label class="lbl">Nombre</label><input class="fld" id="pn" placeholder="Ej: Animales Sueltos — Trailer 2">' +
     '<label class="lbl">Cliente (opcional)</label><input class="fld" id="pc" placeholder="Ej: Perspectiva">' +
-    '<label class="lbl">Nota para Claude (opcional)</label><textarea class="fld" id="pnt" placeholder="Qué hay que lograr en este proyecto"></textarea>',
+    '<label class="lbl">Nota para Agente (opcional)</label><textarea class="fld" id="pnt" placeholder="Qué hay que lograr en este proyecto"></textarea>',
     '<span style="flex:1"></span><button class="btn" id="mCancel">Cancelar</button><button class="btn pri" id="mOk">Crear</button>');
   $("#pn").focus();
   $("#mCancel").onclick = closeModal;
@@ -3624,9 +3821,9 @@ $("#bOut").onclick = () => {
       <button class="btn" data-cp="md"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Markdown</button>
       <button class="btn" data-cp="json"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>JSON</button>
     </div>
-    <h4>O que Claude ve</h4>
+    <h4>O que Agente ve</h4>
     <p style="color:var(--fg-dim);font-size:12px;line-height:1.8">
-      Claude no necesita esto: lee las notas directo por la API en <code>http://127.0.0.1:8477</code>.
+      Agente no necesita esto: lee las notas directo por la API en <code>http://127.0.0.1:8477</code>.
       Esto es para tú, o para pasarlo a otro chat.</p>`,
     '<span style="flex:1"></span><button class="btn" id="mClose2">Cerrar</button>');
   $("#mClose2").onclick = closeModal;
@@ -3657,15 +3854,15 @@ function asCSV(){
   return s;
 }
 
-/* ═══ copiar para Claude ═══ */
+/* ═══ copiar para Agente ═══ */
 $("#bCopy").onclick = async () => {
   if(esInvitado) return;
   if(!st.slug){ toast("Abre un proyecto primero"); return; }
   const ok = await copyText(asMD());
-  toast(ok ? "Copiado — pégalo en Claude" : "No se pudo copiar", ok?2000:3200);
+  toast(ok ? "Copiado — pégalo en Agente" : "No se pudo copiar", ok?2000:3200);
 };
 
-/* ═══ para Claude ═══ */
+/* ═══ para Agente ═══ */
 $("#bClaude").onclick = () => {
   if(esInvitado) return;
   const p = pro();
@@ -3691,7 +3888,7 @@ $("#bClaude").onclick = () => {
     "Proyecto actual: " + (p ? p.nombre + " (" + p.slug + ")" : "ninguno abierto") +
       (p && p.nota ? "\nObjetivo: " + p.nota : "")
   ].join("\n");
-  openModal("Para Claude", '<div class="copybox" id="brief">' + esc(brief) + '</div>' +
+  openModal("Para Agente", '<div class="copybox" id="brief">' + esc(brief) + '</div>' +
     '<div class="srow" style="margin-top:13px"><button class="btn pri" id="cpB"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar</button>' +
     '<button class="btn" id="dlB"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Guardar</button></div>' +
     '<h4>El servidor</h4><p style="color:var(--fg-dim);font-size:12px;line-height:1.8">' +

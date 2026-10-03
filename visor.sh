@@ -57,6 +57,7 @@ visor.sh — revision de video con notas por fotograma
   cambio <slug> <video-id> <frame> "<que cambiaste>" [--por <nota-id>]
                                    marca un cambio. --por = la nota que lo motivo
   cambios-lista <slug>                    lista los cambios marcados, por timecode
+  ajustes <slug>                          lista los cambios devueltos para ajuste
   borrar-cambio <slug> <cambio-id>       quita un marcador de cambio
   resolver <slug> <nota-id>        marca una nota como resuelta
   resolver-todas <slug>            resuelve todas las pendientes
@@ -388,10 +389,24 @@ if not cs:
 for n in cs:
     por = ("   <- %s" % n["resuelve"]) if n.get("resuelve") else ""
     visto = " [visto]" if n.get("visto") else ""
+    decision = " [aprobado]" if n.get("decision") == "approved" else (" [AJUSTE]" if n.get("decision") == "adjust" else "")
     print("  %s  %s  f%-6s %s%s%s" % (n["id"], n["timecode"], n["frame"],
-                                     (n.get("text") or "(SIN TEXTO - punto mudo)").replace("\n", " ")[:70], visto, por))
+                                     (n.get("text") or "(SIN TEXTO - punto mudo)").replace("\n", " ")[:70], decision + visto, por))
 print()
 print("%d cambios" % len(cs))'
+    ;;
+
+  ajustes)
+    SLUG="${1:-}"
+    [ -z "$SLUG" ] && { echo "uso: visor.sh ajustes <slug>" >&2; exit 1; }
+    curl -sf "$API/api/proyectos/$SLUG" | python3 -c '
+import sys, json
+d=json.load(sys.stdin); ns=d.get("notas",[])
+cs=sorted([n for n in ns if n.get("kind")=="cambio" and n.get("decision")=="adjust"], key=lambda n:(n.get("video",""),n.get("frame",0)))
+if not cs: print("SIN AJUSTES PEDIDOS")
+for n in cs:
+    print("  %s  %s  f%-6s [AJUSTE] %s%s" % (n["id"],n["timecode"],n["frame"],(n.get("text") or "").replace("\n"," ")[:70],("   <- "+n["resuelve"]) if n.get("resuelve") else ""))
+print("\n%d ajustes" % len(cs))'
     ;;
 
   borrar-cambio|rm-cambio)

@@ -1,0 +1,11 @@
+# TAREA F · Auditor UX de la maqueta fusionada (SOLO LECTURA de src/)   (puerto 9357 · modelo Fable)
+
+NO modificas `src/`. Eres un diseñador de producto escéptico que usa la maqueta como lo haría Cristian durante una ronda de revisión real, mide la fricción y verifica que lo prometido está cumplido.
+Lee `docs/SPEC.md`, `docs/CONTRATO.md` y los informes `docs/reports/REPORT-*.md`. Construye (`tools/build.py`) y ejecuta tareas REALES por CDP + capturas (mira las capturas con Read):
+1. Revisar un corte de punta a punta: reproducir, pausar en un plano, dibujar una flecha, escribir una nota con dibujo; marcar un tramo y escribir una nota de audio; responder a un cambio del Agente pidiendo otro ajuste; aprobar el otro; comparar v01·v02; filtrar por «Con dibujo» y por persona; buscar «caballo»; cerrar la ronda y aprobar el corte; deshacer cuatro pasos con Ctrl+Z.
+   Cuenta **clics y pulsaciones por tarea**, y anota todo momento en que dudaste de qué hacer, no se veía el estado, el control no se entendía o el resultado no era el esperado.
+2. Estrés visual: 30 notas, 1280×800 y 1920×1080, zoom x1/x4/x8, selección en cada tipo de entrada. ¿Algo se solapa, se corta o se vuelve ilegible?
+3. Verifica uno por uno los **8 puntos prometidos al usuario** (todos con prueba, no con fe): (1) dibujo atado al fotograma; (2) marcadores agrupados + vista previa; (3) filtros/búsqueda del chat; (4) aprobar/pedir ajuste; (5) comparar v01·v02; (6) notas con tramo; (7) cierre de ronda; (8) legibilidad: contraste, tamaños, hit areas, atajos. Estado: ✔ cumplido / ◐ parcial / ✘ no, con evidencia.
+4. Revisión de acabado visual («IA slop»): cuenta gradientes, sombras con blur, dobles bordes/halos, radios y grises distintos; lista cualquier elemento que parezca genérico de IA (contenedores con borde+sombra+icono en círculo, etc.) con selector.
+Entregable: `AUDIT.md` (≤ 700 palabras): tabla de los 8 puntos con estado y evidencia; lista priorizada de problemas (gravedad · qué · pasos o check · dónde · arreglo de 1–3 líneas); «lo mejor» (3 cosas que ya funcionan muy bien); y las 3 cosas que harías a continuación. Honestidad: separa lo medido de lo opinado.
+Commit de `AUDIT.md` y de tus scripts `tools/audit-f.py`.

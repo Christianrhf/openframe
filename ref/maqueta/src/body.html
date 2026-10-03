@@ -1,0 +1,233 @@
+<header>
+  <div class="brand"><span class="brandmark" aria-hidden="true"></span>OpenFrame</div>
+  <div class="crumb"><span>Proyectos</span><span class="crumb-sep">/</span><strong title="Animales Sueltos · documental">Animales Sueltos</strong></div>
+  <div class="header-right">
+    <button class="pill pending-btn" id="pendingBtn" aria-haspopup="dialog" aria-expanded="false" title="Cierre de ronda" aria-label="Cierre de ronda">En revisión</button>
+    <div class="round-pop" id="roundPop" role="dialog" aria-label="Cierre de ronda" hidden>
+      <div class="round-row"><span>Notas abiertas <b id="roundOpenN">0</b></span><button class="text-btn" id="verNotesBtn">Ver</button></div>
+      <div class="round-row"><span>Cambios sin revisar <b id="roundUnrevN">0</b></span><button class="text-btn" id="verChangesBtn">Ver</button></div>
+      <div class="round-actions">
+        <button class="btn" id="sendAgentBtn">{{i:send:sm}}Enviar al Agente</button>
+        <button class="btn black" id="approveBtn">{{i:badge-check:sm}}Aprobar corte</button>
+      </div>
+    </div>
+    <button class="ctl" id="keysBtn" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="?" title="Atajos de teclado (?)" aria-label="Atajos de teclado">{{i:keyboard}}</button>
+    <div class="keys-pop" id="keysPop" role="dialog" aria-modal="false" aria-label="Atajos de teclado" hidden></div>
+    <button class="btn" id="version" title="Cambiar de corte">Corte v02 {{i:chevron-down:sm}}</button>
+    <button class="btn black" id="share" title="Compartir la revisión">{{i:share-2:sm}} Compartir revisión</button>
+    <span class="avatar" title="Lucía Méndez">LM</span>
+  </div>
+</header>
+
+<main class="workspace">
+<div class="main-grid">
+
+<section class="viewer" aria-label="Visor del corte v02">
+  <div class="video" id="video">
+    {{SCENE}}
+    <div class="video-top"><span>ESTUDIO NORTE / FILMS</span><span>FOTOGRAMA DE REFERENCIA · MAQUETA</span></div>
+    <button class="video-play" id="videoPlay" title="Reproducir (Espacio)" aria-label="Reproducir (Espacio)"><svg class="ico solid" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use id="videoPlayIcon" href="#i-play"/></svg></button>
+    <div class="shot-title"><small>UNA HISTORIA SOBRE VOLVER</small><h2>Animales sueltos.</h2><p>Hay cosas que no se pueden domesticar.</p></div>
+    <span class="video-tag">CORTE v02 / 24 FPS</span>
+    <div class="cmp-curtain" id="cmpCurtain" hidden>
+      <span class="cmp-tag l" id="cmpTagL" aria-hidden="true">v01</span>
+      <span class="cmp-tag r" id="cmpTagR" aria-hidden="true">v02</span>
+      <div class="cmp-line" id="cmpLine"><button class="cmp-handle" id="cmpHandle" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 %" aria-label="Cortina de comparación: v01 a la izquierda, v02 a la derecha. Arrastra o usa ← y → (Mayús: 10 %)" title="Arrastra la cortina (← / →)">{{i:chevrons-left-right:sm}}</button></div>
+    </div>
+    <svg id="drawLayer" class="draw-layer" preserveAspectRatio="none" aria-label="Superficie de dibujo"><g id="dlNote"></g><g id="dlDraft"></g></svg>
+    <div class="vpill viewing" id="selPill" role="status" hidden>{{i:eye:sm}}<span id="selPillText"></span></div>
+    <div class="vpill tool" id="toolPill" role="status" hidden>{{i:pencil:sm}}<span id="toolPillText"></span><button class="x" id="toolExit" title="Salir del dibujo (Esc)" aria-label="Salir del dibujo">{{i:x:sm}}</button></div>
+    <div class="vseg" id="cmpSeg" role="group" aria-label="Comparar cortes v01 y v02">
+      <button class="vseg-btn on" data-cmp="v02" aria-pressed="true" title="Ver el corte v02 (actual)" aria-label="Ver el corte v02, el actual">{{i:film:sm}}v02</button>
+      <button class="vseg-btn" data-cmp="v01" aria-pressed="false" title="Ver el corte v01 (anterior)" aria-label="Ver el corte v01, el anterior">{{i:history:sm}}v01</button>
+      <button class="vseg-btn" data-cmp="split" aria-pressed="false" title="Dividir: v01 a la izquierda, v02 a la derecha" aria-label="Dividir la imagen: v01 a la izquierda, v02 a la derecha">{{i:columns-2:sm}}Dividir</button>
+    </div>
+    <div class="vpill cmp" id="cmpPill" role="status" hidden>{{i:columns-2:sm}}<span>Comparando v01 · v02</span><button class="x" id="cmpExit" title="Salir de la comparación (Esc)" aria-label="Salir de la comparación">{{i:x:sm}}</button></div>
+  </div>
+
+  <section class="timeline-panel" aria-label="Línea de tiempo del corte">
+    <div class="tl-bar">
+      <div class="group" role="group" aria-label="Reproducción">
+        <button class="ctl" id="backSecond" title="Retroceder 1 segundo (Mayús + ←)" aria-label="Retroceder 1 segundo">{{i:rewind}}</button>
+        <button class="ctl" id="previous" title="Fotograma anterior (←)" aria-label="Fotograma anterior">{{i:step-back}}</button>
+        <button class="ctl play" id="bandPlay" title="Reproducir (Espacio)" aria-label="Reproducir (Espacio)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use id="bandPlayIcon" href="#i-play"/></svg></button>
+        <button class="ctl" id="next" title="Fotograma siguiente (→)" aria-label="Fotograma siguiente">{{i:step-forward}}</button>
+        <button class="ctl" id="forwardSecond" title="Avanzar 1 segundo (Mayús + →)" aria-label="Avanzar 1 segundo">{{i:fast-forward}}</button>
+      </div>
+      <div class="time" aria-label="Tiempo actual"><b id="bandClock">00:00:12:12</b><span>/ 00:01:00:00</span></div>
+      <button id="speed" class="chip" title="Velocidad de reproducción: normal (1×). Pulsar para cambiar" aria-label="Velocidad de reproducción: normal (1×)">{{i:gauge:sm}}<b>1×</b><small>normal</small></button>
+      <span class="spacer"></span>
+      <div class="group" role="group" aria-label="Zoom de la línea de tiempo">
+        <button class="ctl" id="zoomOut" title="Alejar la línea de tiempo" aria-label="Alejar la línea de tiempo">{{i:zoom-out}}</button>
+        <button class="ctl" id="zoomFit" title="Ajustar: ver el corte entero" aria-label="Ver el corte entero">{{i:fold-horizontal}}</button>
+        <button class="ctl" id="zoomIn" title="Acercar la línea de tiempo" aria-label="Acercar la línea de tiempo">{{i:zoom-in}}</button>
+      </div>
+    </div>
+
+    <div class="tl">
+      <div class="tl-gutter">
+        <div class="tl-corner">Línea de tiempo</div>
+        <div class="lane-label"><i class="shape note" aria-hidden="true"></i>Notas
+          <span class="nav"><button id="prevNote" title="Nota anterior" aria-label="Ir a la nota anterior">{{i:chevron-left:sm}}</button><button id="nextNote" title="Nota siguiente" aria-label="Ir a la nota siguiente">{{i:chevron-right:sm}}</button></span></div>
+        <div class="lane-label"><i class="shape change" aria-hidden="true"></i>Cambios
+          <span class="nav"><button id="prevChange" title="Cambio del agente anterior" aria-label="Ir al cambio anterior">{{i:chevron-left:sm}}</button><button id="nextChange" title="Cambio del agente siguiente" aria-label="Ir al cambio siguiente">{{i:chevron-right:sm}}</button></span></div>
+      </div>
+      <div class="rail" id="rail">
+        <div class="rail-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="ruler" id="ruler" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="lane" id="laneNotes">
+          <button class="marker mk note" data-item="n1" data-frame="300" title="Nota 1 · Lucía Méndez · 00:00:12:12" aria-label="Nota 1 de Lucía Méndez, 00:00:12:12" aria-pressed="false">1</button>
+          <button class="marker mk note" data-item="n2" data-frame="624" data-out="700" title="Nota 2 · Diego Ruiz · 00:00:26:00 → 00:00:29:04" aria-label="Nota 2 de Diego Ruiz, tramo 00:00:26:00 a 00:00:29:04" aria-pressed="false">2</button>
+        </div>
+        <div class="lane" id="laneChanges">
+          <button class="marker mk change" data-item="a1" data-frame="331" title="Cambio A1 · Más aire en el plano del caballo · 00:00:13:19" aria-label="Cambio A1 del agente, 00:00:13:19" aria-pressed="false"><b>A1</b></button>
+          <button class="marker mk change" data-item="a2" data-frame="677" title="Cambio A2 · La voz vuelve al primer plano · 00:00:28:05" aria-label="Cambio A2 del agente, 00:00:28:05" aria-pressed="false"><b>A2</b></button>
+        </div>
+        <div class="played" id="played"></div>
+        <input id="scrubber" type="range" min="0" max="1440" value="300" step="1" aria-label="Posición de reproducción">
+        <div class="playhead" id="playhead"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="dock" role="toolbar" aria-label="Anotar sobre el fotograma" id="dock">
+    <span class="dock-title">{{i:pencil:sm}}Anotar</span>
+    <div class="group" data-drag="tools" role="group" aria-label="Herramientas de dibujo">
+      <span class="grip" title="Arrastra para reordenar">{{i:grip-vertical:sm}}</span>
+      <button class="ctl tool" data-tool="pen" title="Lápiz · trazo libre" aria-label="Lápiz, trazo libre" aria-pressed="false">{{i:pencil}}</button>
+      <button class="ctl tool" data-tool="arrow" title="Flecha" aria-label="Flecha" aria-pressed="false">{{i:arrow-up-right}}</button>
+      <button class="ctl tool" data-tool="rect" title="Rectángulo" aria-label="Rectángulo" aria-pressed="false">{{i:rectangle-horizontal}}</button>
+      <button class="ctl tool" data-tool="ellipse" title="Círculo" aria-label="Círculo" aria-pressed="false">{{i:circle}}</button>
+    </div>
+    <div class="group" data-drag="color" role="group" aria-label="Color del trazo">
+      <span class="grip" title="Arrastra para reordenar">{{i:grip-vertical:sm}}</span>
+      <button class="ink-btn" id="inkColor" type="button" value="#111111" title="Color del trazo: negro. Pulsar para elegir" aria-label="Color del trazo: negro. Pulsar para elegir" aria-haspopup="listbox">{{i:palette}}<i class="sw" style="color:#111111"></i><span class="ink-name">Negro</span></button>
+    </div>
+    <div class="group" data-drag="weight" role="group" aria-label="Grosor del trazo">
+      <span class="grip" title="Arrastra para reordenar">{{i:grip-vertical:sm}}</span>
+      <span class="weights">
+        <button class="weight" data-width="3" title="Trazo fino" aria-label="Trazo fino" aria-pressed="false"><i style="height:2px"></i></button>
+        <button class="weight on" data-width="5" title="Trazo medio" aria-label="Trazo medio" aria-pressed="true"><i style="height:3px"></i></button>
+        <button class="weight" data-width="8" title="Trazo grueso" aria-label="Trazo grueso" aria-pressed="false"><i style="height:5px"></i></button>
+      </span>
+    </div>
+    <div class="group" data-drag="history" role="group" aria-label="Deshacer y rehacer">
+      <span class="grip" title="Arrastra para reordenar">{{i:grip-vertical:sm}}</span>
+      <button class="ctl" id="undoDrawing" title="Deshacer el último cambio (Ctrl+Z)" aria-label="Deshacer el último cambio">{{i:undo-2}}</button>
+      <button class="ctl" id="redoDrawing" title="Rehacer (Ctrl+Mayús+Z)" aria-label="Rehacer">{{i:redo-2}}</button>
+      <button class="ctl" id="clearDrawing" title="Borrar el dibujo de este fotograma" aria-label="Borrar el dibujo de este fotograma">{{i:trash-2}}</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="ctl" id="fullscreen" title="Pantalla completa" aria-label="Pantalla completa">{{i:maximize}}</button>
+  </div>
+</section>
+
+<aside class="sidebar" aria-label="Notas de revisión">
+  <div class="side-head">
+    <div class="side-title">Conversación <span class="live"><span class="dot"></span>Sesión de ejemplo</span></div>
+    <div class="tabs" role="tablist" aria-label="Filtrar notas">
+      <button class="tab" role="tab" aria-selected="true" id="openTab" aria-controls="feed">Abiertas <span class="count" id="openCount">2</span></button>
+      <button class="tab" role="tab" aria-selected="false" id="resolvedTab" aria-controls="feed">Resueltas <span class="count" id="resolvedCount">0</span></button>
+    </div>
+    <div class="filterbar" id="filterBar">
+      <div class="fb-row">
+        <div class="searchbox">
+          {{i:search:sm}}
+          <input type="text" id="searchInput" placeholder="Buscar…" aria-label="Buscar en la conversación">
+          <button class="x" id="searchClear" title="Limpiar búsqueda" aria-label="Limpiar búsqueda" hidden>{{i:x:xs}}</button>
+        </div>
+        <button class="btn filters-btn" id="filtersBtn" aria-haspopup="dialog" aria-expanded="false" title="Más filtros" aria-label="Más filtros">{{i:sliders-horizontal:sm}}Filtros<span class="dot" id="filtersDot" hidden></span></button>
+      </div>
+      <div class="fb-row">
+        <div class="seg" role="group" aria-label="Tipo de entrada">
+          <button class="seg-btn on" data-type="all" aria-pressed="true">Todo <span class="count" id="countAll">4</span></button>
+          <button class="seg-btn" data-type="note" aria-pressed="false">Notas <span class="count" id="countNotes">2</span></button>
+          <button class="seg-btn" data-type="change" aria-pressed="false">Cambios <span class="count" id="countChanges">2</span></button>
+        </div>
+        <span class="result-count" id="resultCount" aria-live="polite">4 de 4</span>
+      </div>
+    </div>
+    <div class="filters-pop" id="filtersPop" role="dialog" aria-label="Más filtros" hidden>
+      <div class="pop-section"><span class="pop-label">Persona</span><div class="person-list" id="personOptions"></div></div>
+      <label class="chk-row"><input type="checkbox" id="chkDrawing"> Con dibujo</label>
+      <label class="chk-row"><input type="checkbox" id="chkReviewed"> Mostrar cambios revisados</label>
+      <button class="text-btn" id="clearFiltersLink">Limpiar filtros</button>
+    </div>
+  </div>
+
+  <div class="feed" id="feed" role="tabpanel" aria-labelledby="openTab"><div class="feed-content" id="noteContent">
+
+    <article class="item note" data-item="n1" data-kind="note" data-frame="300" data-resolved="false" data-drawing="true" data-label="Nota 1 · Lucía Méndez" tabindex="0">
+      <div class="item-top"><span class="mk note">1</span><div class="item-who"><strong>Lucía Méndez</strong><small>Nota</small></div><span class="ago">Hace 18 min</span><span class="now">{{i:eye:xs}}En pantalla</span></div>
+      <div class="item-meta"><button class="time-link" title="Ir a este fotograma">{{i:clock:xs}}00:00:12:12</button><span class="a-flag" title="Esta nota lleva un dibujo sobre su fotograma">{{i:pen-line:xs}}Dibujo</span></div>
+      <p>Dejemos respirar este plano un poco más. El caballo todavía está entrando cuando cortamos; probaría con 12 fotogramas extra.</p>
+      <div class="item-actions"><button class="text-btn reply-btn">{{i:corner-down-right:sm}}Responder</button><button class="text-btn resolve-btn">{{i:circle-check:sm}}<span>Resolver</span></button></div>
+      <div class="reply">
+        <div class="item-top"><span class="agent-av">{{i:sparkles:xs}}</span><strong>Agente</strong><span class="ago">Hace 12 min</span></div>
+        <p>Extendí el plano 12 fotogramas y ajusté el corte siguiente para mantener la duración.</p>
+        <button class="link-chip" data-goto="a1" title="Ver el cambio A1">{{i:link:xs}}Cambio <span class="mk mini change"><b>A1</b></span></button>
+      </div>
+    </article>
+
+    <article class="item change" data-item="a1" data-kind="change" data-frame="331" data-reviewed="false" data-resolves="n1" data-label="Cambio A1 · Agente" tabindex="0">
+      <div class="item-top"><span class="mk change"><b>A1</b></span><div class="item-who"><strong>Agente</strong><small>Cambio del agente</small></div><span class="ago">Hace 12 min</span><span class="now">{{i:eye:xs}}En pantalla</span></div>
+      <div class="item-meta"><button class="time-link" title="Ir a este fotograma">{{i:clock:xs}}00:00:13:19</button><span class="status"><span class="s-un"><i class="dot"></i>Sin revisar</span><span class="s-ok">{{i:check:xs}}Aprobado</span><span class="s-adj">{{i:wrench:xs}}Ajuste pedido</span></span></div>
+      <p><strong>Más aire en el plano del caballo.</strong> Plano extendido 12 fotogramas; el inicio del plano siguiente se compensó para conservar el minuto de duración.</p>
+      <button class="link-chip" data-goto="n1" title="Ver la nota que lo motivó">{{i:link:xs}}Resuelve la nota <span class="mk mini note">1</span></button>
+      <div class="item-actions">
+        <button class="text-btn reply-btn" title="Responder en este hilo" aria-label="Responder en el hilo del cambio A1">{{i:corner-down-right:sm}}<span>Responder</span></button>
+        <button class="text-btn approve-btn" title="Aprobar el cambio y resolver la nota 1" aria-label="Aprobar el cambio A1 y resolver la nota 1">{{i:check:sm}}<span>Aprobar</span></button>
+        <button class="text-btn adjust-btn" title="Pedir otro ajuste al Agente (reabre la nota 1)" aria-label="Pedir otro ajuste sobre el cambio A1">{{i:wrench:sm}}<span>Pedir ajuste</span></button>
+        <button class="text-btn redecide-btn" title="Cambiar la decisión: vuelve a sin revisar" aria-label="Cambiar la decisión sobre el cambio A1">{{i:replace:sm}}<span>Cambiar decisión</span></button>
+        <button class="text-btn compare-btn" title="Comparar v01 · v02 en este fotograma" aria-label="Comparar v01 y v02 en el fotograma del cambio A1">{{i:columns-2:sm}}<span>Comparar</span></button>
+      </div>
+    </article>
+
+    <article class="item note" data-item="n2" data-kind="note" data-frame="624" data-out="700" data-resolved="false" data-label="Nota 2 · Diego Ruiz" tabindex="0">
+      <div class="item-top"><span class="mk note">2</span><div class="item-who"><strong>Diego Ruiz</strong><small>Nota</small></div><span class="ago">Hace 9 min</span><span class="now">{{i:eye:xs}}En pantalla</span></div>
+      <div class="item-meta"><button class="time-link" title="Ir a la entrada del tramo (00:00:26:00 → 00:00:29:04)">{{i:clock:xs}}00:26:00 → 00:29:04</button><span class="a-dur">3,2 s</span></div>
+      <p>La música tapa un poco la última frase. Bajemos la base durante la voz y recuperemos el nivel al entrar al paisaje.</p>
+      <div class="item-actions"><button class="text-btn reply-btn">{{i:corner-down-right:sm}}Responder</button><button class="text-btn a-play-range" title="Reproducir solo el tramo de esta nota" aria-label="Reproducir solo el tramo de esta nota">{{i:repeat-1:sm}}Reproducir tramo</button><button class="text-btn resolve-btn">{{i:circle-check:sm}}<span>Resolver</span></button></div>
+    </article>
+
+    <article class="item change" data-item="a2" data-kind="change" data-frame="677" data-reviewed="false" data-resolves="n2" data-label="Cambio A2 · Agente" tabindex="0">
+      <div class="item-top"><span class="mk change"><b>A2</b></span><div class="item-who"><strong>Agente</strong><small>Cambio del agente</small></div><span class="ago">Hace 6 min</span><span class="now">{{i:eye:xs}}En pantalla</span></div>
+      <div class="item-meta"><button class="time-link" title="Ir a este fotograma">{{i:clock:xs}}00:00:28:05</button><span class="status"><span class="s-un"><i class="dot"></i>Sin revisar</span><span class="s-ok">{{i:check:xs}}Aprobado</span><span class="s-adj">{{i:wrench:xs}}Ajuste pedido</span></span></div>
+      <p><strong>La voz vuelve al primer plano.</strong> Música reducida 4 dB durante la última frase, con una recuperación gradual de 18 fotogramas al paisaje.</p>
+      <button class="link-chip" data-goto="n2" title="Ver la nota que lo motivó">{{i:link:xs}}Resuelve la nota <span class="mk mini note">2</span></button>
+      <div class="item-actions">
+        <button class="text-btn reply-btn" title="Responder en este hilo" aria-label="Responder en el hilo del cambio A2">{{i:corner-down-right:sm}}<span>Responder</span></button>
+        <button class="text-btn approve-btn" title="Aprobar el cambio y resolver la nota 2" aria-label="Aprobar el cambio A2 y resolver la nota 2">{{i:check:sm}}<span>Aprobar</span></button>
+        <button class="text-btn adjust-btn" title="Pedir otro ajuste al Agente (reabre la nota 2)" aria-label="Pedir otro ajuste sobre el cambio A2">{{i:wrench:sm}}<span>Pedir ajuste</span></button>
+        <button class="text-btn redecide-btn" title="Cambiar la decisión: vuelve a sin revisar" aria-label="Cambiar la decisión sobre el cambio A2">{{i:replace:sm}}<span>Cambiar decisión</span></button>
+        <button class="text-btn compare-btn" title="Comparar v01 · v02 en este fotograma" aria-label="Comparar v01 y v02 en el fotograma del cambio A2">{{i:columns-2:sm}}<span>Comparar</span></button>
+      </div>
+    </article>
+
+    <p id="emptyNotes" class="empty" hidden><span id="emptyNotesText">No hay nada en esta vista.</span> <button class="text-btn" id="clearFiltersBtn" hidden>Quitar filtros</button></p>
+  </div></div>
+
+  <nav class="pager" aria-label="Páginas de la conversación"><button id="pagePrev" aria-label="Página anterior">{{i:chevron-left:sm}}</button><button id="pageStatus" aria-haspopup="dialog" aria-expanded="false" aria-live="polite" title="Ir a una página">4 entradas · todas visibles</button><button id="pageNext" aria-label="Página siguiente">{{i:chevron-right:sm}}</button></nav>
+  <div class="page-pop" id="pagePop" role="dialog" aria-label="Ir a la página" hidden>
+    <form id="pageJumpForm"><label for="pageJumpInput">Ir a la página</label><input id="pageJumpInput" type="number" min="1" step="1" inputmode="numeric" aria-label="Número de página"><button type="submit" class="btn">Ir</button></form>
+  </div>
+
+  <form class="composer" id="noteForm">
+    <div class="composer-top"><label for="noteInput" class="eyebrow" id="composerLabel">Nueva nota</label>
+      <span class="a-io" id="aRangeGroup" role="group" aria-label="Tramo de la nota">
+        <button type="button" class="a-iobtn" id="aSetIn" title="Entrada del tramo en este fotograma (I)" aria-label="Fijar la entrada del tramo en este fotograma" aria-pressed="false">{{i:arrow-right-to-line:xs}}Entrada</button>
+        <button type="button" class="a-iobtn" id="aSetOut" title="Salida del tramo en este fotograma (O)" aria-label="Fijar la salida del tramo en este fotograma" aria-pressed="false">{{i:arrow-left-to-line:xs}}Salida</button>
+      </span>
+      <button type="button" class="cancel" id="cancelReply">{{i:x:xs}}Cancelar</button></div>
+    <div class="a-chips" id="aChips" hidden>
+      <span class="a-chip" id="aDrawChip" hidden>{{i:pen-line:xs}}<span id="aDrawChipText">Dibujo</span><button type="button" class="x" id="aDrawChipClear" title="Quitar el dibujo de esta nota" aria-label="Quitar el dibujo de esta nota">{{i:x:xs}}</button></span>
+      <span class="a-chip" id="aRangeChip" hidden>{{i:move-horizontal:xs}}<span id="aRangeChipText">Tramo</span><button type="button" class="x" id="aRangeChipClear" title="Quitar el tramo de esta nota" aria-label="Quitar el tramo de esta nota">{{i:x:xs}}</button></span>
+    </div>
+    <textarea id="noteInput" aria-label="Texto de la nota" placeholder="Escribe una nota para el equipo…"></textarea>
+    <div class="composer-bottom"><span class="at">{{i:clock:xs}}<span id="noteTime">00:00:12:12</span></span><button class="send" type="submit">Añadir {{i:arrow-up:sm}}</button></div>
+  </form>
+</aside>
+
+</div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
