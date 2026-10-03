@@ -345,6 +345,10 @@ class Handler(BaseHTTPRequestHandler):
             max_age = max(1, int((parse_iso(info["invite"]["expira"]) - datetime.now(timezone.utc)).total_seconds()))
             cookie = "ofg=%s; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=%d" % (token, max_age)
             return self.send_body(302, b"", extra={"Location": "/", "Set-Cookie": cookie}, info=info)
+        if p == "/api/ping":
+            # S3: CONTRATO linea 35, /api/ping responde {ok:true} sin cookie
+            # (publicar.sh lo usa para comprobar el tunel desde fuera).
+            return self.send_json(200, {"ok": True})
         info = self.current_info()
         if not info:
             return self.not_found()
@@ -368,8 +372,6 @@ class Handler(BaseHTTPRequestHandler):
             boot = json.dumps(payload).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
             html = "<!doctype html><script>window.__INVITADO=%s</script><script></script>" % boot
             return self.send_body(200, html, "text/html; charset=utf-8", info=info)
-        if p == "/api/ping":
-            return self.send_json(200, {"ok": True}, info=info)
         m = re.match(r"^/api/proyectos/([^/]+)$", p)
         if m:
             asked = m.group(1)

@@ -14,13 +14,14 @@ import math
 import os
 import re
 import secrets
+import socket
 import threading
 import time
 import uuid
 from datetime import datetime, timezone
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -30,6 +31,8 @@ THUMBS = os.path.join(BASE, "thumbs")
 LOGS = os.path.join(BASE, "logs")
 BODY_MAX = 1024 * 1024
 THUMB_MAX = 600 * 1024
+DRAW_STROKES_MAX = 100
+DRAW_POINTS_MAX = 400
 TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{43}$")
 SLUG_RE = r"[A-Za-z0-9][A-Za-z0-9.-]{0,63}"
 VID_RE = r"v_[0-9a-f]{8}"
@@ -39,12 +42,31 @@ NOT_FOUND = ("<!doctype html><meta charset=utf-8><title>No disponible</title>"
              "<p>Este enlace ya no está disponible</p>").encode("utf-8")
 
 
+class BadInput(ValueError):
+    """Entrada mal formada: 400."""
+    status = 400
+
+
+class TooLarge(ValueError):
+    """Entrada bien formada pero por encima de un tope: 413."""
+    status = 413
+
+
 def read_json(path, default):
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return default
+
+
+def base_publica():
+    """Host publico autorizado; el tunel de Cloudflare reenvia este Host."""
+    cfg = read_json(os.path.join(BASE, "config.json"), {})
+    value = cfg.get("base_publica") if isinstance(cfg, dict) else None
+    if not isinstance(value, str) or not value.startswith("https://"):
+        value = "https://openframe.inspiredink.space"
+    return value.rstrip("/")
 
 
 def parse_iso(value):
@@ -124,7 +146,10 @@ class InvitationStore(object):
             for slug, vid, path in self._paths():
                 present.add(path)
                 try:
-                    stamp = os.stat(path).st_mtime_ns
+                    info = os.stat(path)
+                    # Revocar/caducar debe notarse en la peticion siguiente: la huella
+                    # es (mtime_ns, tamano), no un TTL por tiempo.
+                    stamp = (info.st_mtime_ns, info.st_size)
                 except OSError:
                     continue
                 old = self.files.get(path)
@@ -189,17 +214,24 @@ LIMITER = RateLimiter()
 LOG_LOCK = threading.Lock()
 
 
-def secret_value():
+def secret_value(espera=20.0):
+    """Secreto de firma. Lo crea server.py al arrancar, asi que la puerta
+    espera a que aparezca en vez de morir por una carrera de arranque."""
     path = os.path.join(DATA, ".guest_secret")
-    try:
-        with open(path, "rb") as f:
-            value = f.read()
-        if len(value) != 32:
-            raise ValueError("secreto invalido")
-        os.chmod(path, 0o600)
-        return value
-    except Exception:
-        raise RuntimeError("falta data/.guest_secret valido; arranca server.py primero")
+    limite = time.monotonic() + max(0.0, espera)
+    while True:
+        try:
+            with open(path, "rb") as f:
+                value = f.read()
+            if len(value) != 32:
+                raise ValueError("secreto invalido")
+            os.chmod(path, 0o600)
+            return value
+        except Exception:
+            if time.monotonic() >= limite:
+                raise RuntimeError(
+                    "falta data/.guest_secret valido; arranca server.py primero")
+            time.sleep(0.2)
 
 
 def safe_script_json(value):
@@ -251,9 +283,17 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     api = "http://127.0.0.1:8477"
     gate_secret = b""
+    public_origin = "https://openframe.inspiredink.space"
 
     def log_message(self, fmt, *args):
         pass
+
+    def handle_one_request(self):
+        """Un socket que calla hasta el timeout se cierra sin traza ni ruido."""
+        try:
+            BaseHTTPRequestHandler.handle_one_request(self)
+        except (socket.timeout, TimeoutError, ConnectionError):
+            self.close_connection = True
 
     def send_error(self, code, message=None, explain=None):
         # BaseHTTPRequestHandler usa 501 para verbos sin do_*; la puerta no revela
@@ -269,6 +309,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Robots-Tag", "noindex, nofollow")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Vary", "Cookie")
         for key, value in (extra or []):
             self.send_header(key, value)
 
@@ -304,6 +345,45 @@ class Handler(BaseHTTPRequestHandler):
     def _session(self):
         token = self._cookie_values().get("ofg")
         return STORE.by_token(token)
+
+    def _origins(self):
+        """Origenes propios: el publico de config.json y el local de pruebas."""
+        port = self.server.server_address[1]
+        return {self.public_origin,
+                "http://127.0.0.1:%d" % port, "https://127.0.0.1:%d" % port,
+                "http://localhost:%d" % port, "https://localhost:%d" % port}
+
+    def _host_ok(self):
+        """Solo el host publico (lo reenvia el tunel) o el local de pruebas.
+
+        Un Host ajeno delata una peticion que no viene por el tunel: 404.
+        """
+        host = (self.headers.get("Host") or "").strip().lower()
+        if not host:
+            return False
+        port = self.server.server_address[1]
+        allowed = {urlsplit(self.public_origin).netloc.lower(),
+                   "127.0.0.1:%d" % port, "localhost:%d" % port,
+                   "[::1]:%d" % port}
+        if port == 80:
+            allowed |= {"127.0.0.1", "localhost", "[::1]"}
+        return host in allowed
+
+    def _same_site(self):
+        """Escrituras cruzadas rechazadas ademas de SameSite=Lax.
+
+        Origin/Referer ausentes se aceptan (los manda el navegador en POST
+        del propio sitio, pero curl y los clientes de prueba no).
+        """
+        origin = (self.headers.get("Origin") or "").strip()
+        if origin and origin.lower() != "null" and origin not in self._origins():
+            return False
+        referer = (self.headers.get("Referer") or "").strip()
+        if referer:
+            parts = urlsplit(referer)
+            if not parts.scheme or "%s://%s" % (parts.scheme, parts.netloc) not in self._origins():
+                return False
+        return True
 
     def _request_path(self):
         """Conserva la distincion de targets ambiguos que http.server normaliza."""
@@ -357,12 +437,17 @@ class Handler(BaseHTTPRequestHandler):
                 not any(ord(ch) < 32 or ord(ch) == 127 for ch in name))
 
     def _body(self):
-        if self.headers.get("Transfer-Encoding"):
-            return None, 413
+        # Desincronizacion de longitudes (request smuggling): dos Content-Length,
+        # o Content-Length junto a Transfer-Encoding, no se interpretan: 400.
+        lengths = self.headers.get_all("Content-Length") or []
+        if len(lengths) > 1 or self.headers.get("Transfer-Encoding"):
+            self.close_connection = True
+            return None, 400
         try:
-            size = int(self.headers.get("Content-Length", "0"))
+            size = int(lengths[0]) if lengths else 0
         except ValueError:
-            return None, 413
+            self.close_connection = True
+            return None, 400
         if size < 0 or size > BODY_MAX:
             self.close_connection = True
             return None, 413
@@ -399,12 +484,17 @@ class Handler(BaseHTTPRequestHandler):
         except (URLError, OSError, ValueError):
             return 502, {"error": "no disponible"}
 
+    @staticmethod
+    def _seg(value):
+        """Componente de ruta hacia 8477: nada de barras ni de bytes raros."""
+        return quote(str(value), safe="")
+
     def _project(self, slug):
-        return self._upstream("GET", "/api/proyectos/" + slug)
+        return self._upstream("GET", "/api/proyectos/" + self._seg(slug))
 
     def _visible(self, session):
         slug, vid, link, _path = session
-        status, data = self._upstream("GET", "/api/notas/" + slug)
+        status, data = self._upstream("GET", "/api/notas/" + self._seg(slug))
         if status != 200 or not isinstance(data, dict):
             return None
         shared = [n for n in data.get("notas", [])
@@ -416,44 +506,77 @@ class Handler(BaseHTTPRequestHandler):
                 if n.get("enlace_id") == link.get("id") or n.get("parent") in own_ids]
 
     @staticmethod
-    def _drawing(value):
+    def _stroke_points(stroke):
+        """Lista de puntos de un trazo. La interfaz manda `pts`; se acepta
+        tambien `points` porque otros clientes de la API lo usan. Nada mas."""
+        if not isinstance(stroke, dict):
+            raise BadInput("dibujo invalido")
+        for key in ("pts", "points"):
+            if isinstance(stroke.get(key), list):
+                return stroke[key]
+        raise BadInput("dibujo invalido")
+
+    @staticmethod
+    def _point(point):
+        """Normaliza {x,y} o [x,y] al formato que pinta visor.html."""
+        if isinstance(point, dict):
+            x, y = point.get("x"), point.get("y")
+        elif isinstance(point, (list, tuple)) and len(point) == 2:
+            x, y = point[0], point[1]
+        else:
+            raise BadInput("dibujo invalido")
+        for value in (x, y):
+            if (isinstance(value, bool) or not isinstance(value, (int, float)) or
+                    not math.isfinite(value) or not 0 <= value <= 1):
+                raise BadInput("dibujo invalido")
+        return {"x": float(x), "y": float(y)}
+
+    @classmethod
+    def _drawing(cls, value):
+        """Valida y REESCRIBE el dibujo: nada del cliente pasa tal cual.
+
+        El tope de puntos se comprueba antes que las coordenadas para que un
+        dibujo enorme responda 413 (demasiado grande) y no 400.
+        """
         if value is None:
             return None
         if not isinstance(value, dict) or not isinstance(value.get("strokes"), list):
-            raise ValueError("dibujo invalido")
-        total = 0
-        if len(value["strokes"]) > 100:
-            raise ValueError("dibujo demasiado grande")
-        for stroke in value["strokes"]:
-            if not isinstance(stroke, dict) or not isinstance(stroke.get("pts"), list):
-                raise ValueError("dibujo invalido")
-            total += len(stroke["pts"])
-            if total > 400:
-                raise ValueError("dibujo demasiado grande")
-            for point in stroke["pts"]:
-                if not isinstance(point, dict):
-                    raise ValueError("dibujo invalido")
-                x, y = point.get("x"), point.get("y")
-                if (isinstance(x, bool) or isinstance(y, bool) or
-                        not isinstance(x, (int, float)) or not isinstance(y, (int, float)) or
-                        not math.isfinite(x) or not math.isfinite(y) or
-                        not 0 <= x <= 1 or not 0 <= y <= 1):
-                    raise ValueError("dibujo invalido")
-        return value
+            raise BadInput("dibujo invalido")
+        strokes = value["strokes"]
+        if len(strokes) > DRAW_STROKES_MAX:
+            raise TooLarge("dibujo demasiado grande")
+        raw = [cls._stroke_points(stroke) for stroke in strokes]
+        if sum(len(points) for points in raw) > DRAW_POINTS_MAX:
+            raise TooLarge("dibujo demasiado grande")
+        clean = []
+        for stroke, points in zip(strokes, raw):
+            item = {"pts": [cls._point(p) for p in points]}
+            tool, color, size = stroke.get("tool"), stroke.get("color"), stroke.get("size")
+            if isinstance(tool, str) and re.fullmatch(r"[a-z]{1,16}", tool):
+                item["tool"] = tool
+            if isinstance(color, str) and re.fullmatch(r"#[0-9a-fA-F]{3,8}", color):
+                item["color"] = color
+            if (not isinstance(size, bool) and isinstance(size, (int, float)) and
+                    math.isfinite(size) and 0 < size <= 100):
+                item["size"] = float(size)
+            clean.append(item)
+        return {"strokes": clean}
 
     @staticmethod
     def _thumb(value):
         if value in (None, ""):
             return None
         if not isinstance(value, str):
-            raise ValueError("miniatura invalida")
+            raise BadInput("miniatura invalida")
         raw = value.split(",", 1)[-1]
+        if len(raw) > (THUMB_MAX // 3 + 1) * 4 + 4:
+            raise TooLarge("miniatura demasiado grande")
         try:
             decoded = base64.b64decode(raw.encode("ascii"), validate=True)
         except (UnicodeError, binascii.Error):
-            raise ValueError("miniatura invalida")
+            raise BadInput("miniatura invalida")
         if len(decoded) > THUMB_MAX:
-            raise ValueError("miniatura demasiado grande")
+            raise TooLarge("miniatura demasiado grande")
         return value
 
     def _write_allowed(self, link):
@@ -463,6 +586,8 @@ class Handler(BaseHTTPRequestHandler):
         return False
 
     def do_GET(self):
+        if not self._host_ok():
+            return self._404()
         path = self._request_path()
         if path is None:
             return self._404()
@@ -541,6 +666,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._404(enlace_id)
 
     def do_HEAD(self):
+        if not self._host_ok():
+            return self._404()
         path = self._request_path()
         if path is None:
             return self._404()
@@ -555,6 +682,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._404(link.get("id"))
 
     def do_POST(self):
+        if not self._host_ok():
+            return self._404()
         path = self._request_path()
         if path is None:
             return self._404()
@@ -563,6 +692,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._404()
         slug, vid, link, _file = session
         enlace_id = link.get("id")
+        if not self._same_site():
+            return self._json({"error": "origen"}, 403, enlace_id=enlace_id)
         name_route = path == "/api/invitado/nombre"
         note_route = re.fullmatch(r"/api/proyectos/" + re.escape(slug) + r"/notas", path)
         if not name_route and not note_route:
@@ -596,7 +727,8 @@ class Handler(BaseHTTPRequestHandler):
             drawing = self._drawing(body.get("drawing"))
             thumb = self._thumb(body.get("thumb"))
         except ValueError as exc:
-            return self._json({"error": str(exc)}, 400, enlace_id=enlace_id)
+            return self._json({"error": str(exc)}, getattr(exc, "status", 400),
+                              enlace_id=enlace_id)
         parent = body.get("parent")
         if parent is not None:
             visible = self._visible(session)
@@ -609,7 +741,7 @@ class Handler(BaseHTTPRequestHandler):
             "text": text, "frame": frame, "end_frame": end_frame,
             "drawing": drawing, "thumb": thumb, "parent": parent,
         }
-        status, data = self._upstream("POST", "/api/proyectos/%s/notas" % slug,
+        status, data = self._upstream("POST", "/api/proyectos/%s/notas" % self._seg(slug),
                                       forced, gate=True)
         if status == 404:
             return self._404(enlace_id)
@@ -629,6 +761,8 @@ class Handler(BaseHTTPRequestHandler):
         return 24.0
 
     def do_PATCH(self):
+        if not self._host_ok():
+            return self._404()
         path = self._request_path()
         if path is None:
             return self._404()
@@ -637,6 +771,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._404()
         slug, _vid, link, _file = session
         enlace_id = link.get("id")
+        if not self._same_site():
+            return self._json({"error": "origen"}, 403, enlace_id=enlace_id)
         match = re.fullmatch(r"/api/notas/" + re.escape(slug) + r"/(" + NOTE_RE + r")", path)
         if not match:
             return self._404(enlace_id)
@@ -645,7 +781,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "cuerpo invalido"}, error, enlace_id=enlace_id)
         if not self._write_allowed(link):
             return
-        if not body or any(key not in ("text", "drawing") for key in body):
+        if not any(key in ("text", "drawing") for key in body):
             return self._404(enlace_id)
         visible = self._visible(session)
         note = next((n for n in (visible or []) if n.get("id") == match.group(1)), None)
@@ -660,8 +796,9 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 clean["drawing"] = self._drawing(body["drawing"])
             except ValueError as exc:
-                return self._json({"error": str(exc)}, 400, enlace_id=enlace_id)
-        status, data = self._upstream("PATCH", "/api/notas/%s/%s" % (slug, match.group(1)), clean)
+                return self._json({"error": str(exc)}, getattr(exc, "status", 400),
+                                  enlace_id=enlace_id)
+        status, data = self._upstream("PATCH", "/api/notas/%s/%s" % (self._seg(slug), self._seg(match.group(1))), clean)
         if status == 404:
             return self._404(enlace_id)
         return self._json(data, status, enlace_id=enlace_id)
@@ -755,6 +892,8 @@ class Handler(BaseHTTPRequestHandler):
         log_event(link.get("id"), self.command, 200)
 
     def _unknown(self):
+        if not self._host_ok():
+            return self._404()
         session = self._session()
         return self._404(session[2].get("id") if session else None)
 
@@ -774,6 +913,7 @@ def main():
         raise SystemExit("--api debe apuntar a http://127.0.0.1:<puerto>")
     Handler.api = args.api.rstrip("/")
     Handler.gate_secret = secret_value()
+    Handler.public_origin = base_publica()
     server = LimitedServer(("127.0.0.1", args.puerto), Handler)
     print("Puerta de invitados en http://127.0.0.1:%d" % args.puerto)
     try:

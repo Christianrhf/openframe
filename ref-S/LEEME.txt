@@ -1,0 +1,1 @@
+NOTA del orquestador: el guest.py de S (520 lineas) y los cambios de U en visor.html se PERDIERON (un relanzador antiguo borro esas carpetas a las 14:31). Aqui solo queda server.py/visor.sh de S (posiblemente parciales). Usa ref-S2/ (completo) como base de la puerta.

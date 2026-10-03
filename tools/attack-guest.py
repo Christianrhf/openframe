@@ -185,7 +185,10 @@ class Suite(object):
             data["token"] = data.get("token") or data.get("url", "").rsplit("/", 1)[-1]
             links[key] = data
         self.api_json("DELETE", "/api/proyectos/%s/videos/%s/invitar/%s" % (slug_a, vid_a, links["revoked"]["id"]), expect=200)
+        _, pa = self.api_json("GET", "/api/proyectos/%s" % slug_a)
+        fps_a = next((v.get("fps") for v in pa.get("videos", []) if v.get("id") == vid_a), 24.0)
         self.context.update({
+            "fps_a": fps_a,
             "slug_a": slug_a, "slug_b": slug_b, "vid_a": vid_a, "vid_b": vid_b,
             "owner_note": (owner.get("nota") or {}),
             "other_note": (other_note.get("nota") or {}),
@@ -263,9 +266,14 @@ class Suite(object):
         r, data = c.json("GET", "/api/ping")
         self.check("GET /api/ping ok", r.status == 200 and data.get("ok") is True)
         noauth = Client(self.args.gate)
-        for path in ("/", "/api/ping", "/api/proyectos/%s" % self.context["slug_a"], "/api/notas/%s" % self.context["slug_a"]):
+        # S3: /api/ping queda FUERA de esta lista. CONTRATO linea 35: "GET /api/ping
+        # -> {ok:true}", sin cookie, porque publicar.sh lo usa para comprobar el
+        # tunel desde fuera. No expone nada: ni slug, ni notas, ni enlace.
+        for path in ("/", "/api/proyectos/%s" % self.context["slug_a"], "/api/notas/%s" % self.context["slug_a"]):
             r = noauth.request("GET", path)
             self.check("no cookie blocked %s" % path, r.status == 404, "got %s" % r.status)
+        r, data = noauth.json("GET", "/api/ping")
+        self.check("no cookie still gets /api/ping 200", r.status == 200 and data == {"ok": True}, "got %s %s" % (r.status, data))
         invalids = ["", "x", self.context["links"]["normal"]["token"][:-2] + "xx"]
         for token in invalids:
             r = Client(self.args.gate).request("GET", "/r/" + token)
@@ -361,7 +369,7 @@ class Suite(object):
         self.check("guest can create note after name", r.status == 201, "got %s %s" % (r.status, data))
         expectations = [
             ("forced video", note.get("video") == vid, note.get("video")),
-            ("forced fps", float(note.get("fps") or 0) == 24.0, note.get("fps")),
+            ("forced fps", abs(float(note.get("fps") or 0) - float(self.context["fps_a"])) < 1e-6, note.get("fps")),
             ("forced kind nota", note.get("kind") == "nota", note.get("kind")),
             ("forced author invitado", note.get("author") == "invitado", note.get("author")),
             ("forced autor_nombre cookie", note.get("autor_nombre") == "Ana T", note.get("autor_nombre")),
@@ -480,17 +488,20 @@ class Suite(object):
         parsed = urlparse(self.args.gate)
         host, port = parsed.hostname, parsed.port or 80
         cookie = c.cookie_header()
+        # S3: TASK-S3 punto 4(ii) obliga a validar Host (solo el de base_publica y
+        # 127.0.0.1/localhost:<puerto>). Los casos que NO prueban el Host usan ya
+        # el Host real; "false Host" acepta 200 (no valida) o 404 (valida).
         raw_cases = []
-        raw_cases.append(("duplicate CL", "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: x\r\nCookie: %s\r\nContent-Length: 2\r\nContent-Length: 20\r\n\r\n{}" % (self.context["slug_a"], cookie), [400, 404]))
-        raw_cases.append(("TE plus CL", "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: x\r\nCookie: %s\r\nTransfer-Encoding: chunked\r\nContent-Length: 4\r\n\r\n0\r\n\r\n" % (self.context["slug_a"], cookie), [400, 404]))
-        raw_cases.append(("false Host", "GET /api/proyectos/%s HTTP/1.1\r\nHost: evil.example\r\nCookie: %s\r\n\r\n" % (self.context["slug_a"], cookie), [200]))
-        raw_cases.append(("huge header", "GET /api/proyectos/%s HTTP/1.1\r\nHost: x\r\nCookie: %s\r\nX-Big: %s\r\n\r\n" % (self.context["slug_a"], cookie, "A" * 20000), [200, 400, 431]))
-        raw_cases.append(("lowercase method", "get /api/proyectos/%s HTTP/1.1\r\nHost: x\r\nCookie: %s\r\n\r\n" % (self.context["slug_a"], cookie), [400, 404, 501]))
-        raw_cases.append(("10000 headers", "GET /api/proyectos/%s HTTP/1.1\r\nHost: x\r\nCookie: %s\r\n%s\r\n" % (self.context["slug_a"], cookie, "".join("X-%d: y\r\n" % i for i in range(10000))), [200, 400, 431]))
+        raw_cases.append(("duplicate CL", "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\nContent-Length: 2\r\nContent-Length: 20\r\n\r\n{}" % (self.context["slug_a"], cookie), [400, 404]))
+        raw_cases.append(("TE plus CL", "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\nTransfer-Encoding: chunked\r\nContent-Length: 4\r\n\r\n0\r\n\r\n" % (self.context["slug_a"], cookie), [400, 404]))
+        raw_cases.append(("false Host", "GET /api/proyectos/%s HTTP/1.1\r\nHost: evil.example\r\nCookie: %s\r\n\r\n" % (self.context["slug_a"], cookie), [200, 404]))
+        raw_cases.append(("huge header", "GET /api/proyectos/%s HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\nX-Big: %s\r\n\r\n" % (self.context["slug_a"], cookie, "A" * 20000), [200, 400, 431]))
+        raw_cases.append(("lowercase method", "get /api/proyectos/%s HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\n\r\n" % (self.context["slug_a"], cookie), [400, 404, 501]))
+        raw_cases.append(("10000 headers", "GET /api/proyectos/%s HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\n%s\r\n" % (self.context["slug_a"], cookie, "".join("X-%d: y\r\n" % i for i in range(10000))), [200, 400, 431]))
         for name, raw, allowed in raw_cases:
             status, body = raw_http(host, port, raw, timeout=6)
             ok = status in allowed
-            if name in ("false Host",):
+            if name == "false Host" and status == 200:
                 self.finding("low", "Guest gate does not reject false Host headers", "Validate Host if the tunnel ever forwards untrusted hostnames.")
             self.check("raw socket %s" % name, ok, "got %s" % status)
         origin_headers = {"Origin": "https://evil.example"}
@@ -500,16 +511,19 @@ class Suite(object):
         self.check("CSRF behavior documented as finding, not contract failure", r.status in (201, 403, 404), "got %s" % r.status)
 
     def revocation_and_expiry_checks(self, normal):
-        old = normal.request("GET", "/api/ping")
+        # S3: el sondeo de sesion usa una ruta QUE EXIGE sesion (/api/notas/<slug>),
+        # no /api/ping, que por CONTRATO linea 35 responde 200 siempre.
+        probe = "/api/notas/%s" % self.context["slug_a"]
+        old = normal.request("GET", probe)
         self.check("session valid before expiry/revocation", old.status == 200, "got %s" % old.status)
         revoked = Client(self.args.gate)
         revoked.cookies["ofg"] = self.context["links"]["revoked"]["token"]
-        r = revoked.request("GET", "/api/ping")
+        r = revoked.request("GET", probe)
         self.check("manually supplied revoked cookie rejected", r.status == 404, "got %s" % r.status)
         exp = self.login("expiring", "Expire T")
         if self.expire_link("expiring"):
             time.sleep(2.2)
-            r = exp.request("GET", "/api/ping")
+            r = exp.request("GET", probe)
             self.check("expired link rejected on next request", r.status == 404, "got %s" % r.status)
             r = Client(self.args.gate).request("GET", "/r/" + self.context["links"]["expiring"]["token"])
             self.check("expired token cannot restart session", r.status == 404, "got %s" % r.status)
@@ -520,7 +534,7 @@ class Suite(object):
         status, _ = raw_http(
             parsed.hostname,
             parsed.port or 80,
-            "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: x\r\nCookie: %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n{}" % (
+            "POST /api/proyectos/%s/notas HTTP/1.1\r\nHost: {REAL_HOST}\r\nCookie: %s\r\nContent-Type: application/json\r\nContent-Length: %d\r\n\r\n{}" % (
                 slug, c.cookie_header(), 1024 * 1024 + 10),
             timeout=4,
         )
@@ -563,7 +577,7 @@ class Suite(object):
         try:
             for _ in range(50):
                 s = socket.create_connection((parsed.hostname, parsed.port or 80), timeout=2)
-                s.sendall(b"GET /api/ping HTTP/1.1\r\nHost: x\r\n")
+                s.sendall(("GET /api/ping HTTP/1.1\r\nHost: %s:%d\r\n" % (parsed.hostname, parsed.port or 80)).encode("ascii"))
                 sockets.append(s)
             time.sleep(1)
             probe = Client(self.args.gate).request("GET", "/api/ping", timeout=5)
@@ -590,10 +604,13 @@ class Suite(object):
 
 
 def raw_http(host, port, payload, timeout=5):
+    # S3: {REAL_HOST} = el Host legitimo de la puerta. TASK-S3 4(ii) obliga a
+    # validar Host, asi que una peticion cruda legitima tiene que traerlo bien.
     try:
         s = socket.create_connection((host, port), timeout=timeout)
         s.settimeout(timeout)
         if isinstance(payload, str):
+            payload = payload.replace("{REAL_HOST}", "%s:%d" % (host, port))
             payload = payload.encode("utf-8")
         s.sendall(payload)
         data = b""
