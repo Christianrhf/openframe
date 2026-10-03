@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Suite adversaria autocontenida para guest.py (stdlib, puertos S2 9395/9396)."""
+"""Suite adversaria autocontenida para guest.py (stdlib, puertos S3 9381/9382)."""
+import base64
 import concurrent.futures
 import datetime
 import http.client
@@ -7,6 +8,7 @@ import json
 import os
 import random
 import shutil
+import socket
 import stat
 import subprocess
 import sys
@@ -16,8 +18,8 @@ import uuid
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SERVER_PORT = 9395
-GUEST_PORT = 9396
+SERVER_PORT = 9381
+GUEST_PORT = 9382
 SERVER = ("127.0.0.1", SERVER_PORT)
 GUEST = ("127.0.0.1", GUEST_PORT)
 PROCS = []
@@ -55,6 +57,30 @@ def request(target, method, path, body=None, headers=None, guest=False, timeout=
         return result
     finally:
         conn.close()
+
+
+def raw_status(payload):
+    """Peticion cruda por socket: sirve para cabeceras que http.client no deja
+    construir (dos Content-Length, Transfer-Encoding a mano)."""
+    try:
+        sock = socket.create_connection(GUEST, timeout=6)
+    except OSError:
+        return 0
+    try:
+        sock.settimeout(6)
+        sock.sendall(payload.encode("utf-8"))
+        data = b""
+        while b"\r\n\r\n" not in data and len(data) < 65536:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+    except OSError:
+        return 0
+    finally:
+        sock.close()
+    head = data.split(b"\r\n", 1)[0].split(b" ")
+    return int(head[1]) if len(head) > 1 and head[1].isdigit() else 0
 
 
 def jrequest(target, method, path, value=None, headers=None, guest=False):
@@ -330,14 +356,31 @@ def main():
         {"resolved": True}, auth(ofg, ofn), guest=True)
     check(status == 404, "PATCH campo prohibido devuelve 404")
 
+    # S3: pasarse de un TOPE es 413, no 400 (400 queda para la forma invalida).
     too_many = {"strokes": [{"pts": [{"x": .1, "y": .2}] * 401}]}
     status, _hs, _data, _raw = jrequest(
         GUEST, "POST", note_path, {"frame": 1, "drawing": too_many}, auth(ofg, ofn), guest=True)
-    check(status == 400, "mas de 400 puntos rechazados")
-    huge_thumb = "data:image/jpeg;base64," + ("YQ==" * (160 * 1024))
+    check(status == 413, "mas de 400 puntos rechazados")
+    status, _hs, _data, _raw = jrequest(
+        GUEST, "POST", note_path,
+        {"frame": 1, "drawing": {"strokes": [{"pts": [[.1, .2], [.3, .4]]}]}},
+        auth(ofg, ofn), guest=True)
+    check(status == 201, "dibujo con puntos [x,y] normalizado y aceptado")
+    status, _hs, _data, _raw = jrequest(
+        GUEST, "POST", note_path,
+        {"frame": 1, "drawing": {"strokes": [{"pts": [{"x": 2, "y": 0}]}]}},
+        auth(ofg, ofn), guest=True)
+    check(status == 400, "punto fuera de 0..1 rechazado")
+    # S3: base64 VALIDO de mas de 600 KB: antes el relleno "YQ==" repetido se
+    # rechazaba por forma y el tope de tamano no se probaba de verdad.
+    huge_thumb = "data:image/jpeg;base64," + base64.b64encode(b"x" * (601 * 1024)).decode("ascii")
     status, _hs, _data, _raw = jrequest(
         GUEST, "POST", note_path, {"frame": 1, "thumb": huge_thumb}, auth(ofg, ofn), guest=True)
-    check(status == 400, "thumb mayor de 600 KB rechazado")
+    check(status == 413, "thumb mayor de 600 KB rechazado")
+    ok_thumb = "data:image/jpeg;base64," + base64.b64encode(b"x" * 1024).decode("ascii")
+    status, _hs, _data, _raw = jrequest(
+        GUEST, "POST", note_path, {"frame": 1, "thumb": ok_thumb}, auth(ofg, ofn), guest=True)
+    check(status == 201, "thumb pequeno aceptado")
     status, _hs, _raw = declared_large(note_path, ofg + "; " + ofn)
     check(status == 413, "cuerpo mayor de 1 MB devuelve 413")
 
@@ -505,6 +548,117 @@ def main():
     with open(log_path, "rb") as f:
         log_data = f.read()
     check(all(token.encode() not in log_data for token in all_tokens), "guest.log no contiene tokens")
+
+    # ── S3: ultima pasada de atacante ───────────────────────────────
+    cookies = ofg + "; " + ofn
+    # (1) SSRF hacia 8477: ninguna ruta de invitado puede convertirse en otra
+    # ruta de la API de administracion por codificacion o por salto de segmento.
+    ssrf_paths = [
+        "/api/proyectos/%s%%2fhilos" % slug,
+        "/api/proyectos/%s%%2F..%%2Finvitados%%2Factividad" % slug,
+        "/api/notas/%s/..%%2f..%%2fapi%%2finvitados%%2festado" % slug,
+        "/api/notas/%s/%s%%2f..%%2f..%%2fproyectos" % (slug, own_id),
+        "/api/notas/%s%%00/%s" % (slug, own_id),
+        "/api/proyectos/%s/notas%%3f" % slug,
+    ]
+    for path in ssrf_paths:
+        status, _hs, _raw = request(GUEST, "GET", path, headers=auth(ofg, ofn), guest=True)
+        check(status == 404, "SSRF GET %s" % path[:48])
+        status, _hs, _raw = request(GUEST, "PATCH", path, b"{}", auth(ofg, ofn), guest=True)
+        check(status == 404, "SSRF PATCH %s" % path[:48])
+    # El Host de la API local no sirve para que la puerta se confunda de destino.
+    for host in ("127.0.0.1:%d" % SERVER_PORT, "openframe.inspiredink.space.evil.test",
+                 "evil.test", ""):
+        status, _hs, _raw = request(GUEST, "GET", "/api/notas/" + slug,
+                                    headers=dict(auth(ofg, ofn), Host=host), guest=True)
+        check(status == 404, "Host ajeno rechazado %r" % host[:32])
+    # X-Guest-Gate del cliente no se reenvia: la nota sigue siendo de invitado.
+    status, _hs, data, _raw = jrequest(
+        GUEST, "POST", note_path, {"frame": 1, "text": "gate falso", "author": "cristian"},
+        dict(auth(ofg, ofn), **{"X-Guest-Gate": "0" * 64}), guest=True)
+    forged = (data or {}).get("nota", {})
+    check(status == 201 and forged.get("author") == "invitado" and
+          forged.get("autor_nombre") == "Ana", "X-Guest-Gate del cliente no se reenvia")
+    # Y el secreto real no vale como cabecera contra la puerta (no la usa).
+    with open(os.path.join(ROOT, "data", ".guest_secret"), "rb") as f:
+        real_gate = f.read().hex()
+    status, _hs, _raw = request(GUEST, "GET", "/api/invitados/actividad",
+                                headers=dict(auth(ofg, ofn), **{"X-Guest-Gate": real_gate}),
+                                guest=True)
+    check(status == 404, "administracion sigue ausente con el secreto real")
+
+    # (2) Desincronizacion de longitudes.
+    raw_cases = [
+        ("Content-Length duplicado",
+         "POST %s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: %s\r\nContent-Type: application/json"
+         "\r\nContent-Length: 2\r\nContent-Length: 40\r\n\r\n{}" % (note_path, GUEST_PORT, cookies)),
+        ("Transfer-Encoding con Content-Length",
+         "POST %s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: %s\r\nTransfer-Encoding: chunked"
+         "\r\nContent-Length: 4\r\n\r\n0\r\n\r\n" % (note_path, GUEST_PORT, cookies)),
+        ("Transfer-Encoding a secas",
+         "POST %s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: %s\r\nTransfer-Encoding: chunked"
+         "\r\n\r\n2\r\n{}\r\n0\r\n\r\n" % (note_path, GUEST_PORT, cookies)),
+        ("Content-Length con signo",
+         "POST %s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: %s\r\nContent-Length: +2\r\n\r\n{}"
+         % (note_path, GUEST_PORT, cookies)),
+        ("Content-Length negativo",
+         "POST %s HTTP/1.1\r\nHost: 127.0.0.1:%d\r\nCookie: %s\r\nContent-Length: -1\r\n\r\n{}"
+         % (note_path, GUEST_PORT, cookies)),
+    ]
+    for label, payload in raw_cases:
+        status = raw_status(payload)
+        check(status in (400, 404), "%s rechazado (%s)" % (label, status))
+
+    # (3) thumb con ruta: ni al crear ni al descargar.
+    for bad in ["../../data/.guest_secret", "/etc/passwd", "data:image/jpeg;base64,../x",
+                "thumbs/%s/%s.jpg" % (slug, own_id)]:
+        status, _hs, _data, _raw = jrequest(
+            GUEST, "POST", note_path, {"frame": 1, "thumb": bad}, auth(ofg, ofn), guest=True)
+        check(status == 400, "thumb con ruta rechazado %r" % bad[:28])
+    for path in ["/thumbs/%s/..%%2f..%%2fdata%%2f.guest_secret.jpg" % slug,
+                 "/thumbs/%s/../.guest_secret.jpg" % slug,
+                 "/thumbs/%s/%s.jpg" % (other_slug, own_id),
+                 "/thumbs/%s/%s%%00.jpg" % (slug, own_id)]:
+        status, _hs, _raw = request(GUEST, "GET", path, headers=auth(ofg, ofn), guest=True)
+        check(status == 404, "thumb ajeno 404 %s" % path[:46])
+
+    # (4) Enlaces simbolicos dentro de la carpeta del video.
+    video_dir = os.path.join(ROOT, "data", slug, "videos", video["id"])
+    secret_dir = os.path.join(ROOT, "data", other_slug, "videos", secret_video["id"])
+    secret_meta = json.load(open(os.path.join(secret_dir, "meta.json"), encoding="utf-8"))
+    secret_file = os.path.join(secret_dir, secret_meta.get("archivo", "media.mp4"))
+    proxy_link = os.path.join(video_dir, "proxy-720.mp4")
+    os.symlink(secret_file, proxy_link)
+    try:
+        status, _hs, raw = request(GUEST, "GET", media_path,
+                                   headers=dict(auth(ofg, ofn), Range="bytes=0-32"), guest=True)
+        secret_head = open(secret_file, "rb").read(32)
+        check(status == 404 and b"no est" in raw and secret_head not in raw,
+              "proxy que es symlink a otro video da el 404 uniforme")
+        other_name = os.path.join(video_dir, "secreto.mp4")
+        os.symlink(secret_file, other_name)
+        try:
+            status, _hs, _raw = request(GUEST, "GET", "/media/%s/%s/secreto.mp4" % (slug, video["id"]),
+                                        headers=auth(ofg, ofn), guest=True)
+            check(status == 404, "symlink con otro nombre no se sirve")
+        finally:
+            os.unlink(other_name)
+    finally:
+        os.unlink(proxy_link)
+    status, _hs, raw = request(GUEST, "GET", media_path,
+                               headers=dict(auth(ofg, ofn), Range="bytes=0-31"), guest=True)
+    check(status == 206 and len(raw) == 32, "el video compartido vuelve a servirse tras el symlink")
+
+    # (5) Cache entre invitados: nada cacheable y la respuesta depende de la cookie.
+    for path in ["/", "/api/notas/" + slug, "/api/proyectos/" + slug, media_path]:
+        _status, hs, _raw = request(GUEST, "GET", path, headers=auth(ofg, ofn), guest=True)
+        check(hs.get("Cache-Control") == "no-store", "no-store en %s" % path[:38])
+        check("Cookie" in (hs.get("Vary") or ""), "Vary: Cookie en %s" % path[:38])
+    _status, _hs, mine, _raw = jrequest(GUEST, "GET", "/", None, auth(ofg, ofn), guest=True)
+    status_a, _hs, _data, raw_a = jrequest(GUEST, "GET", "/", None, auth(ofg, ofn), guest=True)
+    status_b, _hs, _data, raw_b = jrequest(GUEST, "GET", "/", None, auth(peer_ofg, peer_ofn), guest=True)
+    check(status_a == 200 and status_b == 200 and b'"nombre":"Ana"' in raw_a and
+          b'"nombre":"Ana"' not in raw_b, "cada cookie recibe su propio arranque")
 
     print("\n%s — %d checks, %d fallos, fuzz=420, concurrencia=30" %
           ("PASS" if not FAILS else "FAIL", CHECKS, len(FAILS)))

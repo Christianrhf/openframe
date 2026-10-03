@@ -443,12 +443,13 @@ class Handler(BaseHTTPRequestHandler):
         if len(lengths) > 1 or self.headers.get("Transfer-Encoding"):
             self.close_connection = True
             return None, 400
-        try:
-            size = int(lengths[0]) if lengths else 0
-        except ValueError:
+        # Content-Length es DIGIT* y nada mas: "+2", "-1", " 2 " o "0x2" los
+        # interpretaria distinto cada proxy del camino.
+        if lengths and not re.fullmatch(r"[0-9]{1,15}", lengths[0].strip()):
             self.close_connection = True
             return None, 400
-        if size < 0 or size > BODY_MAX:
+        size = int(lengths[0].strip()) if lengths else 0
+        if size > BODY_MAX:
             self.close_connection = True
             return None, 413
         raw = self.rfile.read(size) if size else b""
