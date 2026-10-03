@@ -1165,6 +1165,7 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
            x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
            x2Page:0, adjustTo:null,
+           x2Llegadas:[],     // notas que trajo el ultimo sondeo (para avisar y paginar)
            selId:null,        // id de la nota activa (editar/mover/borrar)
            playhead:-1,      // fotograma bajo el cursor de reproduccion
            phNote:"",         // ids de las notas bajo el cursor (para no repintar de mas)
@@ -1385,6 +1386,10 @@ function absorbDetail(d){
       if(!st.notas.some(n => n.id === o.id)) st.notas.push(o);
     }
     st.notas.sort(cmpNotas);
+    /* Lo que acaba de llegar tiene que QUEDAR A LA VISTA: con la lista paginada,
+       una nota nueva en la ultima pagina es una nota invisible. */
+    st.x2Llegadas = x2DetectarLlegadas();
+    x2SeguirLlegadas(st.x2Llegadas);
   }
   // la meta del video puede haber cambiado de fps: reevaluar la unica fuente
   if(d.videos && st.vid && typeof setFps === "function") setFps();
@@ -1414,6 +1419,16 @@ function avisarSiLlegoAlgoDeClaude(){
   if(_ultimoRevVisto === -1){ _ultimoRevVisto = st.rev; return; }   // primer arranque: no avisar
   if(st.rev === _ultimoRevVisto) return;
   _ultimoRevVisto = st.rev;
+  /* Las notas de INVITADO tambien se avisan: Cristian comparte un enlace y se va a
+     hacer otra cosa; si la nota entra en la ultima pagina sin decir nada, no existe.
+     Se usan las llegadas que calculo absorbDetail (ids nuevos), no `_visto`, porque
+     una nota de invitado puede llegar editada mas de una vez. */
+  const deInvitado = (st.x2Llegadas || []).filter(n => n.author === "invitado");
+  if(deInvitado.length){
+    const quien = deInvitado[deInvitado.length - 1].autor_nombre || "";
+    toast("Invitado" + (quien ? " · " + quien : "") + ": " +
+          deInvitado.length + (deInvitado.length === 1 ? " nota nueva" : " notas nuevas"), 3200);
+  }
   const nuevos = st.notas.filter(n => n.author === "claude" && !n._visto);
   if(!nuevos.length) return;
   for(const n of nuevos) n._visto = true;
@@ -1526,9 +1541,13 @@ function actualizarBotonUndo(){
   if(e) e.textContent = a ? a.etiqueta : "";
 }
 async function deshacer(){
+  /* El invitado no tiene pila de acciones (crear/borrar es de Cristian): su Ctrl+Z
+     es el del DIBUJO. Antes no deshacia nada: la unica puerta al historial de dibujo
+     era `st.hpos < st.hist.length - 1`, y pushHist() deja siempre hpos al final, asi
+     que la condicion nunca era cierta y Ctrl+Z moria en el `return` de abajo. */
+  if(esInvitado){ if(st.hpos >= 0) undo(); actualizarBotonUndo(); return; }
   // si el dibujo tiene historial propio sin usar, ese va primero
   if(st.hpos < st.hist.length - 1){ undo(); actualizarBotonUndo(); return; }
-  if(esInvitado) return;                 // el historial de acciones (borrar/crear) es de Cristian
   if(!hayUndo()){ toast("Nada que deshacer"); return; }
   const a = st.undo[st.uPos];
   st.uPos--;
@@ -1920,6 +1939,53 @@ function x2Filtradas(){
     return true;
   });
 }
+/* ── La lista esta PAGINADA (fase 3): una nota nueva puede caer en otra pagina ──
+   Sin esto, la nota que acaba de dejar un invitado entraba en st.notas por el
+   sondeo y NO se veia: la lista seguia en la pagina 1 y la nota, que ordena por
+   fotograma, caia en la ultima. Medido: 10 notas, «Página 1 de 3», la nota del
+   invitado en la 3 — invisible hasta hacer clic en «siguiente». */
+function x2PageSize(){
+  const h = $("#list").clientHeight || 360;
+  return h < 330 ? 2 : h < 490 ? 3 : 4;
+}
+// pagina (0..n) en la que cae una nota con los filtros de AHORA; -1 si no entra
+function x2PaginaDe(id){
+  const i = x2Filtradas().findIndex(n => n.id === id);
+  return i < 0 ? -1 : Math.floor(i / x2PageSize());
+}
+/* Lleva la lista a la pagina de esa nota. Devuelve true si tuvo que moverse.
+   Si la nota no pasa los filtros activos NO se toca nada: los filtros son una
+   decision explicita de quien mira y una nota nueva no los anula. */
+function x2SeguirNota(id){
+  if(!id) return false;
+  const p = x2PaginaDe(id);
+  if(p < 0 || p === st.x2Page) return false;
+  st.x2Page = p;
+  return true;
+}
+/* Notas raiz que no estaban en la carga anterior. `null` hasta la primera carga:
+   al arrancar TODAS son nuevas y no hay nada que seguir. */
+let _idsNotasVistas = null;
+function x2DetectarLlegadas(){
+  const ids = st.notas.map(n => n.id);
+  if(_idsNotasVistas === null){ _idsNotasVistas = new Set(ids); return []; }
+  const nuevas = st.notas.filter(n => !_idsNotasVistas.has(n.id) && !String(n.id).startsWith("tmp_"));
+  _idsNotasVistas = new Set(ids);
+  return nuevas;
+}
+/* De las notas recien llegadas, la que esta mas al final de la lista filtrada:
+   es la pagina a la que hay que ir para que «lo nuevo» quede a la vista. */
+function x2SeguirLlegadas(nuevas){
+  if(!nuevas || !nuevas.length) return false;
+  const orden = x2Filtradas().map(n => n.id);
+  let mejor = null, mejorIdx = -1;
+  for(const n of nuevas){
+    const i = orden.indexOf(n.id);
+    if(i > mejorIdx){ mejorIdx = i; mejor = n.id; }
+  }
+  return x2SeguirNota(mejor);
+}
+
 function x2DecisionCard(n){
   const linked = n.resuelve ? st.notas.find(x => x.id === n.resuelve) : null;
   const estado = n.decision === "approved" ? '<span class="decision">aprobado</span>' :
@@ -1955,7 +2021,7 @@ function renderList(){
     return;
   }
   const ph = st.playhead;
-  let pageSize = (L.clientHeight || 360) < 330 ? 2 : (L.clientHeight || 360) < 490 ? 3 : 4;
+  let pageSize = x2PageSize();
   const pages = Math.max(1, Math.ceil(filtradas.length / pageSize));
   st.x2Page = clamp(st.x2Page, 0, pages - 1);
   const ini = st.x2Page * pageSize, list = filtradas.slice(ini, ini + pageSize);
@@ -2277,19 +2343,42 @@ let _inicioX=0, _inicioY=0, _dibujandoEnNota=null, _gestoReal=false;
 function ensurePend(){ if(st.pend && st.pend.frame === snap(v.currentTime)) return;
   st.pend = {frame:snap(v.currentTime), time:v.currentTime}; st.hist=[]; st.hpos=-1; drawCanvas(); }
 
-function pushHist(){ st.hist = st.hist.slice(0, st.hpos+1);
-  const n = curNote(); st.hist.push(n && n.drawing ? JSON.parse(JSON.stringify(n.drawing)) : null);
+/* `st.hist` guarda el estado ANTES de cada trazo; para poder REHACER hay que
+   guardar tambien el estado que el deshacer se lleva. Antes `undo()` recortaba
+   `st.hist` y `redo()` no podia entrar nunca (`hpos+1 >= length` siempre). */
+let _redoDibujo = [];
+function pushHist(nota){ st.hist = st.hist.slice(0, st.hpos+1); _redoDibujo = [];
+  const n = nota || curNote(); st.hist.push(n && n.drawing ? JSON.parse(JSON.stringify(n.drawing)) : null);
   if(st.hist.length>60) st.hist.shift(); st.hpos = st.hist.length-1; }
+/* El historial de dibujo NUNCA escribe sobre la nota de otra persona. El invitado
+   puede tener seleccionada una nota ajena (ve_otras) y Ctrl+Z le borraba el dibujo
+   de esa nota en su pantalla — o peor, le pegaba encima el trazo guardado de otra. */
+function _notaDibujable(){
+  const n = curNote();
+  if(!n) return null;
+  if(esInvitado && !esMia(n)) return null;
+  return n;
+}
 function undo(){ if(st.hpos<0) return;
-  const n = curNote(); const s = st.hist[st.hpos]; st.hpos--;
+  const n = _notaDibujable(); if(esInvitado && !n) return;
+  const actual = (n && n.drawing) ? JSON.parse(JSON.stringify(n.drawing)) : null;
+  const s = st.hist[st.hpos]; st.hpos--;
   if(n) n.drawing = s ? JSON.parse(JSON.stringify(s)) : null;
-  st.hist.length = st.hpos+1; drawCanvas(); saveDrawing(); renderList(); }
-function redo(){ if(st.hpos+1>=st.hist.length) return;
-  st.hpos++; const n = curNote();
-  if(n){ const s = st.hist[st.hpos]; n.drawing = s ? JSON.parse(JSON.stringify(s)) : null; }
-  drawCanvas(); saveDrawing(); renderList(); }
-async function saveDrawing(){
-  const n = curNote(); if(!n) return;
+  _redoDibujo.push({id: n ? n.id : null, estado: actual});
+  if(_redoDibujo.length > 60) _redoDibujo.shift();
+  drawCanvas(); saveDrawing(n); renderList(); }
+function redo(){ if(!_redoDibujo.length) return;
+  const n = _notaDibujable(); if(!n) return;
+  if(_redoDibujo[_redoDibujo.length-1].id !== n.id) return;   // era de otra nota
+  const r = _redoDibujo.pop();
+  st.hpos++;
+  n.drawing = r.estado ? JSON.parse(JSON.stringify(r.estado)) : null;
+  drawCanvas(); saveDrawing(n); renderList(); }
+/* `nota` explicita: el trazo se guarda en la nota en la que se DIBUJO, no en la que
+   curNote() devuelva despues (st.selId podia haber quedado en otra y el PATCH se iba
+   a la nota equivocada; con el invitado el trazo se perdia sin aviso). */
+async function saveDrawing(nota){
+  const n = nota || curNote(); if(!n) return;
   if(esInvitado && !esMia(n)) return;    // el dibujo de otro no se toca
   if(String(n.id).startsWith("tmp_")) return;   // aun sin id del servidor: viaja al sincronizar
   try{ await api(NP(n.id), {method:"PATCH", body:JSON.stringify({drawing: n.drawing})}); }
@@ -2327,7 +2416,7 @@ cv.addEventListener("pointerdown", e => {
   if(!n) return;
   _inicioX = e.clientX; _inicioY = e.clientY; _gestoReal = false;
   if(!n.drawing) n.drawing = {strokes:[]};
-  pushHist();
+  pushHist(n);
   cur = {tool:st.tool, color:st.color, size:st.size, pts:[pt(e)]};
   n.drawing.strokes.push(cur);
   drawing = true; _dibujandoEnNota = n;
@@ -2358,8 +2447,15 @@ function endDraw(e){
     drawCanvas(); renderList(); updateMarks(); updateEditor();
     return;
   }
+  const dibujada = _dibujandoEnNota;
   drawing=false; cur=null; _dibujandoEnNota=null;
-  saveDrawing(); renderList();
+  saveDrawing(dibujada); renderList();
+  /* Un BORRADOR con trazos es contenido sin guardar: hay que encender «Guardar».
+     Tras enviar cualquier nota, setDirty(false) lo deja deshabilitado, y dibujar no
+     lo volvia a encender: el trazo del invitado no tenia forma de salir (clic en un
+     boton deshabilitado = nada). Las notas que ya estan en el servidor no cuentan:
+     su trazo se guarda solo con un PATCH. */
+  if(dibujada && String(dibujada.id).startsWith("tmp_")) setDirty(true);
 }
 
 cv.addEventListener("pointerup", endDraw);
@@ -2374,7 +2470,9 @@ function crearNotaParaDibujar(){
   const f = snap(v.currentTime);
   // el invitado solo reutiliza una nota del fotograma si es SUYA
   const ya = esInvitado ? (notesAt(st.vid, f).find(esMia) || null) : noteAt(st.vid, f);
-  if(ya){ st.pend = {frame:f, time:f/fps}; return ya; }
+  /* Al reutilizar una nota hay que SELECCIONARLA: st.selId se quedaba en la nota
+     anterior y pushHist()/undo() (que miran curNote()) trabajaban sobre otra. */
+  if(ya){ st.pend = {frame:f, time:f/fps}; st.selId = ya.id; return ya; }
   const nota = {
     id: "tmp_" + Date.now().toString(36),
     video: st.vid, frame: f, fps: fps,
@@ -2387,7 +2485,7 @@ function crearNotaParaDibujar(){
   st.notas.sort(cmpNotas);
   st.pend = {frame:f, time:f/fps};
   st.selId = nota.id;
-  pushHist();
+  pushHist(nota);
   drawCanvas(); renderList(); updateMarks(); updateEditor();
   return nota;
 }
@@ -2400,7 +2498,7 @@ function eraseFrame(){
   const n = notaVisibleEnElFrameActual();
   if(!n || !n.drawing || !n.drawing.strokes.length) return;
   if(esInvitado && !esMia(n)){ toast("Solo puedes borrar tus dibujos"); return; }
-  pushHist(); n.drawing = {strokes:[]}; drawCanvas(); saveDrawing(); renderList();
+  pushHist(n); n.drawing = {strokes:[]}; drawCanvas(); saveDrawing(n); renderList();
 }
 function drawCanvas(){
   if(!cv.width){ return; }
@@ -2604,6 +2702,8 @@ async function saveNote(){
     if(saved){
       if(esBorrador) st.notas = st.notas.filter(n => n.id !== existing.id);
       upsertNote(saved);
+      // con la lista paginada, tu propia nota puede nacer en otra pagina
+      x2SeguirNota(saved.id);
     }else{
       const d = await api(P(st.slug));
       absorbDetail(d);
@@ -2648,6 +2748,8 @@ function upsertNote(n){
   if(i >= 0) st.notas[i] = Object.assign(st.notas[i], n);
   else st.notas.push(n);
   st.notas.sort(cmpNotas);
+  // ya la conocemos: que el sondeo no la cuente luego como recien llegada
+  if(_idsNotasVistas) _idsNotasVistas.add(n.id);
 }
 
 $("#ta").addEventListener("input", () => {

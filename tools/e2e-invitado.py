@@ -387,6 +387,15 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
           pg.ev("!!document.querySelector('.note[data-who=\"invitado\"]')"))
 
     # ── nota con dibujo ──
+    # Desde la fase 2 del porte el trazo es un BORRADOR local (`tmp_`) y texto +
+    # trazos + tramo + JPEG viajan en UN SOLO POST al pulsar Guardar: el dibujo ya
+    # no crea una nota vacia en el servidor a mitad del gesto.
+    pg.ev("""window.__posts = [];
+             const _f = window.fetch;
+             window.fetch = function(u, o){ try{ if(o && o.method === 'POST' && o.body)
+               window.__posts.push({u: String(u), len: o.body.length}); }catch(e){}
+               return _f.apply(this, arguments); };
+             true""")
     r = pg.rect("#cv")
     pg.ev("v.currentTime = 2.0")
     time.sleep(0.4)
@@ -394,14 +403,40 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     if r:
         pg.drag(r["x"] + r["w"] * 0.3, r["y"] + r["h"] * 0.35,
                 r["x"] + r["w"] * 0.7, r["y"] + r["h"] * 0.6, steps=10)
-    time.sleep(1.6)
+    time.sleep(1.2)
+    borrador = pg.ev("JSON.stringify((st.notas||[]).filter(n=>String(n.id).startsWith('tmp_'))"
+                     ".map(n=>({id:n.id, frame:n.frame,"
+                     "pts:(n.drawing&&n.drawing.strokes||[]).reduce((a,s)=>a+(s.pts||[]).length,0)})))")
+    bs = json.loads(borrador or "[]")
+    check("el trazo nace como BORRADOR local (tmp_), sin nota vacia en el servidor",
+          len(bs) == 1 and bs[0]["pts"] >= 3
+          and not any((n.get("drawing") or {}).get("strokes") for n in notas_servidor(ADMIN, SLUG)), bs)
+    check("dibujar NO manda ningun POST por la puerta (un solo POST al guardar)",
+          pg.ev("window.__posts.length") == 0, pg.ev("JSON.stringify(window.__posts)"))
+    check("el borrador se marca como «borrador» en la tarjeta",
+          pg.ev("!!document.querySelector('.draft-badge')"),
+          pg.ev("document.getElementById('list').textContent"))
+    pg.click("#bSave")
+    time.sleep(1.8)
+    check("Guardar manda UN solo POST con el dibujo dentro",
+          pg.ev("window.__posts.length") == 1
+          and (pg.ev("JSON.stringify(window.__posts)") or "").find("/notas") > 0,
+          pg.ev("JSON.stringify(window.__posts)"))
     dibujadas = [n for n in notas_servidor(ADMIN, SLUG)
                  if (n.get("drawing") or {}).get("strokes")]
     nd = dibujadas[0] if dibujadas else None
     pts = sum(len(s.get("pts") or []) for s in ((nd or {}).get("drawing") or {}).get("strokes", []))
+    puntos_ok = all(0 <= p.get("x", -1) <= 1 and 0 <= p.get("y", -1) <= 1
+                    for s in ((nd or {}).get("drawing") or {}).get("strokes", [])
+                    for p in (s.get("pts") or []))
     check("nota con DIBUJO guardada por la puerta (strokes con pts normalizados)",
-          nd is not None and pts >= 3, (len(dibujadas), pts))
+          nd is not None and pts >= 3 and puntos_ok, (len(dibujadas), pts, puntos_ok))
     check("el dibujo del invitado lleva su enlace_id", nd and nd.get("enlace_id") == EID, nd)
+    check("el JPEG de la nota con dibujo viaja en el mismo POST y queda en disco",
+          nd and nd.get("thumb") == nd["id"] + ".jpg"
+          and os.path.isfile(os.path.join(ROOT, "thumbs", SLUG, nd["thumb"])), nd and nd.get("thumb"))
+    check("el borrador desaparece al guardarse (ningun tmp_ huerfano)",
+          pg.ev("(st.notas||[]).filter(n=>String(n.id).startsWith('tmp_')).length") == 0)
     pg.ev("document.querySelector('[data-tool=pen]').click()")   # soltar la herramienta
     pg.shot("i03-nota-y-dibujo.png")
 
@@ -532,8 +567,12 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
 
     llego = esperar_js(pg, "JSON.stringify(st.notas.map(n=>n.id)).indexOf(%s) >= 0" % json.dumps(N_RESPCRIS), 12)
     check("el sondeo del invitado trae la respuesta de Cristian (rev de /api/proyectos/<slug>)", llego)
+    # la lista esta paginada: hay que ir a la pagina del hilo antes de mirarlo
+    pg.ev("x2SeguirNota(%s); renderList()" % json.dumps(n1["id"]))
     check("la respuesta de Cristian se pinta como «Cristian», no como invitado",
-          pg.ev("!!document.querySelector('.rep[data-who=\"cristian\"]')"))
+          pg.ev("!!document.querySelector('.rep[data-who=\"cristian\"]')"),
+          (pg.ev("document.getElementById('x2Page').textContent"),
+           pg.ev("document.getElementById('list').textContent")))
     pg.shot("i04-hilo-con-cristian.png")
 
     # ── acciones prohibidas desde la consola del invitado ──
@@ -574,6 +613,87 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     nm = nota_por_id(ADMIN, SLUG, n1["id"])
     check("la nota del invitado no se pudo resolver ni mover ni borrar",
           nm and not nm.get("resolved") and nm.get("frame") == n1.get("frame"), nm)
+
+    # ── auditoria del porte (fases 1-3) con window.__INVITADO ──
+    print("\n== auditoria de las fases 1-3 en modo invitado ==")
+    AJENAS = ["Nota interna de Cristian", "Nota del OTRO invitado", "Nota del OTRO video"]
+    fuga = pg.ev("""(()=>{
+      const malas = [], antes = st.x2Person;
+      for(const p of ['all','cristian','claude','invitado']){
+        st.x2Person = p; st.x2Page = 0; renderList();
+        const t = document.getElementById('list').textContent;
+        for(const s of %s) if(t.indexOf(s) >= 0) malas.push(p + ':' + s);
+      }
+      st.x2Person = antes; st.x2Page = 0; renderList();
+      return JSON.stringify(malas);
+    })()""" % json.dumps(AJENAS))
+    check("ningun filtro de persona expone notas ajenas con ve_otras=false", fuga == "[]", fuga)
+    sin_decidir = pg.ev("JSON.stringify([...document.querySelectorAll("
+                        "'[data-approve],[data-adjust],[data-redecide],.approve-btn,.adjust-btn')]"
+                        ".map(e=>e.outerHTML.slice(0,60)))")
+    check("cero botones de decision (Aprobar / Pedir ajuste / Cambiar decision) en la pagina del invitado",
+          sin_decidir == "[]", sin_decidir)
+    # las funciones de decision existen en el script: llamarlas a mano no debe hacer nada
+    pg.ev("x2Aprobar(%s); x2PedirAjuste(%s); x2Reconsiderar(%s); true"
+          % (json.dumps(n1["id"]), json.dumps(n1["id"]), json.dumps(n1["id"])))
+    time.sleep(1.0)
+    nd1 = nota_por_id(ADMIN, SLUG, n1["id"])
+    check("x2Aprobar/x2PedirAjuste/x2Reconsiderar desde la consola del invitado no cambian nada",
+          nd1 and not nd1.get("decision") and not nd1.get("resolved")
+          and not pg.ev("!!st.adjustTo"), nd1)
+    # Ctrl+Z del invitado: deshace SU dibujo y NUNCA el de otra persona
+    pg.ev("v.currentTime = 2.0")
+    time.sleep(0.4)
+    pg.click("[data-tool=pen]")
+    rcv = pg.rect("#cv")        # `r` se reutiliza para respuestas HTTP mas arriba
+    if rcv:
+        pg.drag(rcv["x"] + rcv["w"] * 0.4, rcv["y"] + rcv["h"] * 0.5,
+                rcv["x"] + rcv["w"] * 0.6, rcv["y"] + rcv["h"] * 0.7, steps=8)
+    time.sleep(1.0)
+    pg.ev("document.querySelector('[data-tool=pen]').click()")
+    antes_z = pg.ev("(()=>{const n=st.notas.find(x=>x.id===%s);"
+                    "return n && n.drawing ? (n.drawing.strokes||[]).length : -1})()" % json.dumps(nd["id"]))
+    pg.ev("deshacer()", await_promise=True)
+    time.sleep(0.6)
+    check("Ctrl+Z del invitado deshace SU trazo (antes no deshacia nada)",
+          pg.ev("(()=>{const d=st.notas.filter(n=>String(n.id).startsWith('tmp_'));"
+                "return d.length===0 || (d[0].drawing.strokes||[]).length===0})()"),
+          pg.ev("JSON.stringify((st.notas||[]).filter(n=>String(n.id).startsWith('tmp_'))"
+                ".map(n=>(n.drawing.strokes||[]).length))"))
+    # ahora con una nota AJENA seleccionada: deshacer no debe tocarla
+    pg.ev("st.selId = %s; true" % json.dumps(N_CRIS))
+    pg.ev("deshacer()", await_promise=True)
+    pg.ev("rehacer()", await_promise=True)
+    time.sleep(0.8)
+    ncris2 = nota_por_id(ADMIN, SLUG, N_CRIS)
+    check("deshacer/rehacer con una nota AJENA seleccionada no la toca (ni local ni en el servidor)",
+          ncris2 and ncris2.get("text") == "Nota interna de Cristian"
+          and not (ncris2.get("drawing") or {}).get("strokes")
+          and not pg.ev("(()=>{const n=st.notas.find(x=>x.id===%s);"
+                        "return !!(n && n.drawing && (n.drawing.strokes||[]).length)})()" % json.dumps(N_CRIS)),
+          ncris2)
+    nd_ok = nota_por_id(ADMIN, SLUG, nd["id"]) if nd else None
+    check("el dibujo ya guardado del invitado sigue intacto tras deshacer/rehacer",
+          nd_ok and len((nd_ok.get("drawing") or {}).get("strokes") or []) == antes_z, (antes_z, nd_ok))
+    pg.ev("st.selId = null; renderList(); true")
+
+    # la lista esta PAGINADA: lo ultimo que escribe el invitado tiene que verse
+    pg.ev("v.currentTime = 5.6")
+    time.sleep(0.3)
+    pg.ev("document.getElementById('ta').value = 'ULTIMA-DEL-INVITADO'")
+    pg.ev("document.getElementById('ta').dispatchEvent(new Event('input'))")
+    pg.click("#bSave")
+    time.sleep(1.6)
+    check("la nota recien escrita por el invitado queda EN LA PAGINA visible (lista paginada)",
+          pg.ev("document.getElementById('list').textContent.indexOf('ULTIMA-DEL-INVITADO') >= 0"),
+          (pg.ev("document.getElementById('x2Page').textContent"),
+           pg.ev("x2Filtradas().length")))
+    check("la lista del invitado pagina en vez de desplazar (sin scroll de caja)",
+          pg.ev("(()=>{const L=document.getElementById('list');"
+                "return L.scrollHeight <= L.clientHeight + 2})()"),
+          pg.ev("(()=>{const L=document.getElementById('list');"
+                "return L.scrollHeight + '>' + L.clientHeight})()"))
+    pg.shot("i03b-invitado-auditoria.png")
 
     # ── video por la puerta: 206 y reproduccion ──
     print("\n== video por la puerta ==")
@@ -718,6 +838,11 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     # ── 5. latencia: nota del invitado -> app de Cristian por sondeo ──
     print("\n== latencia por sondeo ==")
     cp.ev("window.__lat = null; st.rev = st.rev")
+    # con la lista paginada, la nota del invitado puede nacer fuera de la pagina que
+    # Cristian tiene delante: se fuerza esa situacion (pagina 0 y varias paginas)
+    cp.ev("st.x2Page = 0; renderList()")
+    pags_antes = cp.ev("document.getElementById('x2Page').textContent")
+    cp.ev("document.getElementById('toast').textContent = ''")
     pg.ev("v.currentTime = 5.0")
     time.sleep(0.3)
     pg.ev("document.getElementById('ta').value = 'MEDIDA-LATENCIA'")
@@ -737,6 +862,20 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("y llega con la insignia «Invitado · Nombre»",
           cp.ev("(()=>{const n=[...document.querySelectorAll('.note')].find(x=>x.textContent.indexOf('MEDIDA-LATENCIA')>=0);"
                 "return !!n && n.dataset.who==='invitado' && n.textContent.indexOf('Invitado · %s')>=0})()" % NOMBRE))
+    check("la lista paginada SALTA a la pagina de la nota que acaba de llegar",
+          (cp.ev("document.getElementById('x2Page').textContent") or "") != pags_antes
+          and cp.ev("st.x2Page") == cp.ev("x2PaginaDe((st.notas.find(n=>(n.text||'').indexOf("
+                    "'MEDIDA-LATENCIA')>=0)||{}).id)"),
+          (pags_antes, cp.ev("document.getElementById('x2Page').textContent")))
+    check("Cristian recibe un aviso de que llego una nota de invitado",
+          "Invitado" in (cp.ev("document.getElementById('toast').textContent") or ""),
+          cp.ev("document.getElementById('toast').textContent"))
+    check("la lista de Cristian sigue sin scroll tras la llegada",
+          cp.ev("(()=>{const L=document.getElementById('list');"
+                "return L.scrollHeight <= L.clientHeight + 2})()"),
+          cp.ev("(()=>{const L=document.getElementById('list');"
+                "return L.scrollHeight + '>' + L.clientHeight})()"))
+    cp.shot("i08b-llegada-paginada.png")
 
     # ── actividad para el aviso de Telegram ──
     st, d, _ = http("GET", ADMIN + "/api/invitados/actividad?desde=2000-01-01T00:00:00Z")
@@ -801,6 +940,13 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
 
     # ── 7. segundo invitado con ve_otras=true: SI ve las notas del primero ──
     print("\n== segundo invitado (ve_otras=true) ==")
+    # un marcador de CAMBIO de Agente (fase 1 del porte): el invitado que ve «otras»
+    # lo vera en la lista, pero sin una sola accion de decision
+    st, d, _ = http("POST", ADMIN + "/api/proyectos/%s/notas" % SLUG,
+                    {"video": VID, "frame": 55, "text": "Cambio aplicado por el Agente",
+                     "author": "claude", "kind": "cambio", "resuelve": n1["id"]})
+    N_CAMBIO = ((d or {}).get("nota") or {}).get("id")
+    check("marcador de cambio de Agente creado para la auditoria", st == 201 and N_CAMBIO, (st, d))
     st, d, _ = http("POST", "%s/api/proyectos/%s/videos/%s/invitar" % (ADMIN, SLUG, VID),
                     {"dias": 3, "etiqueta": "Director (ve otras)", "ve_otras": True})
     TOKEN_VE, EID_VE = (d or {}).get("token"), (d or {}).get("id")
@@ -822,6 +968,27 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
                   for x in ("Nota del OTRO video",)) and tp(pg, "GET", "/api/notas/" + SLUG2).get("s") == 404)
     check("no puede editar las notas de otro invitado aunque las vea",
           tp(pg, "PATCH", "/api/notas/%s/%s" % (SLUG, n1["id"]), {"text": "mio"}).get("s") == 404)
+    # fase 1 del porte vista por un invitado con ve_otras=true
+    pg.ev("st.x2Type='all'; st.x2Person='all'; st.x2Page=0; renderList()")
+    verCambio = esperar_js(pg, "(()=>{for(let p=0;p<40;p++){ st.x2Page=p; renderList();"
+                               "if(document.getElementById('list').textContent"
+                               ".indexOf('Cambio aplicado por el Agente')>=0) return 'si'; }"
+                               "st.x2Page=0; renderList(); return ''})()", 12)
+    check("ve_otras=true: el invitado ve el cambio de Agente en la conversacion", verCambio == "si",
+          pg.ev("x2Filtradas().length"))
+    check("pero la tarjeta de cambio llega SIN botones de decision",
+          pg.ev("JSON.stringify([...document.querySelectorAll("
+                "'[data-approve],[data-adjust],[data-redecide],.approve-btn,.adjust-btn')].length)") == "0",
+          pg.ev("document.getElementById('list').innerHTML.length"))
+    pg.ev("x2Aprobar(%s); x2PedirAjuste(%s); true" % (json.dumps(N_CAMBIO), json.dumps(N_CAMBIO)))
+    time.sleep(1.0)
+    ncam = nota_por_id(ADMIN, SLUG, N_CAMBIO)
+    check("ni llamando a x2Aprobar/x2PedirAjuste a mano se decide el cambio de Agente",
+          ncam and not ncam.get("decision"), ncam)
+    pg.ev("st.x2Page=0; renderList()")
+    check("el rotulo del hilo dice «Agente», nunca «Claude», tambien para el invitado",
+          "Claude" not in (pg.ev("document.getElementById('list').textContent") or ""),
+          pg.ev("document.getElementById('list').textContent"))
     pg.shot("i11-ve-otras.png")
 
     # ── 8. tope de escrituras: 60/min por enlace -> 429 ──
