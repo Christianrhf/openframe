@@ -63,6 +63,10 @@ visor.sh — revision de video con notas por fotograma
   desmarcar <slug> <nota-id>       vuelve a abrir una nota
   borrar-nota <slug> <nota-id>     elimina una nota
   vids <slug>                      lista los videos con id, fps y duracion
+  invitar <slug> <vid> [--dias N] [--etiqueta T] [--ve-otras]
+                                   crea un enlace privado para ese video
+  invitados [slug]                lista enlaces, uso y notas
+  revocar <slug> <vid> <id>       revoca un enlace de inmediato
 
 Ejemplos:
   visor.sh subir animales-sueltos trailer.mov
@@ -79,6 +83,83 @@ esac
 ensure_up || exit 1
 
 case "$cmd" in
+  invitar)
+    SLUG="${1:-}"; VID="${2:-}"; shift 2 2>/dev/null || true
+    DIAS=7; ETIQUETA=""; VE=false
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --dias)
+          [ $# -ge 2 ] || { echo "ERROR: --dias necesita un numero" >&2; exit 1; }
+          DIAS="$2"; shift 2 ;;
+        --dias=*) DIAS="${1#--dias=}"; shift ;;
+        --etiqueta)
+          [ $# -ge 2 ] || { echo "ERROR: --etiqueta necesita texto" >&2; exit 1; }
+          ETIQUETA="$2"; shift 2 ;;
+        --etiqueta=*) ETIQUETA="${1#--etiqueta=}"; shift ;;
+        --ve-otras) VE=true; shift ;;
+        *) echo "ERROR: opcion desconocida: $1" >&2; exit 1 ;;
+      esac
+    done
+    if [ -z "$SLUG" ] || [ -z "$VID" ]; then
+      echo "uso: visor.sh invitar <slug> <vid> [--dias N] [--etiqueta T] [--ve-otras]" >&2; exit 1; fi
+    BODY=$(python3 -c 'import json,sys
+try: dias=int(sys.argv[1])
+except ValueError: sys.exit("ERROR: --dias debe ser un numero")
+print(json.dumps({"dias":dias,"etiqueta":sys.argv[2],"ve_otras":sys.argv[3]=="true"}))' "$DIAS" "$ETIQUETA" "$VE") || exit 1
+    curl -s -X POST "$API/api/proyectos/$SLUG/videos/$VID/invitar" \
+      -H 'Content-Type: application/json' -d "$BODY" | j '
+print(d["url"])
+if not d.get("publicada"):
+    print("AVISO: la puerta publica NO quedo abierta: %s" % d.get("aviso","sin detalle"), file=sys.stderr)'
+    ;;
+
+  invitados)
+    SLUG="${1:-}"
+    python3 - "$API" "$SLUG" <<'PY'
+import json, sys, urllib.error, urllib.request
+api, wanted = sys.argv[1].rstrip('/'), sys.argv[2]
+def get(path):
+    try:
+        return json.load(urllib.request.urlopen(api + path, timeout=10))
+    except urllib.error.HTTPError as e:
+        try: msg=json.load(e).get('error','HTTP %d' % e.code)
+        except Exception: msg='HTTP %d' % e.code
+        raise SystemExit('ERROR del servidor: ' + msg)
+if wanted:
+    projects=[get('/api/proyectos/' + wanted)]
+else:
+    index=get('/api/proyectos')
+    projects=[get('/api/proyectos/' + p['slug']) for p in index.get('todos', index.get('proyectos',[]))]
+rows=[]
+for project in projects:
+    slug=project.get('proyecto',{}).get('slug')
+    for video in project.get('videos',[]):
+        data=get('/api/proyectos/%s/videos/%s/invitar' % (slug, video['id']))
+        for link in data.get('enlaces',[]):
+            rows.append((slug, video['id'], video.get('nombre',''), link))
+print('%-18s %-11s %-8s %-10s %5s %5s  %s' % ('PROYECTO','VIDEO','ID','ESTADO','USOS','NOTAS','ETIQUETA'))
+for slug, vid, _name, link in rows:
+    if link.get('revocado'): state='revocado'
+    else:
+        import datetime
+        try: expired=datetime.datetime.fromisoformat(link['expira'].replace('Z','+00:00')) <= datetime.datetime.now(datetime.timezone.utc)
+        except Exception: expired=True
+        state='caducado' if expired else 'activo'
+    print('%-18s %-11s %-8s %-10s %5d %5d  %s' %
+          (slug[:18], vid[:11], link.get('id',''), state, int(link.get('usos') or 0),
+           int(link.get('notas') or 0), link.get('etiqueta','')))
+if not rows: print('(sin enlaces)')
+PY
+    ;;
+
+  revocar)
+    SLUG="${1:-}"; VID="${2:-}"; ID="${3:-}"
+    if [ -z "$SLUG" ] || [ -z "$VID" ] || [ -z "$ID" ]; then
+      echo "uso: visor.sh revocar <slug> <vid> <id>" >&2; exit 1; fi
+    curl -s -X DELETE "$API/api/proyectos/$SLUG/videos/$VID/invitar/$ID" \
+      | j 'print("REVOCADO " + "'"$ID"'") if d.get("ok") else sys.exit("ERROR: no se pudo revocar")'
+    ;;
+
   proyectos|ls|ps)
     curl -sf "$API/api/proyectos" | j '
 p=d.get("proyectos",[]); a=d.get("archivados",[])
@@ -360,4 +441,3 @@ print("RESUELTAS %d notas" % len(ns))'
     exit 1
     ;;
 esac
-

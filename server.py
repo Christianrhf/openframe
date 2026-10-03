@@ -8,17 +8,21 @@ Solo stdlib. Escucha en 127.0.0.1, sin dependencias.
 """
 import argparse
 import base64
+import fcntl
 import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
+import subprocess
 import sys
 import threading
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlsplit
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "data")
@@ -26,6 +30,7 @@ THUMBS = os.path.join(BASE, "thumbs")
 LOCK = threading.RLock()
 REV = {"n": 0}          # contador de cambios (para polling barato)
 STARTED = time.time()
+PUBLICAR_INTERVAL = 300
 
 for d in (DATA, THUMBS):
     os.makedirs(d, exist_ok=True)
@@ -51,7 +56,7 @@ def read_json(path, default):
 
 
 def write_json(path, data):
-    tmp = path + ".tmp%d" % os.getpid()
+    tmp = path + ".tmp-%d-%s" % (os.getpid(), uuid.uuid4().hex[:8])
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
@@ -103,6 +108,151 @@ def save_notes(slug, notes):
 
 def vdir(slug, vid):
     return os.path.join(pdir(slug), "videos", vid)
+
+
+def guest_secret_path():
+    return os.path.join(DATA, ".guest_secret")
+
+
+def guest_secret():
+    """Secreto local compartido con guest.py; nunca sale por HTTP."""
+    path = guest_secret_path()
+    with LOCK:
+        try:
+            with open(path, "rb") as f:
+                value = f.read()
+            if len(value) == 32:
+                os.chmod(path, 0o600)
+                return value
+        except OSError:
+            pass
+        value = secrets.token_bytes(32)
+        tmp = path + ".tmp-%d-%s" % (os.getpid(), uuid.uuid4().hex[:8])
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(value)
+            os.replace(tmp, path)
+            os.chmod(path, 0o600)
+        finally:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+        return value
+
+
+def invitados_path(slug, vid):
+    return os.path.join(vdir(slug, vid), "invitados.json")
+
+
+def _locked_links(slug, vid, change=None):
+    """Lee/modifica enlaces con flock para coordinar server.py y guest.py."""
+    path = invitados_path(slug, vid)
+    if not os.path.isdir(vdir(slug, vid)):
+        raise ValueError("video no existe")
+    lock_path = path + ".lock"
+    fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        with os.fdopen(fd, "r+") as lockf:
+            fcntl.flock(lockf.fileno(), fcntl.LOCK_EX)
+            links = read_json(path, [])
+            if not isinstance(links, list):
+                links = []
+            result = change(links) if change else links
+            if change:
+                write_json(path, links)
+                os.chmod(path, 0o600)
+            return result
+    finally:
+        try:
+            os.chmod(lock_path, 0o600)
+        except OSError:
+            pass
+
+
+def parse_iso(value):
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def link_activo(link, at=None):
+    at = at or datetime.now(timezone.utc)
+    exp = parse_iso(link.get("expira"))
+    if exp is None:
+        return False
+    if exp.tzinfo is None:
+        exp = exp.replace(tzinfo=timezone.utc)
+    return not link.get("revocado") and exp > at
+
+
+def base_publica():
+    cfg = read_json(os.path.join(BASE, "config.json"), {})
+    value = cfg.get("base_publica") if isinstance(cfg, dict) else None
+    if not isinstance(value, str) or not value.startswith("https://"):
+        value = "https://openframe.inspiredink.space"
+    return value.rstrip("/")
+
+
+def iter_enlaces():
+    if not os.path.isdir(DATA):
+        return
+    for slug in sorted(os.listdir(DATA)):
+        videos_root = os.path.join(pdir(slug), "videos")
+        if not os.path.isdir(videos_root):
+            continue
+        for vid in sorted(os.listdir(videos_root)):
+            path = invitados_path(slug, vid)
+            if os.path.isfile(path):
+                for link in read_json(path, []):
+                    if isinstance(link, dict):
+                        yield slug, vid, link
+
+
+def enlaces_activos():
+    return sum(1 for _slug, _vid, link in iter_enlaces() if link_activo(link))
+
+
+def publicar(accion):
+    """Opera el launchd sin heredar el request indefinidamente."""
+    if os.environ.get("OPENFRAME_NO_PUBLICAR") == "1":
+        return False, "publicacion desactivada por OPENFRAME_NO_PUBLICAR"
+    try:
+        proc = subprocess.Popen(
+            [os.path.join(BASE, "publicar.sh"), accion], cwd=BASE,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            universal_newlines=True)
+        try:
+            out, _ = proc.communicate(timeout=60)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            out, _ = proc.communicate()
+            return False, "publicar.sh excedio 60 s"
+        msg = (out or "").strip()[-300:]
+        return proc.returncode == 0, msg or ("ok" if proc.returncode == 0 else "fallo")
+    except Exception as exc:
+        return False, "no se pudo ejecutar publicar.sh: %s" % type(exc).__name__
+
+
+def puerta_estado():
+    if os.environ.get("OPENFRAME_NO_PUBLICAR") == "1":
+        return False
+    ok, text = publicar("estado")
+    return bool(ok and "tunel: abierto" in text and "puerta local: abierto" in text)
+
+
+def publicar_watchdog():
+    while True:
+        time.sleep(PUBLICAR_INTERVAL)
+        try:
+            if enlaces_activos() == 0:
+                publicar("off")
+        except Exception:
+            pass
 
 
 def load_videos(slug):
@@ -552,7 +702,8 @@ def group_threads(notes, video=None, solo_abiertos=False):
 def add_note(slug, vid, frame, text, end_frame=None, author="claude",
              resolved=False, drawing=None, thumb=None, fps=None, note_id=None,
              kind="nota", parent=None, created=None,
-             from_note=None, from_video=None, resuelve=None, visto=False):
+             from_note=None, from_video=None, resuelve=None, visto=False,
+             autor_nombre=None, enlace_id=None):
     with LOCK:
         notes = load_notes(slug)
         # ── RESPUESTA: el momento no se elige, se hereda de la raiz ──
@@ -601,6 +752,9 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
             "parent": parent or None,
         }
         n["thread"] = parent or n["id"]
+        if author == "invitado":
+            n["autor_nombre"] = (autor_nombre or "")[:40]
+            n["enlace_id"] = enlace_id
         # de donde viene (herencia entre versiones). Se acepta por la API para que
         # "deshacer el borrado" de un hilo heredado lo devuelva siendo heredado.
         if from_note:
@@ -649,6 +803,120 @@ def video_notes(slug, only_pending=False, video=None):
     if video:
         out = [n for n in out if n.get("video") == video]
     out.sort(key=lambda n: (n.get("video", ""), n.get("frame", 0)))
+    return out
+
+
+# ── ENLACES DE INVITADO ──────────────────────────────────────
+def crear_enlace(slug, vid, dias=7, etiqueta="", ve_otras=False):
+    if not os.path.isdir(vdir(slug, vid)):
+        raise ValueError("video no existe")
+    try:
+        dias = int(dias)
+    except (TypeError, ValueError):
+        raise ValueError("dias debe ser un entero entre 1 y 90")
+    if not 1 <= dias <= 90:
+        raise ValueError("dias debe estar entre 1 y 90")
+    if not isinstance(etiqueta, str):
+        raise ValueError("etiqueta invalida")
+    etiqueta = etiqueta.strip()
+    if len(etiqueta) > 60 or any(ord(ch) < 32 for ch in etiqueta):
+        raise ValueError("etiqueta invalida")
+    creado_dt = datetime.now(timezone.utc)
+    link = {
+        "id": secrets.token_hex(4),
+        "token": secrets.token_urlsafe(32),
+        "creado": creado_dt.isoformat(timespec="seconds"),
+        "expira": (creado_dt + timedelta(days=dias)).isoformat(timespec="seconds"),
+        "revocado": False,
+        "etiqueta": etiqueta,
+        "ve_otras": bool(ve_otras),
+        "usos": 0,
+        "ultimo_uso": None,
+    }
+
+    def append(links):
+        links.append(link)
+        return dict(link)
+
+    _locked_links(slug, vid, append)
+    return link
+
+
+def listar_enlaces(slug, vid):
+    notes = load_notes(slug)
+    out = []
+    for link in _locked_links(slug, vid):
+        item = {k: link.get(k) for k in (
+            "id", "creado", "expira", "revocado", "etiqueta", "ve_otras",
+            "usos", "ultimo_uso")}
+        item["url"] = base_publica() + "/r/" + link.get("token", "")
+        item["notas"] = sum(1 for n in notes if n.get("enlace_id") == link.get("id"))
+        out.append(item)
+    out.sort(key=lambda x: x.get("creado") or "", reverse=True)
+    return out
+
+
+def revocar_enlace(slug, vid, enlace_id):
+    found = {"ok": False}
+
+    def revoke(links):
+        for link in links:
+            if link.get("id") == enlace_id:
+                link["revocado"] = True
+                found["ok"] = True
+                break
+        return found["ok"]
+
+    _locked_links(slug, vid, revoke)
+    return found["ok"]
+
+
+def enlace_valido_id(slug, vid, enlace_id):
+    try:
+        links = _locked_links(slug, vid)
+    except ValueError:
+        return False
+    return any(link.get("id") == enlace_id and link_activo(link) for link in links)
+
+
+def actividad_invitados(desde):
+    since = parse_iso(desde) if desde else datetime.fromtimestamp(0, timezone.utc)
+    if since is None:
+        raise ValueError("desde no es ISO")
+    if since.tzinfo is None:
+        since = since.replace(tzinfo=timezone.utc)
+    out = []
+    for slug in sorted(os.listdir(DATA)):
+        pm = plist(slug)
+        if not pm:
+            continue
+        videos = {v["id"]: v for v in load_videos(slug)}
+        etiquetas = {}
+        for vid in videos:
+            path = invitados_path(slug, vid)
+            for link in read_json(path, []):
+                etiquetas[link.get("id")] = link.get("etiqueta", "")
+        for n in load_notes(slug):
+            if n.get("author") != "invitado":
+                continue
+            created = parse_iso(n.get("created"))
+            if created is None:
+                continue
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if created <= since:
+                continue
+            vm = videos.get(n.get("video"), {})
+            out.append({
+                "slug": slug, "vid": n.get("video"), "id": n.get("id"),
+                "nombre": n.get("autor_nombre", ""),
+                "etiqueta": etiquetas.get(n.get("enlace_id"), ""),
+                "text": n.get("text", ""), "frame": n.get("frame", 0),
+                "timecode": n.get("timecode", ""), "created": n.get("created"),
+                "proyecto": pm.get("nombre", slug),
+                "version": vm.get("nombre", n.get("video", "")),
+            })
+    out.sort(key=lambda x: (x.get("created") or "", x.get("id") or ""))
     return out
 
 
@@ -781,8 +1049,9 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── GET ──
     def do_GET(self):
-        p = self.path.split("?")[0]
-        q = self.path.split("?")[1] if "?" in self.path else ""
+        parsed = urlsplit(self.path)
+        p = parsed.path
+        q = parse_qs(parsed.query, keep_blank_values=True)
         try:
             if p in ("/", "/index.html"):
                 return self._index()
@@ -790,6 +1059,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"ok": True, "rev": rev(), "uptime": round(time.time() - STARTED)})
             if p == "/api/proyectos":
                 return self._json(dict({"rev": rev()}, **api_proyectos()))
+            if p == "/api/invitados/estado":
+                return self._json({"publicada": puerta_estado(),
+                                   "enlaces_activos": enlaces_activos()})
+            if p == "/api/invitados/actividad":
+                try:
+                    notas = actividad_invitados((q.get("desde") or [""])[0])
+                except ValueError as exc:
+                    return self._err(400, str(exc))
+                return self._json({"notas": notas})
+            m = re.match(r"^/api/proyectos/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/videos/(v_[0-9a-f]{8})/invitar$", p)
+            if m:
+                try:
+                    return self._json({"enlaces": listar_enlaces(m.group(1), m.group(2))})
+                except ValueError:
+                    return self._err(404, "video no existe")
             m = re.match(r"^/api/proyectos/([\w.-]+)$", p)
             if m:
                 slug = m.group(1)
@@ -806,10 +1090,11 @@ class Handler(BaseHTTPRequestHandler):
                 slug = m.group(1)
                 if not os.path.isdir(pdir(slug)):
                     return self._err(404, "proyecto no existe")
-                qs = dict(kv.split("=", 1) for kv in q.split("&") if "=" in kv)
                 notes = load_notes(slug)
-                hs = group_threads(notes, video=qs.get("video") or None,
-                                   solo_abiertos=qs.get("todas") not in ("1", "si", "true"))
+                video = (q.get("video") or [""])[0]
+                todas = (q.get("todas") or [""])[0]
+                hs = group_threads(notes, video=video or None,
+                                   solo_abiertos=todas not in ("1", "si", "true"))
                 return self._json({"rev": rev(), "hilos": hs,
                                    "videos": load_videos(slug)})
             m = re.match(r"^/api/notas/([\w.-]+)$", p)
@@ -822,9 +1107,13 @@ class Handler(BaseHTTPRequestHandler):
             if m:
                 return self._file(os.path.join(THUMBS, m.group(1), m.group(2)),
                                   H["image/jpeg"], root=THUMBS)
-            m = re.match(r"^/media/([\w.-]+)/([\w.-]+)/(.+)$", p)
+            m = re.match(r"^/media/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/(v_[0-9a-f]{8})/([A-Za-z0-9][A-Za-z0-9._-]{0,127})$", p)
             if m:
-                return self._media(os.path.join(pdir(m.group(1)), "videos", m.group(2), m.group(3)))
+                vm = read_json(os.path.join(vdir(m.group(1), m.group(2)), "meta.json"), {})
+                allowed = {vm.get("archivo"), "proxy-720.mp4"}
+                if m.group(3) not in allowed or os.path.splitext(m.group(3))[1].lower() not in VIDEO_EXT:
+                    return self._err(404, "no encontrado")
+                return self._media(os.path.join(vdir(m.group(1), m.group(2)), m.group(3)))
             return self._err(404, "no encontrado: " + p)
         except Exception as e:
             return self._err(500, "%s: %s" % (type(e).__name__, e))
@@ -859,21 +1148,49 @@ class Handler(BaseHTTPRequestHandler):
                 finally:
                     os.unlink(tmp)
                 return self._json({"video": meta})
+            m = re.match(r"^/api/proyectos/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/videos/(v_[0-9a-f]{8})/invitar$", p)
+            if m:
+                d = self._jbody()
+                try:
+                    link = crear_enlace(m.group(1), m.group(2), d.get("dias", 7),
+                                        d.get("etiqueta", ""), d.get("ve_otras", False))
+                except ValueError as exc:
+                    return self._err(400, str(exc))
+                publicada, aviso = publicar("on")
+                out = {k: link[k] for k in ("id", "token", "expira", "etiqueta", "ve_otras")}
+                out.update({"url": base_publica() + "/r/" + link["token"],
+                            "publicada": publicada, "aviso": aviso})
+                return self._json(out, 201)
             m = re.match(r"^/api/proyectos/([\w.-]+)/notas$", p)
             if m:
                 d = self._jbody()
                 # una respuesta no trae video: lo hereda de la nota a la que responde
                 if not d.get("video") and not d.get("parent"):
                     return self._err(400, "falta video")
+                supplied_gate = self.headers.get("X-Guest-Gate", "")
+                valid_gate = secrets.compare_digest(supplied_gate, guest_secret().hex())
+                if valid_gate:
+                    nombre = d.get("autor_nombre")
+                    enlace_id = d.get("enlace_id")
+                    if (not isinstance(nombre, str) or not 1 <= len(nombre) <= 40 or
+                            any(ord(ch) < 32 or ord(ch) == 127 for ch in nombre)):
+                        return self._err(400, "nombre de invitado invalido")
+                    if not enlace_valido_id(m.group(1), d.get("video"), enlace_id):
+                        return self._err(404, "enlace no disponible")
+                    author = "invitado"
+                else:
+                    nombre = None
+                    enlace_id = None
+                    author = "claude" if d.get("author") == "claude" else "cristian"
                 try:
                     n = add_note(m.group(1), d.get("video"), d.get("frame", 0), d.get("text", ""),
-                                 d.get("end_frame"), d.get("author", "cristian"),
+                                 d.get("end_frame"), author,
                                  d.get("resolved", False), d.get("drawing"),
                                  d.get("thumb"), d.get("fps"), d.get("id"),
                                  d.get("kind", "nota"), d.get("parent"),
                                  d.get("created"), d.get("from_note"),
                                  d.get("from_video"), d.get("resuelve"),
-                                 bool(d.get("visto")))
+                                 bool(d.get("visto")), nombre, enlace_id)
                 except ValueError as e:
                     return self._err(400, str(e))
                 return self._json({"nota": n}, 201)
@@ -976,8 +1293,11 @@ class Handler(BaseHTTPRequestHandler):
                     else:
                         n["end_timecode"] = None
                         n["end_time"] = None
-                    if d.get("drawing"):
-                        n["drawing"] = d["drawing"]
+                    if "drawing" in d:
+                        if d["drawing"] is None:
+                            n.pop("drawing", None)
+                        else:
+                            n["drawing"] = d["drawing"]
                     if d.get("thumb"):
                         try:
                             raw = d["thumb"].split(",", 1)[-1]
@@ -1005,6 +1325,18 @@ class Handler(BaseHTTPRequestHandler):
     # ── DELETE ──
     def do_DELETE(self):
         try:
+            p = urlsplit(self.path).path
+            m = re.match(r"^/api/proyectos/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/videos/(v_[0-9a-f]{8})/invitar/([0-9a-f]{8})$", p)
+            if m:
+                try:
+                    ok = revocar_enlace(m.group(1), m.group(2), m.group(3))
+                except ValueError:
+                    ok = False
+                if not ok:
+                    return self._err(404, "enlace no existe")
+                if enlaces_activos() == 0:
+                    publicar("off")
+                return self._json({"ok": True})
             return self._delete_nota()
         except Exception as e:
             return self._err(500, "%s: %s" % (type(e).__name__, e))
@@ -1120,8 +1452,12 @@ def main():
     ap.add_argument("--puerto", type=int, default=8477)
     ap.add_argument("--host", default="127.0.0.1")
     a = ap.parse_args()
+    guest_secret()
     srv = ThreadingHTTPServer((a.host, a.puerto), Handler)
     srv.daemon_threads = True
+    watcher = threading.Thread(target=publicar_watchdog, name="publicar-watchdog")
+    watcher.daemon = True
+    watcher.start()
     print("Visor de Notas escuchando en http://%s:%d" % (a.host, a.puerto))
     print("Proyectos en %s" % DATA)
     try:

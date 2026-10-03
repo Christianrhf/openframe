@@ -3,3 +3,4 @@ logs/
 shots/
 __pycache__/
 *.bak-*
+ref-S2/
