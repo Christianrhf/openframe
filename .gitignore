@@ -3,4 +3,7 @@ logs/
 shots/
 __pycache__/
 *.bak-*
+thumbs/
+ref-S/
 ref-S2/
+ref-U/
