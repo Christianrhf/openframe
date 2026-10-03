@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.cristian.openframe-tunnel</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-i</string>
+    <string>/Users/cristianhernandez/bin/cloudflared</string>
+    <string>tunnel</string>
+    <string>--config</string><string>/Users/cristianhernandez/.cloudflared/config.yml</string>
+    <string>--no-autoupdate</string>
+    <string>run</string><string>openframe</string>
+  </array>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/cristianhernandez/visornotas/logs/tunel.log</string>
+  <key>StandardErrorPath</key><string>/Users/cristianhernandez/visornotas/logs/tunel.log</string>
+</dict>
+</plist>

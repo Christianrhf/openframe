@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.cristian.openframe-guest</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/cristianhernandez/visornotas/guest.py</string>
+    <string>--puerto</string><string>8478</string>
+    <string>--api</string><string>http://127.0.0.1:8477</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/cristianhernandez/visornotas</string>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/cristianhernandez/visornotas/logs/guest.log</string>
+  <key>StandardErrorPath</key><string>/Users/cristianhernandez/visornotas/logs/guest.log</string>
+</dict>
+</plist>
