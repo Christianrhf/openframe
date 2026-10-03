@@ -704,6 +704,16 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
              kind="nota", parent=None, created=None,
              from_note=None, from_video=None, resuelve=None, visto=False,
              autor_nombre=None, enlace_id=None):
+    # R1b: un fotograma gigante (p. ej. 10**400) desbordaba `frame / fps` con OverflowError -> 500.
+    for _nm, _v in (("fotograma", frame), ("fotograma de salida", end_frame)):
+        if _nm == "fotograma de salida" and _v in (None, "", 0):
+            continue
+        try:
+            _fv = float(_v)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError(_nm + " invalido")
+        if not (0 <= _fv <= 10000000):
+            raise ValueError(_nm + " fuera de rango")
     with LOCK:
         notes = load_notes(slug)
         # ── RESPUESTA: el momento no se elige, se hereda de la raiz ──
@@ -1048,7 +1058,39 @@ class Handler(BaseHTTPRequestHandler):
             return {}
 
     # ── GET ──
+    # ── defensa en profundidad: 8477 es de confianza y SOLO local ──────────────────────────────
+    # Si alguien apunta por error el tunel de Cloudflare (o cualquier proxy) a ESTE puerto, toda
+    # peticion llega con cabeceras de proxy y se rechaza aqui con 404; igual con un Host no local
+    # (DNS rebinding). La unica puerta publica es guest.py (8478), que habla con este puerto con
+    # sus propias cabeceras.
+    _HDR_PROXY = ("cf-ray", "cf-connecting-ip", "cf-visitor", "cdn-loop", "x-forwarded-for",
+                  "x-forwarded-host", "x-real-ip", "forwarded")
+
+    def _trusted_local(self):
+        h = self.headers
+        for k in self._HDR_PROXY:
+            if h.get(k) is not None:
+                return False
+        host = (h.get("Host") or "").strip().lower()
+        if not host:
+            return True
+        hn = (host.split("]")[0] + "]") if host.startswith("[") else host.rsplit(":", 1)[0]
+        return hn in ("127.0.0.1", "localhost", "[::1]")
+
+    def _err500(self, e):
+        """Error interno: a Cristian/Claude (local) el detalle; a quien llega por la puerta de
+        invitados (X-Guest-Gate) nunca el texto de la excepcion, solo se registra."""
+        if self.headers.get("X-Guest-Gate"):
+            try:
+                sys.stderr.write("ERROR interno %s: %s\n" % (type(e).__name__, e))
+            except Exception:
+                pass
+            return self._err(500, "interno")
+        return self._err(500, "%s: %s" % (type(e).__name__, e))
+
     def do_GET(self):
+        if not self._trusted_local():
+            return self._err(404, "no encontrado")
         parsed = urlsplit(self.path)
         p = parsed.path
         q = parse_qs(parsed.query, keep_blank_values=True)
@@ -1116,10 +1158,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._media(os.path.join(vdir(m.group(1), m.group(2)), m.group(3)))
             return self._err(404, "no encontrado: " + p)
         except Exception as e:
-            return self._err(500, "%s: %s" % (type(e).__name__, e))
+            return self._err500(e)
 
     # ── POST ──
     def do_POST(self):
+        if not self._trusted_local():
+            return self._err(404, "no encontrado")
         p = self.path.split("?")[0]
         try:
             if p == "/api/proyectos":
@@ -1231,10 +1275,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"video": cur})
             return self._err(404, "no encontrado: " + p)
         except Exception as e:
-            return self._err(500, "%s: %s" % (type(e).__name__, e))
+            return self._err500(e)
 
     # ── PATCH ──
     def do_PATCH(self):
+        if not self._trusted_local():
+            return self._err(404, "no encontrado")
         # do_GET y do_POST ya envolvian su cuerpo en try/except; PATCH y DELETE no.
         # Una excepcion ahi dejaba la peticion SIN respuesta: con el keep-alive de
         # HTTP/1.1 el navegador se quedaba esperando hasta el timeout y la UI parecia
@@ -1242,7 +1288,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             return self._patch_nota()
         except Exception as e:
-            return self._err(500, "%s: %s" % (type(e).__name__, e))
+            return self._err500(e)
 
     def _patch_nota(self):
         p = self.path.split("?")[0]
@@ -1327,6 +1373,8 @@ class Handler(BaseHTTPRequestHandler):
 
     # ── DELETE ──
     def do_DELETE(self):
+        if not self._trusted_local():
+            return self._err(404, "no encontrado")
         try:
             p = urlsplit(self.path).path
             m = re.match(r"^/api/proyectos/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/videos/(v_[0-9a-f]{8})/invitar/([0-9a-f]{8})$", p)
@@ -1342,7 +1390,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"ok": True})
             return self._delete_nota()
         except Exception as e:
-            return self._err(500, "%s: %s" % (type(e).__name__, e))
+            return self._err500(e)
 
     def _delete_nota(self):
         p = self.path.split("?")[0]

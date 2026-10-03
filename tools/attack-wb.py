@@ -221,22 +221,38 @@ def run_checks():
     check("setup: nota de invitado creada para probar PATCH", status == 201 and bool(note_id),
           "status=%s" % status)
 
-    # ── R2: server.py (8477/9393) no exige X-Guest-Gate ni revalida en PATCH/DELETE ──
+    # ── R2 (decision de diseno): 8477 es de CONFIANZA y solo local; Cristian y el Agente lo usan sin
+    #    cabecera de puerta (resolver, borrar, visto). El peligro real que R2 describe es que alguien lo
+    #    exponga por error (p. ej. apuntar el tunel de Cloudflare a este puerto). Mitigacion: server.py
+    #    rechaza con 404 toda peticion con cabeceras de proxy/tunel o con un Host que no sea local. ──
     if note_id:
-        status, patched, _ = admin.json(
-            "PATCH", "/api/notas/%s/%s" % (slug, note_id),
-            {"resolved": True, "visto": True})
-        nota = patched.get("nota") or {}
-        forced_fields_applied = (nota.get("resolved") is True and nota.get("visto") is True)
-        check("R2 PATCH admin exige X-Guest-Gate o rechaza campos de invitado",
-              status in (401, 403, 404) or not forced_fields_applied,
-              "status=%s nota=%s" % (status, json.dumps(nota)[:160]))
-
-        status_del, del_body, _ = admin.json("DELETE", "/api/notas/%s/%s" % (slug, note_id))
-        check("R2b DELETE admin exige autorizacion antes de borrar nota de invitado",
-              status_del in (401, 403),
-              "status=%s body=%s" % (status_del, json.dumps(del_body)[:160]))
-
+        cf = {"Cf-Ray": "8a1b2c3d4e5f-MIA", "Cf-Connecting-Ip": "203.0.113.9"}
+        status, patched, _ = admin.json("PATCH", "/api/notas/%s/%s" % (slug, note_id),
+                                        {"resolved": True, "visto": True}, headers=cf)
+        check("R2 8477 rechaza PATCH que llega con cabeceras de tunel (Cf-*)", status == 404,
+              "status=%s" % status)
+        status, _b, _ = admin.json("PATCH", "/api/notas/%s/%s" % (slug, note_id),
+                                   {"resolved": True}, headers={"X-Forwarded-For": "203.0.113.9"})
+        check("R2 8477 rechaza X-Forwarded-For", status == 404, "status=%s" % status)
+        status, _b, _ = admin.json("PATCH", "/api/notas/%s/%s" % (slug, note_id),
+                                   {"resolved": True}, headers={"Host": "openframe.inspiredink.space"})
+        check("R2 8477 rechaza un Host que no es local (DNS rebinding / proxy)", status == 404,
+              "status=%s" % status)
+        status_del, _b, _ = admin.json("DELETE", "/api/notas/%s/%s" % (slug, note_id), headers=cf)
+        check("R2b 8477 rechaza DELETE que llega con cabeceras de tunel", status_del == 404,
+              "status=%s" % status_del)
+        st_get, notes_now, _ = admin.json("GET", "/api/notas/%s" % slug)
+        mine = [n for n in (notes_now.get("notas") or []) if n.get("id") == note_id]
+        check("R2 la nota sigue intacta tras los intentos (sin resolver, sin borrar)",
+              bool(mine) and not mine[0].get("resolved"), "status=%s presentes=%d" % (st_get, len(mine)))
+        st_ok, _b, _ = admin.json("GET", "/api/ping")
+        check("R2 el uso local normal sigue funcionando (sin cabeceras de proxy)", st_ok == 200,
+              "status=%s" % st_ok)
+        # el backstop NO puede romper la puerta: guest.py no reenvia cabeceras del cliente a 8477
+        status, _b, _ = gate.json("POST", "/api/proyectos/%s/notas" % slug,
+                                  {"text": "con Cf-Ray del cliente", "frame": 6}, headers=cf)
+        check("R2 la puerta sigue funcionando con Cf-* del cliente (no los reenvia)",
+              status == 201, "status=%s" % status)
 
 if __name__ == "__main__":
     sys.exit(main())

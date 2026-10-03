@@ -729,10 +729,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"error": "texto invalido"}, 400, enlace_id=enlace_id)
         frame = body.get("frame", 0)
         end_frame = body.get("end_frame")
-        if isinstance(frame, bool) or not isinstance(frame, int) or frame < 0:
+        if isinstance(frame, bool) or not isinstance(frame, int) or frame < 0 or frame > 10_000_000:
             return self._json({"error": "fotograma invalido"}, 400, enlace_id=enlace_id)
         if (end_frame not in (None, "", 0) and
-                (isinstance(end_frame, bool) or not isinstance(end_frame, int) or end_frame < frame)):
+                (isinstance(end_frame, bool) or not isinstance(end_frame, int) or end_frame < frame or end_frame > 10_000_000)):
             return self._json({"error": "tramo invalido"}, 400, enlace_id=enlace_id)
         try:
             drawing = self._drawing(body.get("drawing"))
