@@ -26,7 +26,7 @@ Python **3.9** de sistema en la Mac (stdlib únicamente: nada de `match`, nada d
 - `POST /api/proyectos/<slug>/videos/<vid>/invitar` body `{dias (1–90, def. 7), etiqueta, ve_otras}` → `201 {id, token, url, expira, etiqueta, ve_otras}`.
 - `GET /api/proyectos/<slug>/videos/<vid>/invitar` → `{enlaces:[{id, url, creado, expira, revocado, etiqueta, ve_otras, usos, ultimo_uso, notas (nº de notas con ese enlace_id)}]}`.
 - `DELETE /api/proyectos/<slug>/videos/<vid>/invitar/<id>` → `{ok:true}` (revoca; efecto inmediato).
-- `GET /api/invitados/actividad?desde=<ISO>` → `{notas:[{slug, vid, id, nombre, etiqueta, text, frame, created}]}` (notas con `author=="invitado"` creadas después de `desde`; para el aviso por Telegram que monta Cristian aparte).
+- `GET /api/invitados/actividad?desde=<ISO>` → `{notas:[{slug, vid, id, nombre, etiqueta, text, frame, timecode, created, proyecto (nombre legible), version (nombre legible del video)}]}` (notas con `author=="invitado"` creadas después de `desde`; para el aviso por Telegram que monta Cristian aparte).
 ## API de invitado en 8478 (`guest.py`)
 Identidad = cookie `ofg` (el token; `HttpOnly; Secure; SameSite=Lax; Path=/`; `Max-Age` hasta `expira`). El nombre = cookie `ofn` firmada con HMAC-SHA256.
 - `GET /r/<token>` → `302 /` + cookie `ofg` (válido) · `404` página mínima «Este enlace ya no está disponible» (inválido, caducado, revocado: **idéntico**, sin pistas). Cuenta `usos`/`ultimo_uso`.
