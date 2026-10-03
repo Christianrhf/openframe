@@ -830,6 +830,47 @@
   .shlink .btn.xs.confirmar{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
   .shaviso{font-size:11px;color:var(--fg-dim);padding:6px 0 0}
 
+  /* ── Comparar v01 · v02 (P7) ──
+     Estado de VISTA, no de datos: un segundo <video> (#v2) que sigue al principal.
+     Lado a lado: .screen pasa a flex y el JS fija en px el tamano de las dos cajas
+     (misma altura, cada una con su proporcion). Cortina: #cmpWrap se coloca ENCIMA
+     de #fw con su mismo rectangulo y se recorta con clip-path; el tirador vive en
+     una capa aparte (#cmpCurtain) para que el recorte no se lo coma. */
+  .cmpwrap{position:absolute;display:none;z-index:3;background:#000;border-radius:2px;overflow:hidden}
+  .cmpwrap.on{display:block}
+  .cmpwrap video{width:100%;height:100%;display:block;background:#000}
+  .screen.cmp-side{display:flex;align-items:center;justify-content:center;gap:12px}
+  .screen.cmp-side .cmpwrap{position:relative;order:0;flex:0 0 auto}
+  .screen.cmp-side .framewrap{order:1;flex:0 0 auto}
+  .screen.cmp-side .framewrap video{width:100%;height:100%}
+  /* en cortina la capa del otro corte SI recibe el puntero: un clic a la izquierda
+     del divisor no debe llegar al canvas (no dibuja ni pausa), como en la maqueta */
+  .cmpcurtain{position:absolute;display:none;z-index:4;pointer-events:none}
+  .cmpcurtain.on{display:block}
+  .cmpline{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;
+    box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+  .cmphandle{position:absolute;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);display:grid;place-items:center;cursor:ew-resize;
+    pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .cmphandle svg{width:14px;height:14px;color:#111;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .cmphandle:focus-visible{outline:2px solid #111;outline-offset:2px}
+  .cmplbl{position:absolute;left:8px;top:8px;z-index:5;font-family:var(--mono);font-size:10px;line-height:1.5;
+    color:#fff;background:rgba(0,0,0,.62);padding:2px 6px;border-radius:3px;pointer-events:none;
+    max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cmplbl[hidden]{display:none}
+  .screen.cmp-curtain .cmplbl-cur{left:auto;top:auto;right:8px;bottom:8px}
+  .cmpctl{position:absolute;top:10px;right:12px;z-index:6;display:flex;align-items:center;gap:4px}
+  .cmpctl select{height:22px;padding:0 6px;border:1px solid var(--line);border-radius:4px;
+    background:var(--panel-2);font-size:10.5px;max-width:170px;color:var(--fg-dim)}
+  .cmpctl [hidden]{display:none !important}
+  .cmppill{position:absolute;left:12px;bottom:10px;z-index:6;font-family:var(--mono);font-size:10px;
+    color:var(--fg);background:var(--panel);border:1px solid var(--line);padding:2px 7px;border-radius:4px;
+    max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cmppill[hidden]{display:none}
+  /* el invitado no compara: ni boton, ni capa, ni pista de que existe */
+  body.invitado .cmpctl,body.invitado .cmpwrap,body.invitado .cmpcurtain,body.invitado .cmppill,
+  body.invitado .cmplbl{display:none !important}
+
   @media (max-width:1180px){
     .rail{flex:0 0 176px;width:176px}
     .vcol{flex:0 0 200px;width:200px}
@@ -914,6 +955,10 @@
     <g id="i-ver"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></g>
     <!-- i-share2: compartir con un enlace (Lucide share-2, geometria exacta de lucide-react) -->
     <g id="i-share2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></g>
+    <!-- i-cols: comparar dos cortes lado a lado (Lucide columns-2, geometria exacta de lucide-react) -->
+    <g id="i-cols"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></g>
+    <!-- i-curtain: tirador de la cortina (Lucide chevrons-left-right, geometria exacta de lucide-react) -->
+    <g id="i-curtain"><path d="m9 7-5 5 5 5"/><path d="m15 7 5 5-5 5"/></g>
   </defs>
 </svg>
 
@@ -973,6 +1018,7 @@
       <div class="framewrap" id="fw">
         <video id="v" playsinline preload="metadata"></video>
         <canvas id="cv"></canvas>
+        <span class="cmplbl cmplbl-cur" id="cmpLblCur" hidden></span>
       </div>
       <div class="nocodec" id="nocodec">
         <div>
@@ -981,6 +1027,24 @@
           <code> visor/server.py no transcodifica</code>
         </div>
       </div>
+      <!-- Comparar v01 · v02 (solo anfitrion): segundo video, cortina y controles.
+           #v2 NO lleva src hasta entrar al modo; al salir se libera. -->
+      <div class="cmpwrap" id="cmpWrap">
+        <video id="v2" muted playsinline preload="metadata"></video>
+        <span class="cmplbl" id="cmpLblOtro" hidden></span>
+      </div>
+      <div class="cmpcurtain" id="cmpCurtain">
+        <div class="cmpline" id="cmpLine"></div>
+        <div class="cmphandle" id="cmpHandle" role="slider" tabindex="0" aria-label="Divisor de la cortina: ← → 1 %, Shift 10 %" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" title="Arrastra o usa ← → (Shift = 10 %)"><svg viewBox="0 0 24 24"><use href="#i-curtain"/></svg></div>
+      </div>
+      <div class="cmpctl" id="cmpCtl">
+        <button class="btn xs" id="bCmp" title="Comparar este corte con otro del proyecto" aria-label="Comparar este corte con otro del proyecto"><svg viewBox="0 0 24 24"><use href="#i-cols"/></svg>Comparar</button>
+        <select id="cmpSel" title="Corte con el que comparar" aria-label="Corte con el que comparar" hidden></select>
+        <button class="btn xs" id="cmpSide" title="Ver los dos cortes lado a lado" aria-label="Lado a lado" aria-pressed="false" hidden>Lado a lado</button>
+        <button class="btn xs" id="cmpCurt" title="Ver los dos cortes con una cortina deslizante" aria-label="Cortina" aria-pressed="false" hidden>Cortina</button>
+        <button class="btn xs icon" id="cmpExit" title="Salir de comparar (Esc)" aria-label="Salir de comparar" hidden><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="cmppill" id="cmpPill" role="status" hidden></div>
     </div>
     <div class="transport">
       <!-- UNA SOLA BANDA.
@@ -1691,6 +1755,7 @@ async function openProject(slug, opts){
 async function openVideo(vid){
   if(esInvitado && vid !== INV.video) return;   // un invitado ve UN video
   if(typeof shCerrar === "function") shCerrar();
+  cmpSalir(false);                      // otro corte: la comparacion anterior no vale (sin restaurar)
   st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
   guardarSesion();
   st.undo=[]; st.uPos=-1; actualizarBotonUndo();
@@ -1719,6 +1784,7 @@ function renderVideos(){
   const h = $("#vlist"); h.innerHTML = "";
   const p = pro();
   $("#vcolName").textContent = p ? p.nombre : "—";
+  cmpPintarControl();                   // «Comparar» depende de cuantos cortes hay
   // el corte mas reciente va ARRIBA: es el que se esta revisando. Antes salia abajo.
   const vids = p ? (st.videos||[]).slice().sort((a,b) => String(b.created||"").localeCompare(String(a.created||""))) : [];
   if(!vids.length){
@@ -2305,6 +2371,9 @@ cv.addEventListener("pointerdown", e => {
      universal de pausar, crea una nota vacia... 7 notas vacias en rafaga y 4 trazos
      de 1 punto". El lapiz ya no viene activo y el canvas no se come el clic. */
   if(!st.tool){
+    // con la cortina activa el clic sobre el video es parte del gesto del divisor:
+    // no cambia reproducir/pausar (igual que en la maqueta)
+    if(cmpEstado().on && cmpEstado().modo === "curtain") return;
     if(v.paused) play(); else pause();
     return;
   }
@@ -2866,7 +2935,11 @@ $("#bPrev").onclick = () => stepF(-1);
 $("#bNext").onclick = () => stepF(1);
 $("#bBack").onclick = () => stepS(-1);
 $("#bFwd").onclick = () => stepS(1);
-$("#bMax").onclick = () => { (v.requestFullscreen||v.webkitRequestFullscreen||function(){}).call(v); };
+$("#bMax").onclick = () => {
+  // comparando, la pantalla completa es la escena entera (los dos cortes), no solo #v
+  const el = cmpEstado().on ? $("#screen") : v;
+  (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);
+};
 $("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; renderList(); };
 $("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; renderList(); };
 $("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; renderList(); };
@@ -4174,6 +4247,249 @@ if(shBtn && shPop){
   document.addEventListener("keydown", ev => { if(ev.key === "Escape" && shAbierto()){ shCerrar(); } });
   window.addEventListener("resize", shColocar);
 }
+
+/* ═══ COMPARAR v01 · v02 (P7, solo anfitrion) ═══
+   Estado de VISTA: no toca notas ni entra en el historial de deshacer. El corte
+   actual (#v, con sus notas, marcadores y canvas) se muestra junto a OTRO corte del
+   mismo proyecto en #v2, que SIGUE al principal: reproducir, pausar, saltar, velocidad
+   y scrub se replican por TIEMPO (currentTime), nunca por fotograma, asi que dos
+   cortes con fps distintos tambien van a la par (y el rotulo lo dice).
+   - Por defecto se compara con el corte ANTERIOR por `created`; el selector permite
+     cualquier otro. Sin otro corte reproducible el boton queda desactivado con title.
+   - «Lado a lado»: las dos cajas con la misma altura, cada una con su proporcion.
+   - «Cortina»: #cmpWrap encima de #fw con su mismo rectangulo, recortado con
+     clip-path; el tirador es role=slider (← → 1 %, Shift 10 %).
+   - #v2 no lleva src hasta entrar y lo suelta al salir. Esc sale. Al salir se
+     restaura el estado exacto: posicion, pausa, velocidad, zoom y seleccion. */
+const CMP = {on:false, modo:"side", otro:null, pct:50, snap:null, raf:0, corr:0};
+const v2 = $("#v2");
+function cmpEstado(){ return CMP; }
+function cmpCandidatos(){
+  return (st.videos || []).filter(x => x.id !== st.vid && x.reproducible !== false);
+}
+// el anterior por `created`; si el actual es el mas viejo, el siguiente
+function cmpAnterior(){
+  const vs = (st.videos || []).slice().sort((a,b) => String(a.created||"").localeCompare(String(b.created||"")));
+  const cand = cmpCandidatos();
+  const i = vs.findIndex(x => x.id === st.vid);
+  for(let k = i - 1; k >= 0; k--) if(cand.some(c => c.id === vs[k].id)) return vs[k];
+  for(let k = i + 1; k < vs.length; k++) if(cand.some(c => c.id === vs[k].id)) return vs[k];
+  return cand[0] || null;
+}
+function cmpPintarControl(){
+  const b = $("#bCmp"); if(!b || esInvitado) return;
+  const m = vmeta();
+  const cand = cmpCandidatos();
+  const puede = !!m && m.reproducible !== false && cand.length > 0;
+  b.disabled = !puede;
+  b.setAttribute("aria-disabled", puede ? "false" : "true");
+  b.title = puede ? "Comparar este corte con otro del proyecto"
+                  : "Para comparar hace falta otro corte reproducible en este proyecto";
+  b.hidden = CMP.on;
+  const sel = $("#cmpSel");
+  if(CMP.on){
+    sel.innerHTML = cand.map(x => '<option value="' + esc(x.id) + '"' + (x.id === CMP.otro ? ' selected' : '') + '>' +
+                                  esc(x.nombre) + '</option>').join("");
+    sel.value = CMP.otro || "";
+  }
+  for(const id of ["cmpSel", "cmpSide", "cmpCurt", "cmpExit"]){ const e = $("#" + id); if(e) e.hidden = !CMP.on; }
+  const bs = $("#cmpSide"), bc = $("#cmpCurt");
+  if(bs){ bs.classList.toggle("on", CMP.modo === "side");    bs.setAttribute("aria-pressed", CMP.modo === "side" ? "true" : "false"); }
+  if(bc){ bc.classList.toggle("on", CMP.modo === "curtain"); bc.setAttribute("aria-pressed", CMP.modo === "curtain" ? "true" : "false"); }
+}
+function cmpPintarRotulos(){
+  const pill = $("#cmpPill"), lc = $("#cmpLblCur"), lo = $("#cmpLblOtro");
+  const m1 = vmeta(), m2 = (st.videos || []).find(x => x.id === CMP.otro);
+  if(!CMP.on || !m1 || !m2){ pill.hidden = true; lc.hidden = true; lo.hidden = true; return; }
+  const corto = s => { s = String(s || ""); return s.length > 28 ? s.slice(0, 27) + "…" : s; };
+  let extra = "";
+  const f1 = okFps(m1.fps) ? +m1.fps : 0, f2 = okFps(m2.fps) ? +m2.fps : 0;
+  if(f1 && f2 && Math.abs(f1 - f2) > 0.01) extra += " · fps " + f1 + " / " + f2 + ": a la par por tiempo";
+  const r1 = (vw && vh) ? vw / vh : 0;
+  const r2 = (v2.videoWidth && v2.videoHeight) ? v2.videoWidth / v2.videoHeight : 0;
+  if(r1 && r2 && Math.abs(r1 - r2) > 0.01) extra += " · proporción distinta (" + vw + "×" + vh + " / " + v2.videoWidth + "×" + v2.videoHeight + ")";
+  pill.textContent = "Comparando «" + corto(m1.nombre) + "» con «" + corto(m2.nombre) + "»" + extra;
+  pill.title = pill.textContent; pill.hidden = false;
+  lc.textContent = corto(m1.nombre); lc.hidden = false;
+  lo.textContent = corto(m2.nombre); lo.hidden = false;
+}
+function cmpSetPct(p){
+  CMP.pct = clamp(+p || 0, 0, 100);
+  $("#cmpWrap").style.clipPath = "inset(0 " + (100 - CMP.pct) + "% 0 0)";
+  $("#cmpLine").style.left = CMP.pct + "%";
+  const h = $("#cmpHandle");
+  h.style.left = CMP.pct + "%";
+  h.setAttribute("aria-valuenow", String(Math.round(CMP.pct)));
+  h.setAttribute("aria-valuetext", Math.round(CMP.pct) + " %");
+}
+// escribe solo si cambia: el ResizeObserver de #fw vuelve a llamar aqui y no debe ciclar
+function cmpPx(el, css){
+  for(const k of Object.keys(css)){
+    const val = Math.round(css[k]) + "px";
+    if(el.style[k] !== val) el.style[k] = val;
+  }
+}
+let _cmpLayoutBusy = false;
+function cmpLayout(){
+  if(!CMP.on || _cmpLayoutBusy) return;
+  _cmpLayoutBusy = true;
+  try{
+    const sc = $("#screen"), fw = $("#fw"), w2 = $("#cmpWrap"), cu = $("#cmpCurtain");
+    const r1 = (vw && vh) ? vw / vh : 16 / 9;
+    const r2 = (v2.videoWidth && v2.videoHeight) ? v2.videoWidth / v2.videoHeight : r1;
+    if(CMP.modo === "side"){
+      const PAD = 16, GAP = 12;
+      const W = sc.clientWidth - 2 * PAD, H = sc.clientHeight - 2 * PAD;
+      if(W <= 0 || H <= 0) return;
+      // sin pasar del tamano natural: el visor normal tampoco amplia un clip pequeno
+      const natural = Math.max(vh || H, v2.videoHeight || 0);
+      const h = Math.floor(Math.min(H, (W - GAP) / (r1 + r2), natural));
+      cmpPx(fw, {width: h * r1, height: h});
+      cmpPx(w2, {width: h * r2, height: h});
+    } else {
+      const sr = sc.getBoundingClientRect(), fr = fw.getBoundingClientRect();
+      const css = {left: fr.left - sr.left, top: fr.top - sr.top, width: fr.width, height: fr.height};
+      cmpPx(w2, css); cmpPx(cu, css);
+    }
+  } finally { _cmpLayoutBusy = false; }
+}
+function cmpSetModo(m){
+  CMP.modo = (m === "curtain") ? "curtain" : "side";
+  const sc = $("#screen");
+  sc.classList.toggle("cmp-side", CMP.modo === "side");
+  sc.classList.toggle("cmp-curtain", CMP.modo === "curtain");
+  $("#cmpCurtain").classList.toggle("on", CMP.modo === "curtain");
+  // limpiar la geometria del modo anterior antes de medir la del nuevo
+  $("#fw").style.cssText = ""; $("#cmpWrap").style.cssText = ""; $("#cmpCurtain").style.cssText = "";
+  if(CMP.modo === "curtain") cmpSetPct(CMP.pct);
+  cmpPintarControl(); cmpLayout(); fit();
+}
+function cmpEntrar(otroId){
+  if(esInvitado || !st.vid) return false;
+  const m = vmeta();
+  if(!m || m.reproducible === false) return false;
+  const otro = (otroId && cmpCandidatos().find(x => x.id === otroId)) || cmpAnterior();
+  if(!otro){ toast("No hay otro corte con el que comparar"); return false; }
+  if(!CMP.on){
+    CMP.snap = {t: v.currentTime, paused: v.paused, rate: v.playbackRate,
+                zoom: st.tl.zoom, off: st.tl.off, selId: st.selId,
+                pend: st.pend ? Object.assign({}, st.pend) : null, replyTo: st.replyTo};
+    pause();                                   // el segundo corte tiene que cargar primero
+    CMP.on = true;
+    $("#screen").classList.add("cmp-on");
+    $("#cmpWrap").classList.add("on");
+  }
+  if(CMP.otro !== otro.id || !v2.getAttribute("src")){
+    CMP.otro = otro.id;
+    v2.src = "/media/" + encodeURIComponent(st.slug) + "/" + otro.id + "/" + otro.archivo;
+    v2.load();
+  }
+  v2.playbackRate = v.playbackRate;
+  cmpSetModo(CMP.modo);
+  cmpPintarRotulos();
+  return true;
+}
+function cmpSalir(restaurar){
+  if(!CMP.on) return false;
+  CMP.on = false;
+  if(CMP.raf){ cancelAnimationFrame(CMP.raf); CMP.raf = 0; }
+  v2.pause(); v2.removeAttribute("src"); v2.load();   // liberar el segundo video
+  const sc = $("#screen");
+  sc.classList.remove("cmp-on", "cmp-side", "cmp-curtain");
+  $("#cmpWrap").classList.remove("on"); $("#cmpCurtain").classList.remove("on");
+  $("#fw").style.cssText = ""; $("#cmpWrap").style.cssText = ""; $("#cmpCurtain").style.cssText = "";
+  const s = CMP.snap; CMP.snap = null; CMP.otro = null;
+  cmpPintarControl(); cmpPintarRotulos();
+  if(s && restaurar !== false){
+    tlSetView(s.zoom, s.off);
+    v.playbackRate = s.rate;
+    st.selId = s.selId; st.pend = s.pend; st.replyTo = s.replyTo;
+    seek(s.t); tlPaint();
+    if(!s.paused) play();
+    renderList(); updateEditor(); drawCanvas();
+  }
+  fit();
+  return true;
+}
+/* ── seguimiento: #v manda, #v2 sigue por tiempo ── */
+function cmpSync(forzar){
+  if(!CMP.on || v2.readyState < 1) return;
+  const d = v.currentTime - v2.currentTime;
+  if(forzar || Math.abs(d) > 0.5 / Math.max(1, fps)) v2.currentTime = v.currentTime;
+}
+function cmpLoop(){
+  if(CMP.raf) cancelAnimationFrame(CMP.raf);
+  const paso = () => {
+    if(!CMP.on || v.paused){ CMP.raf = 0; return; }
+    if(v2.readyState >= 2 && !v2.seeking){
+      const d = v.currentTime - v2.currentTime;          // > 0: #v2 va por detras
+      const fr = 1 / Math.max(1, fps), ahora = performance.now();
+      if(Math.abs(d) > 0.5 * fr && ahora - CMP.corr > 250){
+        v2.currentTime = v.currentTime; CMP.corr = ahora; v2.playbackRate = v.playbackRate;
+      } else if(Math.abs(d) > 0.004){
+        // deriva pequena: se corrige con la velocidad, sin salto visible
+        v2.playbackRate = v.playbackRate * (1 + clamp(d * 4, -0.08, 0.08));
+      } else if(v2.playbackRate !== v.playbackRate) v2.playbackRate = v.playbackRate;
+      if(v2.paused) v2.play().catch(() => {});
+    }
+    CMP.raf = requestAnimationFrame(paso);
+  };
+  CMP.raf = requestAnimationFrame(paso);
+}
+v.addEventListener("seeking", () => cmpSync(true));
+v.addEventListener("seeked",  () => cmpSync(true));
+v.addEventListener("play",  () => { if(!CMP.on) return; cmpSync(true); v2.play().catch(() => {}); cmpLoop(); });
+v.addEventListener("pause", () => { if(!CMP.on) return; v2.pause(); cmpSync(true); });
+v.addEventListener("ended", () => { if(CMP.on) v2.pause(); });
+v.addEventListener("ratechange", () => { if(CMP.on) v2.playbackRate = v.playbackRate; });
+v2.addEventListener("loadedmetadata", () => {
+  if(!CMP.on) return;
+  v2.playbackRate = v.playbackRate; cmpSync(true);
+  if(!v.paused){ v2.play().catch(() => {}); cmpLoop(); }
+  cmpLayout(); cmpPintarRotulos();
+});
+v2.addEventListener("error", () => { if(CMP.on) toast("No se pudo cargar el otro corte", 3000); });
+// la geometria depende de la escena y del tamano real de #fw (la carga del video lo cambia)
+new ResizeObserver(() => cmpLayout()).observe($("#screen"));
+new ResizeObserver(() => cmpLayout()).observe($("#fw"));
+/* ── tirador de la cortina: arrastre con captura y teclado ── */
+(function(){
+  const h = $("#cmpHandle"), cu = $("#cmpCurtain");
+  if(!h || !cu) return;
+  let arrastrando = false;
+  const aPct = ev => { const r = cu.getBoundingClientRect(); return r.width ? clamp((ev.clientX - r.left) / r.width, 0, 1) * 100 : CMP.pct; };
+  h.addEventListener("pointerdown", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    arrastrando = true; try{ h.setPointerCapture(ev.pointerId); }catch(_){}
+    h.focus(); cmpSetPct(aPct(ev));
+  });
+  h.addEventListener("pointermove", ev => { if(arrastrando) cmpSetPct(aPct(ev)); });
+  const fin = () => { arrastrando = false; };
+  h.addEventListener("pointerup", fin); h.addEventListener("pointercancel", fin);
+  h.addEventListener("keydown", ev => {
+    const paso = ev.shiftKey ? 10 : 1;
+    if(ev.key === "ArrowLeft") cmpSetPct(CMP.pct - paso);
+    else if(ev.key === "ArrowRight") cmpSetPct(CMP.pct + paso);
+    else if(ev.key === "Home") cmpSetPct(0);
+    else if(ev.key === "End") cmpSetPct(100);
+    else return;
+    ev.preventDefault(); ev.stopPropagation();   // que ← → no muevan ademas el fotograma
+  });
+})();
+$("#bCmp").onclick = () => { if(!$("#bCmp").disabled) cmpEntrar(); };
+$("#cmpSel").onchange = e => cmpEntrar(e.target.value);
+$("#cmpSide").onclick = () => cmpSetModo("side");
+$("#cmpCurt").onclick = () => cmpSetModo("curtain");
+$("#cmpExit").onclick = () => cmpSalir(true);
+document.addEventListener("keydown", ev => {
+  if(ev.key !== "Escape" || !CMP.on) return;
+  if($("#modal").classList.contains("on")) return;
+  if(typeof shAbierto === "function" && shAbierto()) return;
+  const sw = $("#swPop"); if(sw && !sw.hidden) return;
+  const tag = (ev.target.tagName || "").toLowerCase();
+  if(tag === "textarea" || tag === "input") return;
+  cmpSalir(true);
+});
 
 /* ═══ arranque ═══ */
 /* Color: un circulito con el color actual; al clic se despliega el resto.
