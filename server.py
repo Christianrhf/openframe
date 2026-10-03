@@ -1172,7 +1172,10 @@ class Handler(BaseHTTPRequestHandler):
                 if valid_gate:
                     nombre = d.get("autor_nombre")
                     enlace_id = d.get("enlace_id")
+                    # el nombre firma las notas del invitado: en blanco deja la
+                    # insignia «Invitado · » vacia (igual que la de cualquier otro)
                     if (not isinstance(nombre, str) or not 1 <= len(nombre) <= 40 or
+                            not nombre.strip() or
                             any(ord(ch) < 32 or ord(ch) == 127 for ch in nombre)):
                         return self._err(400, "nombre de invitado invalido")
                     if not enlace_valido_id(m.group(1), d.get("video"), enlace_id):

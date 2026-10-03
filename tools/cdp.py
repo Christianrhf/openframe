@@ -59,7 +59,10 @@ class Page:
         return inner.get('value')
 
     def click(self, sel):  # clic real de DOM (programatico)
-        return self.ev(f"(()=>{{const e=document.querySelector({json.dumps(sel)});if(!e)return 'NO EXISTE {sel}';e.click();return true}})()")
+        # el selector va SIEMPRE por json.dumps (tambien en el mensaje de error):
+        # interpolarlo crudo rompia con comillas dentro, p.ej. [data-eid='x']
+        s = json.dumps(sel)
+        return self.ev(f"(()=>{{const e=document.querySelector({s});if(!e)return 'NO EXISTE '+{s};e.click();return true}})()")
 
     def rect(self, sel):
         return self.ev(f"(()=>{{const e=document.querySelector({json.dumps(sel)});if(!e)return null;const b=e.getBoundingClientRect();return {{x:b.left,y:b.top,w:b.width,h:b.height,r:b.right,b:b.bottom}}}})()")

@@ -436,7 +436,10 @@ class Handler(BaseHTTPRequestHandler):
 
     @staticmethod
     def _valid_name(name):
-        return (isinstance(name, str) and 1 <= len(name) <= 40 and
+        # `strip()`: un nombre de solo espacios pasaba el 1-40 y dejaba la insignia
+        # «Invitado · » vacia, que es justo lo que NO puede pasar (no se distingue
+        # de otro invitado). La interfaz ya lo recorta antes de enviarlo.
+        return (isinstance(name, str) and 1 <= len(name) <= 40 and bool(name.strip()) and
                 not any(ord(ch) < 32 or ord(ch) == 127 for ch in name))
 
     def _body(self):
@@ -624,6 +627,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._404(enlace_id)
             config = {
                 "slug": slug, "video": vid, "nombre": self._name(link),
+                # enlace_id: la interfaz lo necesita para saber que notas son SUYAS
+                # sin depender del nombre (dos invitados pueden llamarse igual).
+                # No es secreto: ya viaja en cada nota que el invitado ve.
+                "enlace_id": enlace_id,
                 "expira": link.get("expira"), "ve_otras": bool(link.get("ve_otras")),
                 "proyecto": {"nombre": pdata.get("proyecto", {}).get("nombre", slug),
                              "cliente": pdata.get("proyecto", {}).get("cliente", "")},

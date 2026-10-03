@@ -20,8 +20,10 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cdp import Page  # noqa: E402
 
-GUEST = "http://127.0.0.1:9384"
-ADMIN = "http://127.0.0.1:9385"
+# los puertos se pueden mover con INV_GUEST_PORT / INV_ADMIN_PORT: dos clones a la
+# vez en la misma Mac chocaban en 9384/9385 (y uno probaba el visor.html del otro)
+GUEST = "http://127.0.0.1:%s" % os.environ.get("INV_GUEST_PORT", "9384")
+ADMIN = "http://127.0.0.1:%s" % os.environ.get("INV_ADMIN_PORT", "9385")
 SLUG = "zz-port"
 XSS_NOMBRE = "<img src=x onerror=window.__xss=1>"
 XSS_TEXTO = "<img src=x onerror=window.__xss=2> & <b>no</b>"
