@@ -1298,7 +1298,7 @@ async function pullInvitado(){
       if(!st.busyNote && !drawing && !cur) absorbDetail(d);
       if(st.vid && !drawing){ renderList(); updateMarks(); updateEditor(); }
     }
-  }catch(e){ setConn(false); }
+  }catch(e){ setConn(invCaducado); }   // enlace muerto = 404 a todo, no «sin conexión»
 }
 async function pull(force){
   if(esInvitado) return pullInvitado();
@@ -2011,7 +2011,10 @@ v.addEventListener("error", () => { $("#nocodec").classList.add("on"); });
    para siempre ("el boton de reproducir no se ve"). Ahora se reconstruye el <svg>. */
 function setIcon(sel, id){
   const b = $(sel); if(!b) return;
-  b.innerHTML = '<svg viewBox="0 0 24 24"><use href="#'+id+'"/></svg>';
+  // los llamadores pasan "#i-pause" y aqui se anteponia OTRO «#»: href="##i-pause",
+  // que no apunta a nada — el boton de reproducir se quedaba en blanco al reproducir
+  const ref = String(id).startsWith("#") ? id : "#" + id;
+  b.innerHTML = '<svg viewBox="0 0 24 24"><use href="' + ref + '"/></svg>';
 }
 
 /* El UNICO sitio que escribe `fps`. Precedencia: archivo > medido > 24. */

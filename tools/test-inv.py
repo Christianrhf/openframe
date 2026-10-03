@@ -165,6 +165,11 @@ def pruebas_invitado():
     banner = pg.ev("document.querySelector('#invBanner').textContent")
     check("banner fijo «Revisando como Ana Pérez · zz-port · clip.mp4»",
           banner == "Revisando como Ana Pérez · zz-port · clip.mp4" and pg.ev("document.querySelector('#invBanner').offsetParent!==null"), banner)
+    pg.click("#bPlay"); time.sleep(0.5)
+    check("reproducir: el boton cambia a pausa y el icono existe (href «#i-pause», no «##i-pause»)",
+          pg.ev("!v.paused && document.querySelector('#bPlay use').getAttribute('href')==='#i-pause' && document.querySelector('#bPlay svg').getBBox().width>0"),
+          j(pg, "{p:v.paused, h:document.querySelector('#bPlay use')&&document.querySelector('#bPlay use').getAttribute('href')}"))
+    pg.click("#bPlay"); pg.ev("seek(0)"); time.sleep(0.3)
     check("video cargado: un solo video, el compartido",
           pg.ev("st.vid===window.__INVITADO.video && (st.videos||[]).length===1 && document.querySelector('#fw').classList.contains('on')"),
           j(pg, "{vid:st.vid, n:(st.videos||[]).length}"))
