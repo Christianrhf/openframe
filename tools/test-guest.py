@@ -491,6 +491,15 @@ def main():
     check(item.get("nombre") == "Ana" and item.get("etiqueta") == "Principal", "actividad decora autor/etiqueta")
     check(item.get("proyecto") and item.get("version") and item.get("timecode"), "actividad tiene nombres/timecode")
 
+    # S3: estado de la puerta para el popover «Compartir».
+    status, _hs, estado, _raw = jrequest(SERVER, "GET", "/api/invitados/estado")
+    check(status == 200 and estado is not None and estado.get("publicada") is False and
+          isinstance(estado.get("enlaces_activos"), int) and estado["enlaces_activos"] >= 2,
+          "estado de la puerta: cerrada y con enlaces activos")
+    status, _hs, _data, _raw = jrequest(
+        SERVER, "GET", "/api/invitados/actividad?desde=no-es-iso")
+    check(status == 400, "actividad con desde invalido devuelve 400")
+
     list_status, _hs, listing, _raw = jrequest(
         SERVER, "GET", "/api/proyectos/%s/videos/%s/invitar" % (slug, video["id"]))
     listed = next(x for x in listing.get("enlaces", []) if x.get("id") == main_link["id"])

@@ -362,9 +362,12 @@ class Handler(BaseHTTPRequestHandler):
         if not host:
             return False
         port = self.server.server_address[1]
-        allowed = {urlsplit(self.public_origin).netloc.lower(),
-                   "127.0.0.1:%d" % port, "localhost:%d" % port,
+        publico = urlsplit(self.public_origin).netloc.lower()
+        allowed = {publico, "127.0.0.1:%d" % port, "localhost:%d" % port,
                    "[::1]:%d" % port}
+        # El tunel puede reenviar el host con el puerto por defecto explicito.
+        if ":" not in publico:
+            allowed.add(publico + ":443")
         if port == 80:
             allowed |= {"127.0.0.1", "localhost", "[::1]"}
         return host in allowed
@@ -443,7 +446,7 @@ class Handler(BaseHTTPRequestHandler):
         if len(lengths) > 1 or self.headers.get("Transfer-Encoding"):
             self.close_connection = True
             return None, 400
-        # Content-Length es DIGIT* y nada mas: "+2", "-1", " 2 " o "0x2" los
+        # Content-Length es DIGIT* y nada mas: "+2", "-1" o "0x2" los
         # interpretaria distinto cada proxy del camino.
         if lengths and not re.fullmatch(r"[0-9]{1,15}", lengths[0].strip()):
             self.close_connection = True
