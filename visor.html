@@ -602,6 +602,26 @@
 .feed-content{overflow-x:hidden;overflow-y:auto;column-count:auto;overscroll-behavior:contain;overflow-anchor:none}
 .hilo-b{display:block}
 .item{scroll-margin-block:10px}
+/* seleccionada = tarjeta EN NEGATIVO (decision del usuario): fondo ink, texto claro */
+.item.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.item.sel p,.item.sel p strong,.item.sel .item-who strong{color:#fff}
+.item.sel .item-who small,.item.sel .a-dur,.item.sel .status,.item.sel .status .s-ok,.item.sel .status .s-adj,.item.sel .text-btn{color:rgba(255,255,255,.78)}
+.item.sel .text-btn:hover{color:#fff}
+.item.sel .now{background:#fff;color:var(--ink)}
+.item.sel .time-link{background:rgba(255,255,255,.16);color:#fff}
+.item.sel .time-link:hover{background:rgba(255,255,255,.26)}
+.item.sel .mk.note,.item.sel .mk.change{background:#fff;color:var(--ink);border-color:#fff}
+.item.sel .status .dot{background:#fff}
+.item.sel .a-flag{border-color:rgba(255,255,255,.45);color:#fff}
+.item.sel .link-chip{background:transparent;border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.85)}
+.item.sel .link-chip:hover{border-color:#fff;color:#fff}
+.item.sel .reply{border-left-color:rgba(255,255,255,.3)}
+.item.sel .agent-av{background:#fff;color:var(--ink)}
+.item.sel .thumb{border-color:rgba(255,255,255,.3)}
+/* redactor: UN solo trazo. El foco lo marca el borde del propio recuadro, no un aro extra sobre el texto */
+.composer textarea:focus-visible{outline:none}
+.composer:focus-within{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.composer.adjusting:focus-within{box-shadow:none}
 .list.hilo-lazy .hilo-b{content-visibility:auto;contain-intrinsic-size:auto 160px}
 .item p{white-space:pre-wrap}
 .item p.p-empty{color:var(--muted);font-style:italic}
@@ -899,8 +919,7 @@
 
 
   .colorWrap{position:relative;flex:0 0 auto}
-  #edLbl.respondiendo{color:var(--fg);font-weight:650;background:var(--panel-2);
-    padding:1px 7px;border-radius:5px;box-shadow:inset 0 0 0 1px var(--fg)}
+  #edLbl.respondiendo{font-weight:700}
 
   /* ── Archivar proyecto ── */
   .parch{position:absolute;right:8px;top:8px;width:28px;height:28px;padding:0;
@@ -1776,7 +1795,13 @@ const P = p => "/api/proyectos/" + encodeURIComponent(p);
 const LAST_KEY = "openframe:last";
 function guardarSesion(){
   if(esInvitado) return;
-  try{ localStorage.setItem(LAST_KEY, JSON.stringify({slug: st.slug, vid: st.vid})); }catch(e){}
+  try{ localStorage.setItem(LAST_KEY, JSON.stringify({slug: st.slug, vid: st.vid, sel: st.slug ? (st.selId || null) : null})); }catch(e){}
+}
+/* La seleccion (nota o cambio) tambien se recuerda: tras recargar vuelve marcada la ultima */
+let _selListo = false, _selGuardada = null, _selSeek = null;
+function guardarSeleccion(){
+  if(esInvitado || !_selListo || !st.slug || st.selId === _selGuardada) return;
+  _selGuardada = st.selId; guardarSesion();
 }
 function leerSesion(){
   try{ return JSON.parse(localStorage.getItem(LAST_KEY) || "null") || {}; }catch(e){ return {}; }
@@ -2167,6 +2192,7 @@ async function openProject(slug, opts){
   cmpSalir(false);                      // otro proyecto (aunque no tenga video): fuera la comparacion
   st.slug = slug; st.vid = null; st.filterVid = "";
   st.vidAVolver = opts.vid || null;
+  st.selId = null; _selListo = false;
   await pullDetail();
   // si pullDetail fallo (servidor caido), st.videos puede no traer nada: sin esto
   // `st.videos[0]` reventaba la funcion y el proyecto no se abria nunca mas
@@ -2179,12 +2205,22 @@ async function openProject(slug, opts){
   // habia ningun proyecto cargado: estaba siempre vacio.
   renderFilter();
   renderProyectos(); renderVideos(); renderList(); updateEditor(); updateUI();
+  // volver a marcar la ultima seleccion guardada (si la nota sigue existiendo)
+  const nSel = opts.sel ? st.notas.find(x => x.id === opts.sel) : null;
+  if(nSel){
+    if(nSel.video !== st.vid) await openVideo(nSel.video);
+    st.selId = raizDe(nSel).id;
+    st.pend = {frame:nSel.frame, time:nSel.frame/fps}; _selSeek = nSel.frame;
+    pintarRail(); renderList(); updateMarks(); updateEditor(); x2SeguirNota(st.selId);
+  }
+  _selListo = true; _selGuardada = st.selId; guardarSesion();
 }
 async function openVideo(vid){
   if(esInvitado && vid !== INV.video) return;   // un invitado ve UN video
   if(typeof shCerrar === "function") shCerrar();
   cmpSalir(false);                      // otro corte: la comparacion anterior no vale (sin restaurar)
   st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
+  { const ns = st.selId ? st.notas.find(x => x.id === st.selId) : null; if(ns && ns.video !== vid) st.selId = null; }   // la seleccion de otro corte no viaja
   $("#list").scrollTop = 0;
   guardarSesion();
   st.undo=[]; st.uPos=-1; actualizarBotonUndo();
@@ -2768,6 +2804,7 @@ function renderList(){
     const actual = anclaId && L.querySelector('[data-hilo="' + CSS.escape(anclaId) + '"]');
     if(actual) L.scrollTop += actual.getBoundingClientRect().top - borde - offset;
   }
+  guardarSeleccion();
   if(_x2Seguir && performance.now() < _x2Seguir.hasta){
     const e2 = L.querySelector('[data-id="' + CSS.escape(String(_x2Seguir.id)) + '"]');
     if(e2) e2.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
@@ -2808,6 +2845,7 @@ function x2PedirAjuste(id){
   st.adjustTo = id; st.replyTo = null; editingId = null;
   $("#ta").value = ""; $("#ta").placeholder = "Qué ajuste le pides al Agente sobre " + x2Numero(c) + "…";
   $(".editor").classList.add("adjusting"); $("#edLbl").textContent = "Pedir ajuste · " + x2Numero(c);
+  { const t = $("#bSaveTxt"); if(t) t.textContent = "Pedir ajuste"; }
   $("#bCancel").style.display = ""; setDirty(false); $("#ta").focus();
 }
 async function x2Reconsiderar(id){
@@ -3004,6 +3042,7 @@ v.addEventListener("loadedmetadata", () => {
     .then(()=>pull()).catch(()=>{});
   setFps();
   fit(); tlPaint(); updateUI(); renderVideos();
+  if(_selSeek != null){ const f0 = _selSeek; _selSeek = null; seek(f0/fps); }   // seleccion recordada: el video vuelve a su fotograma
 });
 /* El dibujo pertenece a UN fotograma. Al movernos hay que repintar el canvas:
    antes el listener solo llamaba updateUI(), asi que el trazo de la nota anterior se
@@ -5973,7 +6012,7 @@ p6Nombrar(); p6EstadoAria(); p6KeysEnBotones();
     const ses = leerSesion();
     const sigue = st.proyectos.find(p => p.slug === ses.slug && !p.archivado);
     // si el guardado ya no esta (archivado o borrado), se abre el primero activo
-    openProject(sigue ? sigue.slug : st.proyectos[0].slug, {vid: sigue ? ses.vid : null});
+    openProject(sigue ? sigue.slug : st.proyectos[0].slug, {vid: sigue ? ses.vid : null, sel: sigue ? ses.sel : null});
   });
   setInterval(() => { if(st.vid && !v.paused) updateEditor(); }, 500);
 // Enter / Guardar envian al instante: no queda nada "en el aire" al cerrar.
