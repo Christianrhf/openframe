@@ -17,7 +17,7 @@ rm -rf data logs; mkdir -p logs; cp -R /tmp/o10/datos-reales data; python3 serve
 res test-i2 "$(CDP_PORT=9433 $PY tools/test-i2.py --api http://127.0.0.1:9431 2>&1 | grep -E 'checks|✘|FALLAN' | tr '\n' ' ')"; limpia
 # p4
 rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9441 >logs/s.out 2>&1 & api 9441
-curl -s -X POST http://127.0.0.1:9441/api/proyectos -H 'Content-Type: application/json' -d '{"nombre":"prueba-p4"}' >/dev/null; tools/chrome.sh start 9443 >/dev/null
+curl -s -X POST http://127.0.0.1:9441/api/proyectos -H 'Content-Type: application/json' -d '{"nombre":"prueba-p4"}' >/dev/null; curl -s -X POST http://127.0.0.1:9441/api/proyectos/prueba-p4/videos --data-binary @clip.mp4 -H 'X-Filename: clip.mp4' -H 'Content-Type: application/octet-stream' >/dev/null; tools/chrome.sh start 9443 >/dev/null
 res test-p4 "$(CDP_PORT=9443 $PY tools/test-p4.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
 # p5 (arranca sus servidores)
 rm -rf data logs; mkdir -p logs; tools/chrome.sh start 9453 >/dev/null
