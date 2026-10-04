@@ -320,14 +320,15 @@
   .transport{flex:0 0 auto;align-self:center;width:min(100%,calc((100cqh - var(--tl) - var(--dock)) * 1.7777778));
     background:var(--paper);border:1px solid var(--line);
     border-radius:0 0 var(--radius) var(--radius);
-    padding:8px 12px 7px;display:flex;flex-direction:column;gap:0}
-  .transport > .tlinesa{padding:10px 0 12px}
-  .transport > .tp-row{border-top:1px solid var(--line-soft);padding-top:7px}
+    padding:10px 16px 0;display:flex;flex-direction:column;gap:8px}
+  /* orden de la maqueta: .tl-bar (transporte · reloj · velocidad · zoom) arriba, luego los carriles */
+  .transport > .tlinesa{padding:0 0 12px}
+  .transport > .tp-row{flex:0 0 var(--grp);height:var(--grp);padding:0;border:0}
   /* .tools = el dock «Anotar» de la maqueta: su propia franja de --dock (56px),
      a ancho de tarjeta completo (compensa el padding de .transport con margenes
      negativos, igual que la maqueta separa timeline-panel y dock en dos cajas). */
-  .transport > .tools{height:var(--dock);flex:0 0 var(--dock);margin:6px -12px -7px 0;
-    padding:0 16px;border-top:1px solid var(--line-soft)}
+  .transport > .tools{height:var(--dock);flex:0 0 var(--dock);margin:0 -16px;
+    padding:0 16px;border-top:1px solid var(--line)}
 
   /* ── Línea de tiempo = .tl-gutter (148px, la maqueta) + .rail ── */
   .tl{display:flex;gap:12px;align-items:flex-start}
@@ -1320,6 +1321,35 @@
       </div>
     </div>
     <div class="transport">
+      <!-- .tp-row = .tl-bar de la maqueta: grupo de transporte · reloj · velocidad ·
+           «medir» · «todo el video» (reales, lenguaje de .group/.time/.chip) y,
+           al final, el grupo de dibujo que no entro en .tools de R4. -->
+      <div class="tp-row">
+        <div class="group" role="group" aria-label="Reproducción">
+          <button class="ctl has-tip" id="bBack" data-tip="Un segundo atrás" data-key="⇧←" title="⇧←"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+          <button class="ctl has-tip" id="bPrev" data-tip="Fotograma anterior" data-key="←" title="←"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
+          <button class="ctl play has-tip" id="bPlay" data-tip="Reproducir / pausar" data-key="Espacio" title="Espacio"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
+          <button class="ctl has-tip" id="bNext" data-tip="Fotograma siguiente" data-key="→" title="→"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
+          <button class="ctl has-tip" id="bFwd" data-tip="Un segundo adelante" data-key="⇧→" title="⇧→"><svg viewBox="0 0 24 24"><use href="#i-fwd"/></svg></button>
+        </div>
+        <div class="time" aria-label="Tiempo actual"><b id="tcTC">00:00:00:00</b><span id="tcTotal">/ 00:00:00:00</span></div>
+        <!-- velocidad real (v.playbackRate ya existia para comparar; aqui el control) -->
+        <button type="button" class="chip has-tip" id="speed" data-tip="Velocidad de reproducción. Pulsar para cambiar" aria-label="Velocidad de reproducción"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg><b id="speedX">1×</b><small id="speedTxt">normal</small></button>
+        <!-- «medir» = casilla real; el valor de fps medido/del archivo va al title, no a la superficie -->
+        <label class="chip chk-chip has-tip" id="cDetWrap" data-tip="Medir los fps reales mientras se reproduce">
+          <input type="checkbox" id="cDet" checked>
+          <svg viewBox="0 0 24 24"><use href="#i-eye"/></svg><small>medir</small>
+        </label>
+        <!-- la ventana visible es una LECTURA, no un control: vive junto al timecode.
+             Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
+        <span class="tlinfo" id="tlInfo">todo el video</span>
+        <span class="spacer"></span>
+        <div class="group" role="group" aria-label="Zoom de la línea de tiempo">
+            <button class="ctl has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomout"/></svg></button>
+            <button class="ctl has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0" aria-label="Ver el video entero"><svg viewBox="0 0 24 24"><use href="#i-foldh"/></svg></button>
+            <button class="ctl has-tip" id="tlZout" data-tip="Acercar" data-key="+" aria-label="Acercar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomin"/></svg></button>
+          </div>
+      </div>
       <!-- UNA SOLA BANDA.
            Antes: carril de 18px con borde propio ARRIBA + barra de tiempo con los
            botones de zoom metidos a los lados ABAJO. Dos cajas del mismo ancho, una
@@ -1362,41 +1392,7 @@
           </div>
         </div>
       </div>
-      <!-- .tp-row = .tl-bar de la maqueta: grupo de transporte · reloj · velocidad ·
-           «medir» · «todo el video» (reales, lenguaje de .group/.time/.chip) y,
-           al final, el grupo de dibujo que no entro en .tools de R4. -->
-      <div class="tp-row">
-        <div class="group" role="group" aria-label="Reproducción">
-          <button class="ctl has-tip" id="bBack" data-tip="Un segundo atrás" data-key="⇧←" title="⇧←"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
-          <button class="ctl has-tip" id="bPrev" data-tip="Fotograma anterior" data-key="←" title="←"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
-          <button class="ctl play has-tip" id="bPlay" data-tip="Reproducir / pausar" data-key="Espacio" title="Espacio"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
-          <button class="ctl has-tip" id="bNext" data-tip="Fotograma siguiente" data-key="→" title="→"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
-          <button class="ctl has-tip" id="bFwd" data-tip="Un segundo adelante" data-key="⇧→" title="⇧→"><svg viewBox="0 0 24 24"><use href="#i-fwd"/></svg></button>
-        </div>
-        <div class="time" aria-label="Tiempo actual"><b id="tcTC">00:00:00:00</b><span id="tcTotal">/ 00:00:00:00</span></div>
-        <!-- velocidad real (v.playbackRate ya existia para comparar; aqui el control) -->
-        <button type="button" class="chip has-tip" id="speed" data-tip="Velocidad de reproducción. Pulsar para cambiar" aria-label="Velocidad de reproducción"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg><b id="speedX">1×</b><small id="speedTxt">normal</small></button>
-        <!-- «medir» = casilla real; el valor de fps medido/del archivo va al title, no a la superficie -->
-        <label class="chip chk-chip has-tip" id="cDetWrap" data-tip="Medir los fps reales mientras se reproduce">
-          <input type="checkbox" id="cDet" checked>
-          <svg viewBox="0 0 24 24"><use href="#i-eye"/></svg><small>medir</small>
-        </label>
-        <!-- la ventana visible es una LECTURA, no un control: vive junto al timecode.
-             Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
-        <span class="tlinfo" id="tlInfo">todo el video</span>
-              </div>
-      <!-- Controles de la banda de tiempo. Antes vivian A LA DERECHA de la banda y le
-           robaban 301px: la pista se quedaba en 423px de los 778 disponibles. Ahora
-           ocupan su propia fila abajo y la banda usa el ancho entero de lado a lado. -->
-      <div class="tlctrls">
-          <span class="rlbl" id="rlLbl" title="notas y cambios de este video"></span>
-          <span class="spacer"></span>
-          <div class="group" role="group" aria-label="Zoom de la línea de tiempo">
-            <button class="ctl has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomout"/></svg></button>
-            <button class="ctl has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0" aria-label="Ver el video entero"><svg viewBox="0 0 24 24"><use href="#i-foldh"/></svg></button>
-            <button class="ctl has-tip" id="tlZout" data-tip="Acercar" data-key="+" aria-label="Acercar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomin"/></svg></button>
-          </div>
-        </div>
+      <span class="rlbl" id="rlLbl" title="notas y cambios de este video" hidden></span>
             <div class="tools" id="tools" role="toolbar" aria-label="Anotar sobre el fotograma">
         <span class="dock-title"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg>Anotar</span>
         <div class="group" data-drag="tools" role="group" aria-label="Herramientas de dibujo">
