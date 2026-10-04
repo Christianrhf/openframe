@@ -25,6 +25,9 @@ res test-p5 "$(CDP_PORT=9453 $PY tools/test-p5.py 2>&1 | grep -E 'checks|✘|FAL
 # p7
 rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9461 >logs/s.out 2>&1 & python3 guest.py --puerto 9462 --api http://127.0.0.1:9461 >logs/g.out 2>&1 & api 9461; tools/chrome.sh start 9463 >/dev/null
 res test-p7 "$(CDP_PORT=9463 $PY tools/test-p7.py 2>&1 | grep -E 'checks|✘|FALLAN' | tr '\n' ' ')"; limpia
+# p6 (arranca sus servidores: 9471 server, 9472 guest)
+rm -rf data logs; mkdir -p logs; tools/chrome.sh start 9473 >/dev/null
+res test-p6 "$(CDP_PORT=9473 $PY tools/test-p6.py 2>&1 | grep -E 'checks|FALLA' | tr '\n' ' ')"; limpia
 # guest + ataque
 res test-guest "$(python3 tools/test-guest.py 2>&1 | tail -1)"; limpia
 res ataque "$(bash tools/run-attack.sh 2>&1 | grep -E 'SUMMARY|PASS.*FAIL|[0-9]+/[0-9]+' | tail -1)"; limpia
