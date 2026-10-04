@@ -2016,9 +2016,9 @@
      "props": [
       "display",
       "alignItems",
-      "columnGap",
       "flexWrap"
-     ]
+     ],
+     "nota": "acciones solo con icono (decision del usuario): separacion propia"
     },
     {
      "n": "accion",
@@ -2027,10 +2027,9 @@
      "props": [
       "minHeight",
       "fontSize",
-      "columnGap",
       "display"
      ],
-     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py · acciones solo con icono (decision del usuario): separacion propia"
     },
     {
      "n": "respuesta",
