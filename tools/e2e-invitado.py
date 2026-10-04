@@ -567,11 +567,11 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
 
     llego = esperar_js(pg, "JSON.stringify(st.notas.map(n=>n.id)).indexOf(%s) >= 0" % json.dumps(N_RESPCRIS), 12)
     check("el sondeo del invitado trae la respuesta de Cristian (rev de /api/proyectos/<slug>)", llego)
-    # la lista esta paginada: hay que ir a la pagina del hilo antes de mirarlo
+    # El hilo ya esta montado; seguir es una accion explicita de lectura.
     pg.ev("x2SeguirNota(%s); renderList()" % json.dumps(n1["id"]))
     check("la respuesta de Cristian se pinta como «Cristian», no como invitado",
           pg.ev("!!document.querySelector('.rep[data-who=\"cristian\"]')"),
-          (pg.ev("document.getElementById('x2Page').textContent"),
+          (pg.ev("document.getElementById('hiloCount').textContent"),
            pg.ev("document.getElementById('list').textContent")))
     pg.shot("i04-hilo-con-cristian.png")
 
@@ -620,11 +620,11 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     fuga = pg.ev("""(()=>{
       const malas = [], antes = st.x2Person;
       for(const p of ['all','cristian','claude','invitado']){
-        st.x2Person = p; st.x2Page = 0; renderList();
+        st.x2Person = p; renderList();
         const t = document.getElementById('list').textContent;
         for(const s of %s) if(t.indexOf(s) >= 0) malas.push(p + ':' + s);
       }
-      st.x2Person = antes; st.x2Page = 0; renderList();
+      st.x2Person = antes; renderList();
       return JSON.stringify(malas);
     })()""" % json.dumps(AJENAS))
     check("ningun filtro de persona expone notas ajenas con ve_otras=false", fuga == "[]", fuga)
@@ -677,22 +677,20 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
           nd_ok and len((nd_ok.get("drawing") or {}).get("strokes") or []) == antes_z, (antes_z, nd_ok))
     pg.ev("st.selId = null; renderList(); true")
 
-    # la lista esta PAGINADA: lo ultimo que escribe el invitado tiene que verse
+    # Lo que escribe el invitado debe quedar dentro de su caja desplazable.
     pg.ev("v.currentTime = 5.6")
     time.sleep(0.3)
     pg.ev("document.getElementById('ta').value = 'ULTIMA-DEL-INVITADO'")
     pg.ev("document.getElementById('ta').dispatchEvent(new Event('input'))")
     pg.click("#bSave")
     time.sleep(1.6)
-    check("la nota recien escrita por el invitado queda EN LA PAGINA visible (lista paginada)",
-          pg.ev("document.getElementById('list').textContent.indexOf('ULTIMA-DEL-INVITADO') >= 0"),
-          (pg.ev("document.getElementById('x2Page').textContent"),
-           pg.ev("x2Filtradas().length")))
-    check("la lista del invitado pagina en vez de desplazar (sin scroll de caja)",
-          pg.ev("(()=>{const L=document.getElementById('list');"
-                "return L.scrollHeight <= L.clientHeight + 2})()"),
-          pg.ev("(()=>{const L=document.getElementById('list');"
-                "return L.scrollHeight + '>' + L.clientHeight})()"))
+    check("la nota nueva del invitado queda dentro de la caja",
+          pg.ev("(()=>{const n=[...list.querySelectorAll('.note')].find(n=>n.textContent.includes('ULTIMA-DEL-INVITADO'));"
+                "if(!n)return false;const a=n.getBoundingClientRect(),b=list.getBoundingClientRect();"
+                "return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
+    check("el hilo del invitado permite scroll propio",
+          pg.ev("getComputedStyle(list).overflowY==='auto' && document.documentElement.scrollHeight<=innerHeight+2") is True)
+    check("invitado sin controles de pagina", pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
     pg.shot("i03b-invitado-auditoria.png")
 
     # ── video por la puerta: 206 y reproduccion ──
@@ -838,10 +836,9 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     # ── 5. latencia: nota del invitado -> app de Cristian por sondeo ──
     print("\n== latencia por sondeo ==")
     cp.ev("window.__lat = null; st.rev = st.rev")
-    # con la lista paginada, la nota del invitado puede nacer fuera de la pagina que
-    # Cristian tiene delante: se fuerza esa situacion (pagina 0 y varias paginas)
-    cp.ev("st.x2Page = 0; renderList()")
-    pags_antes = cp.ev("document.getElementById('x2Page').textContent")
+    # Quien lee arriba conserva su posicion y seleccion al llegar una nota remota.
+    cp.ev("renderList(); list.scrollTop=0")
+    lectura_antes = cp.ev("({top:list.scrollTop,sel:st.selId})")
     cp.ev("document.getElementById('toast').textContent = ''")
     pg.ev("v.currentTime = 5.0")
     time.sleep(0.3)
@@ -862,20 +859,14 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("y llega con la insignia «Invitado · Nombre»",
           cp.ev("(()=>{const n=[...document.querySelectorAll('.note')].find(x=>x.textContent.indexOf('MEDIDA-LATENCIA')>=0);"
                 "return !!n && n.dataset.who==='invitado' && n.textContent.indexOf('Invitado · %s')>=0})()" % NOMBRE))
-    check("la lista paginada SALTA a la pagina de la nota que acaba de llegar",
-          (cp.ev("document.getElementById('x2Page').textContent") or "") != pags_antes
-          and cp.ev("st.x2Page") == cp.ev("x2PaginaDe((st.notas.find(n=>(n.text||'').indexOf("
-                    "'MEDIDA-LATENCIA')>=0)||{}).id)"),
-          (pags_antes, cp.ev("document.getElementById('x2Page').textContent")))
+    check("el sondeo conserva la lectura y seleccion de Cristian",
+          cp.ev("({top:list.scrollTop,sel:st.selId})") == lectura_antes)
     check("Cristian recibe un aviso de que llego una nota de invitado",
           "Invitado" in (cp.ev("document.getElementById('toast').textContent") or ""),
           cp.ev("document.getElementById('toast').textContent"))
-    check("la lista de Cristian sigue sin scroll tras la llegada",
-          cp.ev("(()=>{const L=document.getElementById('list');"
-                "return L.scrollHeight <= L.clientHeight + 2})()"),
-          cp.ev("(()=>{const L=document.getElementById('list');"
-                "return L.scrollHeight + '>' + L.clientHeight})()"))
-    cp.shot("i08b-llegada-paginada.png")
+    check("el hilo permite scroll y la pagina sigue fija tras la llegada",
+          cp.ev("getComputedStyle(list).overflowY==='auto' && document.documentElement.scrollHeight<=innerHeight+2") is True)
+    cp.shot("i08b-llegada-hilo.png")
 
     # ── actividad para el aviso de Telegram ──
     st, d, _ = http("GET", ADMIN + "/api/invitados/actividad?desde=2000-01-01T00:00:00Z")
@@ -969,11 +960,8 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("no puede editar las notas de otro invitado aunque las vea",
           tp(pg, "PATCH", "/api/notas/%s/%s" % (SLUG, n1["id"]), {"text": "mio"}).get("s") == 404)
     # fase 1 del porte vista por un invitado con ve_otras=true
-    pg.ev("st.x2Type='all'; st.x2Person='all'; st.x2Page=0; renderList()")
-    verCambio = esperar_js(pg, "(()=>{for(let p=0;p<40;p++){ st.x2Page=p; renderList();"
-                               "if(document.getElementById('list').textContent"
-                               ".indexOf('Cambio aplicado por el Agente')>=0) return 'si'; }"
-                               "st.x2Page=0; renderList(); return ''})()", 12)
+    pg.ev("st.x2Type='all'; st.x2Person='all'; renderList()")
+    verCambio = esperar_js(pg, "document.getElementById('list').textContent.includes('Cambio aplicado por el Agente') ? 'si' : ''", 12)
     check("ve_otras=true: el invitado ve el cambio de Agente en la conversacion", verCambio == "si",
           pg.ev("x2Filtradas().length"))
     check("pero la tarjeta de cambio llega SIN botones de decision",
@@ -985,7 +973,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     ncam = nota_por_id(ADMIN, SLUG, N_CAMBIO)
     check("ni llamando a x2Aprobar/x2PedirAjuste a mano se decide el cambio de Agente",
           ncam and not ncam.get("decision"), ncam)
-    pg.ev("st.x2Page=0; renderList()")
+    pg.ev("renderList()")
     check("el rotulo del hilo dice «Agente», nunca «Claude», tambien para el invitado",
           "Claude" not in (pg.ev("document.getElementById('list').textContent") or ""),
           pg.ev("document.getElementById('list').textContent"))

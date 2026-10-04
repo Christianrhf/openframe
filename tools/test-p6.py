@@ -420,6 +420,12 @@ def parte_ui(slug, vid, notas):
         check("sin scroll de pagina a %dx%d" % (w, h),
               pg.ev("(()=>{const d=document.documentElement;"
                     "return d.scrollWidth<=d.clientWidth && d.scrollHeight<=d.clientHeight})()"))
+        check("hilo completo sin paginador a %dx%d" % (w, h),
+              pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page') && list.querySelectorAll('.note').length===x2Filtradas().length") is True)
+        pg.ev("saltarANota(x2Filtradas().at(-1).id)")
+        time.sleep(.7)
+        check("atajo/seleccion lleva la tarjeta a la caja a %dx%d" % (w, h),
+              pg.ev("(()=>{const a=list.querySelector('.note.on').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
         check("la chuleta cabe sin scroll a %dx%d" % (w, h),
               pg.ev("(()=>{p6KeysAbrir();const r=keysPop.getBoundingClientRect();"
                     "const ok=r.top>=-0.5&&r.bottom<=innerHeight+0.5&&r.left>=-0.5&&r.right<=innerWidth+0.5;"

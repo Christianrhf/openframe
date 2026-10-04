@@ -90,20 +90,20 @@ def sonda(ADMIN, GATE):
                        "thumb": n.get("thumb"),
                        "pts": sum(len(s.get("pts") or []) for s in n["drawing"]["strokes"])} for n in dib]))
 
-    # ── B. la app de Cristian: pagina de la lista y llegada por sondeo ──
+    # ── B. la app de Cristian: hilo de notas y llegada por sondeo ──
     cp = Page(url=ADMIN + "/", w=1600, h=1000)
     time.sleep(1.0)
     cp.ev("localStorage.setItem('openframe:last', JSON.stringify({slug:%s, vid:%s}))"
           % (json.dumps(SLUG), json.dumps(VID)))
     E.nav(cp, ADMIN + "/", 2.4)
     E.esperar_js(cp, "(st && st.slug === %s && st.vid) ? st.vid : ''" % json.dumps(SLUG), 15)
-    # llenar de notas para forzar varias paginas
+    # llenar de notas para forzar scroll dentro del hilo
     for i in range(8):
         http("POST", ADMIN + "/api/proyectos/%s/notas" % SLUG,
              {"video": VID, "frame": 5 + i, "text": "relleno %d" % i, "author": "cristian"})
     time.sleep(3.0)
-    print("B1 pager:", json.dumps(cp.ev("document.getElementById('x2Page').textContent")),
-          "| x2Page:", cp.ev("st.x2Page"), "| cards:", cp.ev("document.querySelectorAll('#list .note').length"))
+    print("B1 hilo:", json.dumps(cp.ev("hiloCount.textContent")),
+          "| scroll:", cp.ev("list.scrollTop"), "| cards:", cp.ev("document.querySelectorAll('#list .note').length"))
 
     pg.ev("v.currentTime = 5.0")
     time.sleep(0.4)
@@ -126,8 +126,8 @@ def sonda(ADMIN, GATE):
     print("B4 esta en st.notas de Cristian:",
           cp.ev("JSON.stringify((st.notas||[]).filter(n=>(n.text||'').indexOf('MEDIDA-LATENCIA')>=0)"
                 ".map(n=>({id:n.id,frame:n.frame,who:n.author})))"))
-    print("B5 pager ahora:", json.dumps(cp.ev("document.getElementById('x2Page').textContent")),
-          "| x2Page:", cp.ev("st.x2Page"))
+    print("B5 hilo ahora:", json.dumps(cp.ev("hiloCount.textContent")),
+          "| scroll:", cp.ev("list.scrollTop"))
     print("B6 orden de la lista filtrada (frames):",
           cp.ev("JSON.stringify(x2Filtradas().map(n=>n.frame))"))
 

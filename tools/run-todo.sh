@@ -31,6 +31,8 @@ res test-p6 "$(CDP_PORT=9473 $PY tools/test-p6.py 2>&1 | grep -E 'checks|FALLA' 
 # bugs-r2 (los 4 hallazgos de R2 deben NO reproducirse)
 tools/chrome.sh start 9483 >/dev/null; sleep 2
 res bugs-r2 "$(CDP_PORT=9483 $PY tools/bugs-r2.py 2>&1 | tail -1)"; limpia
+# hilo continuo (server 9491, guest 9492, Chrome 9493; procesos propios)
+res test-hilo "$( $PY tools/test-hilo.py 2>&1 | grep -E 'checks|✘|NO VERIFICADO' | tr '\n' ' ')"; limpia
 # guest + ataque
 res test-guest "$(python3 tools/test-guest.py 2>&1 | tail -1)"; limpia
 res ataque "$(bash tools/run-attack.sh 2>&1 | grep -E 'SUMMARY|PASS.*FAIL|[0-9]+/[0-9]+' | tail -1)"; limpia

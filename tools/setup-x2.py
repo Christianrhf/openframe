@@ -5,7 +5,7 @@
     /usr/bin/python3 tools/setup-x2.py --api http://127.0.0.1:9421
 
 Notas de Cristian + marcadores de cambio de Agente (`kind:"cambio"`, con `resuelve`)
-+ respuestas, suficientes para que la lista pagine. Sin aleatoriedad: los mismos
++ respuestas, suficientes para que el hilo necesite scroll. Sin aleatoriedad: los mismos
 datos en cada ejecucion.
 """
 import argparse

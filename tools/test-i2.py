@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Suite de I2: compatibilidad con los datos REALES y las reglas del porte que el
-modo invitado toca (lista paginada, borrador con dibujo, deshacer/rehacer).
+modo invitado toca (hilo continuo, borrador con dibujo, deshacer/rehacer).
 
     cp -R /tmp/o10/datos-reales data            # solo notes.json/meta.json, sin videos
     OPENFRAME_NO_PUBLICAR=1 /usr/bin/python3 server.py --puerto 9431 &
@@ -77,27 +77,11 @@ def esperar_js(pg, expr, segundos=15, paso=0.3):
     return ultimo
 
 
-# ── todas las tarjetas de la lista, recorriendo las paginas (la lista no desplaza) ──
-# Se recorre con el PAGINADOR (como un usuario), no con `pagina * tamano`: el tamano
-# efectivo puede encogerse al pintar una pagina alta. Primero una pasada para que se
-# asiente, despues la pasada que cuenta.
+# Todas las raices deben existir simultaneamente y en el orden original.
 RECORRER = """(()=>{
-  const andar = recoge => {
-    st.x2Page = 0; renderList();
-    const vistas = [];
-    for(let i = 0; i < 400; i++){
-      if(recoge) for(const n of document.querySelectorAll('#list .note')) vistas.push(n.dataset.id || '');
-      if(document.getElementById('x2Next').disabled) break;
-      st.x2Page++; renderList();
-    }
-    return vistas;
-  };
-  andar(false);                      // asentar el tamano de pagina
-  const ids = andar(true);
-  const paginas = st.x2Page + 1;
-  st.x2Page = 0; renderList();
-  return JSON.stringify({ids: ids, paginas: paginas, filtradas: x2Filtradas().length,
-                         raices: visibleNotes().length, tamano: st.x2Size});
+  renderList();
+  return JSON.stringify({ids:[...document.querySelectorAll('#list .note')].map(n=>n.dataset.id),
+    filtradas:x2Filtradas().length, raices:visibleNotes().length});
 })()"""
 
 
@@ -132,24 +116,23 @@ def main():
                      pg.ev("JSON.stringify({slug:st.slug, vid:st.vid})")):
             continue
         # todas las notas del proyecto, no solo las del video actual
-        pg.ev("st.filterVid = ''; st.x2Page = 0; st.x2Type='all'; st.x2Person='all'; "
+        pg.ev("st.filterVid = ''; st.x2Type='all'; st.x2Person='all'; "
               "st.x2Search=''; st.onlyPend=false; st.x2Drawing=false; "
-              "x2OlvidarTamano(); renderList()")
+              "renderList()")
         m = json.loads(pg.ev(RECORRER))
         disco = notas_en_disco(slug)
         # las respuestas viajan dentro de su hilo: las raices son las tarjetas
         raices_disco = [n for n in disco if not n.get("parent")]
         delvideo = [n for n in raices_disco if n.get("video") == pg.ev("st.vid")]
-        check("«%s»: %d notas en notes.json, %d raices, %d del video abierto, %d tarjetas en %d paginas"
-              % (slug, len(disco), len(raices_disco), len(delvideo), len(m["ids"]), m["paginas"]),
+        check("«%s»: %d notas en notes.json, %d raices, %d del video abierto, %d tarjetas en un hilo"
+              % (slug, len(disco), len(raices_disco), len(delvideo), len(m["ids"])),
               len(m["ids"]) == len(delvideo) and m["filtradas"] == len(delvideo), (m, len(delvideo)))
-        check("«%s»: cada tarjeta se pinta una sola vez (sin duplicados al paginar)" % slug,
+        check("«%s»: cada tarjeta se pinta una sola vez (sin duplicados en el hilo)" % slug,
               len(set(m["ids"])) == len(m["ids"]), len(m["ids"]) - len(set(m["ids"])))
-        check("«%s»: la lista pagina, no desplaza" % slug,
-              pg.ev("(()=>{const L=document.getElementById('list');"
-                    "return L.scrollHeight <= L.clientHeight + 2})()"),
-              pg.ev("(()=>{const L=document.getElementById('list');"
-                    "return L.scrollHeight + '>' + L.clientHeight})()"))
+        check("«%s»: caja desplazable y pagina fija" % slug,
+              pg.ev("getComputedStyle(list).overflowY==='auto' && document.documentElement.scrollHeight<=innerHeight+2") is True)
+        check("«%s»: sin controles de pagina" % slug,
+              pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
         total_disco += len(delvideo)
         total_pintadas += len(m["ids"])
         pg.shot("i2-%s.png" % slug)
@@ -172,9 +155,9 @@ def main():
                 "const e=document.querySelector('.note[data-id=\"'+n.id+'\"]');"
                 "return !!e && !e.querySelector('img.thumb')})()"))
 
-    # ── reglas del porte que el invitado usa: paginacion y seguimiento ──
-    print("\n== lista paginada: seguir lo que llega ==")
-    # sobre el video del proyecto con MAS notas: hacen falta varias paginas
+    # ── reglas del hilo que el invitado tambien usa ──
+    print("\n== hilo continuo: seguir solo acciones propias ==")
+    # sobre el video del proyecto con MAS notas: debe desbordar la caja
     pg.ev("""(()=>{
       const cuenta = {};
       for(const n of st.notas) if(!n.parent) cuenta[n.video] = (cuenta[n.video] || 0) + 1;
@@ -182,30 +165,20 @@ def main():
       if(mejor && mejor !== st.vid) openVideo(mejor);
       return true })()""")
     esperar_js(pg, "x2Filtradas().length > 5 ? 'si' : ''", 20)
-    check("hay un video real con mas de 5 notas raiz para probar la paginacion",
+    check("hay un video real con mas de 5 notas raiz para probar el scroll",
           pg.ev("x2Filtradas().length") > 5, pg.ev("x2Filtradas().length"))
-    check("x2PageSize devuelve el mismo tamano que usa renderList (2..4)",
-          pg.ev("(()=>{const s=x2PageSize();"
-                "return s>=2 && s<=4 && document.querySelectorAll('#list .note').length <= s})()"),
-          pg.ev("x2PageSize() + '/' + document.querySelectorAll('#list .note').length"))
-    check("x2PaginaDe de la ultima nota filtrada es la ultima pagina",
-          pg.ev("(()=>{const f=x2Filtradas(); if(!f.length) return false;"
-                "const ult=f[f.length-1].id, pags=Math.ceil(f.length/x2PageSize());"
-                "return x2PaginaDe(ult) === pags-1})()"))
-    check("x2PaginaDe de un id inexistente es -1", pg.ev("x2PaginaDe('n_noexiste') === -1"))
-    check("x2SeguirNota deja la nota EN EL DOM (y no en la pagina 0)",
-          pg.ev("(()=>{const f=x2Filtradas(); if(f.length < 5) return false;"
-                "st.x2Page=0; renderList(); const ult=f[f.length-1].id;"
-                "const movio=x2SeguirNota(ult); renderList();"
-                "return movio && st.x2Page > 0 && "
-                "!!document.querySelector('.note[data-id=\"'+ult+'\"]')})()"),
-          pg.ev("st.x2Page + '/' + document.getElementById('x2Page').textContent"))
-    check("x2SeguirNota NO toca la pagina si la nota no pasa los filtros",
-          pg.ev("(()=>{const f=x2Filtradas(); const ult=f[f.length-1].id;"
-                "st.x2Page=0; st.x2Search='zzz-no-existe-nada'; x2OlvidarTamano(); renderList();"
-                "const p0=st.x2Page; const movio=x2SeguirNota(ult);"
-                "st.x2Search=''; x2OlvidarTamano(); renderList();"
-                "return movio===false && p0===0})()"))
+    check("todas las raices estan en el DOM simultaneamente",
+          pg.ev("document.querySelectorAll('#list .note').length===x2Filtradas().length") is True)
+    check("la lista tiene scroll propio", pg.ev("list.scrollHeight>list.clientHeight") is True)
+    check("un id inexistente no mueve el hilo", pg.ev("x2SeguirNota('n_noexiste')===false") is True)
+    pg.ev("renderList(); x2SeguirNota(x2Filtradas().at(-1).id)")
+    time.sleep(.7)
+    check("la ultima nota queda dentro del area visible",
+          pg.ev("(()=>{const a=list.querySelector('.hilo-b:last-child .note').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
+    check("seguir una nota no anula los filtros",
+          pg.ev("(()=>{const id=x2Filtradas().at(-1).id; st.x2Search='zzz-no-existe-nada';renderList();"
+                "const before=list.scrollTop,m=x2SeguirNota(id),ok=m===false&&list.scrollTop===before;"
+                "st.x2Search='';renderList();return ok})()") is True)
     check("x2SeguirNota(null) no hace nada", pg.ev("x2SeguirNota(null) === false"))
 
     # ── el aviso de llegada de invitado no se dispara con notas de Cristian ──

@@ -35,22 +35,11 @@ VISIBLES_INVITADO = ["#invBanner", "#bPlay", "#bPrev", "#bNext", "#ta", "#bSave"
                      "[data-tool=pen]", "[data-tool=arrow]", "#swBtn", "#tlZout", "#tlZin", "#tlNear",
                      "#cPend", "#cThumb", "#bErase", "#bUndo", "#bMax", "#scrub"]
 
-# La lista de notas esta PAGINADA (fase 3 del porte): el DOM solo tiene la pagina
-# activa. Para contar o buscar tarjetas hay que recorrer todas las paginas y dejar
-# la lista como estaba.
-RECORRER_PAGINAS = """(()=>{
-  const out = [], p0 = st.x2Page;
-  const total = Math.max(1, Math.ceil(x2Filtradas().length / (st.x2Size || x2PageSize())));
-  for(let p = 0; p < total; p++){
-    st.x2Page = p; renderList();
-    for(const n of document.querySelectorAll('#list .note')){
-      const w = n.querySelector('.who');
-      out.push([n.dataset.who, w ? w.textContent : null, !!n.querySelector('.ed')]);
-    }
-  }
-  st.x2Page = p0; renderList();
-  return JSON.stringify(out);
-})()"""
+# Todas las tarjetas del hilo existen a la vez; contar no modifica el scroll.
+RECORRER_HILO = """JSON.stringify([...document.querySelectorAll('#list .note')].map(n=>{
+  const w=n.querySelector('.who');
+  return [n.dataset.who,w?w.textContent:null,!!n.querySelector('.ed')];
+}))"""
 
 RES = []
 
@@ -274,8 +263,8 @@ def pruebas_invitado():
 
     # ── ve_otras: ve a Cristian y Claude, no los edita, puede responder ──
     mock({"ve_otras": True}); pg.reload(); time.sleep(1.8)
-    # la lista pagina (fase 3): hay que recorrer las paginas, no solo la que se ve
-    chips = json.loads(pg.ev(RECORRER_PAGINAS))
+    # El hilo entero debe estar presente sin navegar.
+    chips = json.loads(pg.ev(RECORRER_HILO))
     check("ve_otras=true: ve «Cristian» y «Agente» con sus chips, sin boton de editar en esas",
           any(c == ["cristian", "Cristian", False] for c in chips)
           and any(c == ["claude", "Agente", False] for c in chips), chips)
@@ -345,15 +334,8 @@ def pruebas_cristian():
     check("sin __INVITADO: vista normal, boton Compartir (share-2) en la cabecera del video, sin banner",
           pg.ev("!document.body.classList.contains('invitado') && document.querySelector('.vcol-head #bShare').offsetParent!==null && document.querySelector('#bShare use').getAttribute('href')==='#i-share2' && document.querySelector('#invBanner').offsetParent===null"))
     insig = json.loads(pg.ev("""(()=>{
-      const out = [], p0 = st.x2Page;
-      const total = Math.max(1, Math.ceil(x2Filtradas().length / (st.x2Size || x2PageSize())));
-      let rep = false;
-      for(let p = 0; p < total; p++){
-        st.x2Page = p; renderList();
-        for(const e of document.querySelectorAll('#list .note .who')) out.push(e.className + '|' + e.textContent);
-        if(document.querySelector('#list .rep[data-who=invitado]')) rep = true;
-      }
-      st.x2Page = p0; renderList();
+      const out = [...document.querySelectorAll('#list .note .who')].map(e=>e.className+'|'+e.textContent);
+      const rep = !!document.querySelector('#list .rep[data-who=invitado]');
       return JSON.stringify({chips: out, rep: rep, marca: !!document.querySelector('#scrub .mark.inv')});
     })()"""))
     check("insignia en la vista de Cristian: «Invitado · Ana Pérez» distinta de «Tú» y «Agente»; marcador a rayas",
@@ -439,8 +421,8 @@ def pruebas_cristian():
     pg.key("Escape")
     mock({"sin_endpoints": False})
     # el sondeo repinta: una nota nueva del invitado aparece sola
-    # con la lista paginada, «aparece sola» = la tarjeta esta EN LA PAGINA que se ve
-    # y el total de raices ha crecido en una (contar `.note` del DOM topa en pageSize)
+    # El sondeo agrega la tarjeta sin mover la lectura ni cambiar la seleccion.
+    lectura = pg.ev("({top:list.scrollTop,sel:st.selId})")
     antes = pg.ev("visibleNotes().length")
     mock({"nombre": "Ana Pérez", "caducado": False})
     http("POST", GUEST + "/api/proyectos/%s/notas" % SLUG, {"video": pg.ev("st.vid"), "frame": 90, "text": "Llego por el sondeo"})
@@ -448,7 +430,9 @@ def pruebas_cristian():
     check("el sondeo pinta la nota nueva del invitado sin tocar nada (arreglo de `dibujando`)",
           pg.ev("[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')")
           and pg.ev("visibleNotes().length") == antes + 1,
-          (antes, pg.ev("visibleNotes().length"), pg.ev("document.querySelector('#x2Page').textContent")))
+          (antes, pg.ev("visibleNotes().length"), pg.ev("document.querySelector('#hiloCount').textContent")))
+    check("el sondeo conserva scroll y seleccion", pg.ev("({top:list.scrollTop,sel:st.selId})") == lectura)
+    check("sin controles de pagina en anfitrion", pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
     check("servidor sin endpoints: solo el 404 esperado en consola, ninguna excepcion", solo_404(errores(pg, n_err)), errores(pg, n_err))
     for (w, h) in ((1440, 900), (1600, 1000)):
         pg.viewport(w, h, reload=True, clear_storage=False); time.sleep(1.8)

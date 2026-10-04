@@ -322,19 +322,19 @@
   .note.res .txt{color:var(--fg-mute);text-decoration:line-through;text-decoration-color:var(--strike)}
   .note .body{flex:1;min-width:0}
 
-  /* X2 · decisiones + chat paginado. La lista nunca desplaza: cada pagina se
-     calcula con la altura disponible y solo monta las entradas que caben. */
-  .list{overflow:hidden}
+  /* X2 · decisiones y conversacion continua con scroll propio. */
+  .list{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;overflow-anchor:none}
+  .note.on{outline:2px solid var(--fg);outline-offset:-2px}
+  .note.on::before{display:none}
+  .list.hilo-lazy .hilo-b{content-visibility:auto;contain-intrinsic-size:auto 100px}
   .x2filters{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;padding:6px 9px;
     border-bottom:1px solid var(--line-soft);background:var(--panel)}
   .x2search,.x2select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);
     padding:0 8px;font-size:11px;min-width:0}
   .x2select{max-width:94px}
   .x2checks{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:20px}
-  .x2pager{flex:0 0 34px;display:flex;align-items:center;justify-content:space-between;padding:3px 9px;
+  .hilo-count{flex:0 0 34px;display:flex;align-items:center;justify-content:space-between;padding:3px 9px;
     border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg-mute)}
-  .x2pager button{width:28px;height:28px;border:1px solid var(--line);border-radius:5px;display:grid;place-items:center}
-  .x2pager button:disabled{opacity:.3;cursor:default}
   /* ── P5 · cierre de ronda ──
      El estado del corte se lee por TEXTO + FORMA (reloj / avion / roseta), nunca
      por color: el visor es blanco y negro y el color vive solo en los pinceles. */
@@ -1282,11 +1282,7 @@
       </div>
     </div>
     <div class="list" id="list"></div>
-    <nav class="x2pager" aria-label="Páginas de la conversación">
-      <button id="x2Prev" title="Página anterior" aria-label="Página anterior"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
-      <span id="x2Page">0 de 0</span>
-      <button id="x2Next" title="Página siguiente" aria-label="Página siguiente"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
-    </nav>
+    <div class="hilo-count"><span id="hiloCount" role="status">0 de 0</span></div>
     <div class="editor">
       <div class="ed-head">
         <span class="at" id="edAt">00:00:00:00</span>
@@ -1361,9 +1357,8 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            tool:null, color:PALETTE[0], size:SIZES[1], pend:null, hist:[], hpos:-1,
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
            x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
-           x2Page:0, adjustTo:null,
-           x2Size:0,          // tarjetas que CABEN en la pagina (medido en renderList)
-           x2Llegadas:[],     // notas que trajo el ultimo sondeo (para avisar y paginar)
+           adjustTo:null,
+           x2Llegadas:[],     // notas que trajo el ultimo sondeo (solo para avisar)
            selId:null,        // id de la nota activa (editar/mover/borrar)
            playhead:-1,      // fotograma bajo el cursor de reproduccion
            phNote:"",         // ids de las notas bajo el cursor (para no repintar de mas)
@@ -1584,10 +1579,8 @@ function absorbDetail(d){
       if(!st.notas.some(n => n.id === o.id)) st.notas.push(o);
     }
     st.notas.sort(cmpNotas);
-    /* Lo que acaba de llegar tiene que QUEDAR A LA VISTA: con la lista paginada,
-       una nota nueva en la ultima pagina es una nota invisible. */
+    // El sondeo avisa, pero conserva la seleccion y la lectura del usuario.
     st.x2Llegadas = x2DetectarLlegadas();
-    x2SeguirLlegadas(st.x2Llegadas);
   }
   // la meta del video puede haber cambiado de fps: reevaluar la unica fuente
   if(d.videos && st.vid && typeof setFps === "function") setFps();
@@ -1618,7 +1611,7 @@ function avisarSiLlegoAlgoDeClaude(){
   if(st.rev === _ultimoRevVisto) return;
   _ultimoRevVisto = st.rev;
   /* Las notas de INVITADO tambien se avisan: Cristian comparte un enlace y se va a
-     hacer otra cosa; si la nota entra en la ultima pagina sin decir nada, no existe.
+     hacer otra cosa; el aviso anuncia la llegada sin desplazar su lectura.
      Se usan las llegadas que calculo absorbDetail (ids nuevos), no `_visto`, porque
      una nota de invitado puede llegar editada mas de una vez. */
   const deInvitado = (st.x2Llegadas || []).filter(n => n.author === "invitado");
@@ -1920,7 +1913,7 @@ async function openVideo(vid){
   if(typeof shCerrar === "function") shCerrar();
   cmpSalir(false);                      // otro corte: la comparacion anterior no vale (sin restaurar)
   st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
-  st.x2Page = 0; x2OlvidarTamano();     // otras notas, otras alturas: volver a medir
+  $("#list").scrollTop = 0;
   guardarSesion();
   st.undo=[]; st.uPos=-1; actualizarBotonUndo();
   st.tl = {zoom:1, off:0};              // vista del timeline: siempre empieza entera
@@ -2011,12 +2004,14 @@ function startEdit(id){
   st.pend = {frame:n.frame, time:n.frame/fps};
   seek(n.frame/fps);
   editingId = n.id;
-  st.selId = n.id;
+  st.selId = raizDe(n).id;
+  st.plegados[st.selId] = false;
   $("#ta").value = n.text || "";
   setDirty(false);
   $("#bCancel").style.display = "";
   $("#ta").focus();
   drawCanvas(); renderList(); updateEditor();
+  x2SeguirNota(n.id);
   toast("Editando la nota de " + n.timecode, 1800);
 }
 /* ── RESPONDER EN EL HILO ──
@@ -2042,6 +2037,7 @@ function startReply(id){
   setDirty(false);
   $("#bCancel").style.display = "";
   renderList(); updateEditor(); drawCanvas();
+  x2SeguirNota(raiz.id);
   $("#ta").focus();
 }
 function cancelReply(){
@@ -2064,6 +2060,7 @@ function selectNoteById(id){
   $("#ta").value = "";
   setDirty(false);
   drawCanvas(); renderList(); updateEditor();
+  x2SeguirNota(n.id);
   setTimeout(() => { if($("#bMove") && !$("#bMove").disabled) $("#bMove").click(); }, 80);
 }
 
@@ -2151,42 +2148,17 @@ function x2Filtradas(){
     return true;
   });
 }
-/* ── La lista esta PAGINADA (fase 3): una nota nueva puede caer en otra pagina ──
-   Sin esto, la nota que acaba de dejar un invitado entraba en st.notas por el
-   sondeo y NO se veia: la lista seguia en la pagina 1 y la nota, que ordena por
-   fotograma, caia en la ultima. Medido: 10 notas, «Página 1 de 3», la nota del
-   invitado en la 3 — invisible hasta hacer clic en «siguiente». */
-/* Al cambiar filtros, video o ventana hay que volver a medir desde la apuesta alta:
-   si no, el tamano se queda clavado en el minimo de la vista mas apretada. */
-function x2OlvidarTamano(){ st.x2Size = 0; }
-function x2PageSize(){
-  const h = $("#list").clientHeight || 360;
-  return h < 330 ? 2 : h < 490 ? 3 : 4;
-}
-// pagina (0..n) en la que cae una nota con los filtros de AHORA; -1 si no entra
-function x2PaginaDe(id){
-  const i = x2Filtradas().findIndex(n => n.id === id);
-  // el tamano EFECTIVO del ultimo pintado; x2PageSize() solo es la primera apuesta
-  return i < 0 ? -1 : Math.floor(i / (st.x2Size || x2PageSize()));
-}
-/* Lleva la lista a la pagina de esa nota. Devuelve true si tuvo que moverse.
-   Si la nota no pasa los filtros activos NO se toca nada: los filtros son una
-   decision explicita de quien mira y una nota nueva no los anula. */
+/* Solo una accion explicita sigue una tarjeta; el sondeo nunca llama aqui.
+   Las respuestas se buscan dentro de su hilo, sin alterar los filtros. */
 function x2SeguirNota(id){
   if(!id) return false;
-  let movio = false;
-  /* Se repinta dentro: pintar la pagina puede ENCOGERLA (las tarjetas reales no
-     miden todas igual) y entonces la nota cae en otra. Con 4 vueltas sobra: el
-     tamano solo baja, y el minimo es 1. */
-  for(let i = 0; i < 4; i++){
-    const p = x2PaginaDe(id);
-    if(p < 0 || p === st.x2Page) break;
-    st.x2Page = p;
-    movio = true;
-    renderList();
-  }
-  return movio;
+  const L = $("#list"), key = CSS.escape(String(id));
+  const el = L.querySelector('[data-rid="' + key + '"], .note[data-id="' + key + '"]');
+  if(!el) return false;
+  el.scrollIntoView({behavior:"smooth", block:"nearest", inline:"nearest"});
+  return true;
 }
+
 /* Notas raiz que no estaban en la carga anterior. `null` hasta la primera carga:
    al arrancar TODAS son nuevas y no hay nada que seguir. */
 let _idsNotasVistas = null;
@@ -2197,19 +2169,6 @@ function x2DetectarLlegadas(){
   _idsNotasVistas = new Set(ids);
   return nuevas;
 }
-/* De las notas recien llegadas, la que esta mas al final de la lista filtrada:
-   es la pagina a la que hay que ir para que «lo nuevo» quede a la vista. */
-function x2SeguirLlegadas(nuevas){
-  if(!nuevas || !nuevas.length) return false;
-  const orden = x2Filtradas().map(n => n.id);
-  let mejor = null, mejorIdx = -1;
-  for(const n of nuevas){
-    const i = orden.indexOf(n.id);
-    if(i > mejorIdx){ mejorIdx = i; mejor = n.id; }
-  }
-  return x2SeguirNota(mejor);
-}
-
 function x2DecisionCard(n){
   const linked = n.resuelve ? st.notas.find(x => x.id === n.resuelve) : null;
   const estado = n.decision === "approved" ? '<span class="decision">aprobado</span>' :
@@ -2220,15 +2179,22 @@ function x2DecisionCard(n){
     '<div class="decide"><button data-redecide="' + esc(n.id) + '" title="Cambiar esta decisión" aria-label="Cambiar decisión sobre ' + esc(x2Numero(n)) + '">Cambiar decisión</button></div>' :
     '<div class="decide"><button class="approve-btn" data-approve="' + esc(n.id) + '" title="Aprobar el cambio y cerrar la nota vinculada" aria-label="Aprobar ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Aprobar</button>' +
     '<button class="adjust-btn" data-adjust="' + esc(n.id) + '" title="Pedir otro ajuste y reabrir la nota vinculada" aria-label="Pedir ajuste sobre ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg>Pedir ajuste</button></div>';
-  return '<div class="hilo-b" data-hilo="' + esc(n.id) + '"><div class="note raiz change" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="claude">' +
+  return '<div class="hilo-b" data-hilo="' + esc(n.id) + '"><div class="note raiz change' + (n.id === st.selId ? " on" : "") + '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="claude">' +
     '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span><span class="who c">Agente</span><strong>' + esc(x2Numero(n)) + '</strong>' + estado + '</div>' +
     '<div class="txt">' + esc(n.text || "Cambio sin descripción") + '</div>' +
     (linked ? '<div class="rng">Responde a ' + esc(x2Numero(linked)) + '</div>' : '') + acciones + '</div></div>' + cuerpoReps + '</div>';
 }
 function renderList(){
+  const inicio = performance.now();
   const L = $("#list"), filtradas = x2Filtradas();
-  const todos = (st.filterVid ? st.notas : st.notas.filter(n => !st.vid || n.video === st.vid))
-                  .filter(n => !esRespuesta(n));
+  const top = L.scrollTop, borde = L.getBoundingClientRect().top;
+  // Anclar la primera tarjeta visible conserva la lectura incluso con inserciones
+  // o respuestas nuevas por encima. En el inicio absoluto se conserva el cero.
+  const ancla = top > 0 ? [...L.children].find(el => el.getBoundingClientRect().bottom > borde) : null;
+  const anclaId = ancla && ancla.dataset.hilo;
+  const offset = ancla ? ancla.getBoundingClientRect().top - borde : 0;
+  const videoLista = st.filterVid || st.vid;
+  const todos = st.notas.filter(n => !esRespuesta(n) && (!videoLista || n.video === videoLista));
   // los marcadores de cambio no son notas: no cuentan en el total ni en "pendientes"
   const cambios = todos.filter(n => n.kind === "cambio").length;
   const all = todos.filter(n => n.kind !== "cambio");
@@ -2238,9 +2204,11 @@ function renderList(){
   // la UI. Decidir cambios individuales NUNCA cambia el estado por si solo.
   p5Actualizar();
   if(!filtradas.length){
+    L._hiloHTML = null;
     L.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>' +
       (todos.length ? "Nada coincide con los filtros." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
-    $("#x2Page").textContent = "0 de 0"; $("#x2Prev").disabled = $("#x2Next").disabled = true;
+    $("#hiloCount").textContent = "0 de " + todos.length;
+    L.dataset.renderMs = (performance.now() - inicio).toFixed(2);
     return;
   }
   const ph = st.playhead;
@@ -2300,25 +2268,11 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       cuerpoReps +
       '</div>';
   };
-  /* El tamano de pagina se MIDE, no se adivina. Con notas REALES (texto largo, tramo,
-     respuestas colgando) cuatro tarjetas desbordaban la caja y la lista salia con
-     scroll: medido 650 px de contenido en 638 de caja con v03-empire-state a
-     1600x1000. Se pinta la pagina y, si no cabe, se quita una tarjeta y se repinta.
-     El tamano EFECTIVO queda en `st.x2Size` y NO vuelve a crecer mientras no cambien
-     los filtros, el video o la ventana (x2OlvidarTamano): si cada pagina usara un
-     tamano distinto, `pagina * tamano` se descuadraria y habria tarjetas repetidas y
-     tarjetas que no salen en ninguna pagina. */
-  let pageSize = st.x2Size || x2PageSize(), pages, ini, list;
-  for(;;){
-    pages = Math.max(1, Math.ceil(filtradas.length / pageSize));
-    st.x2Page = clamp(st.x2Page, 0, pages - 1);
-    ini = st.x2Page * pageSize;
-    list = filtradas.slice(ini, ini + pageSize);
-    L.innerHTML = list.map(pinta).join("");
-    if(pageSize <= 1 || !L.clientHeight || L.scrollHeight <= L.clientHeight + 2) break;
-    pageSize--;
-  }
-  st.x2Size = pageSize;
+  const html = filtradas.map(pinta).join("");
+  // Si el contenido no cambia, conservar los nodos evita interrumpir el scroll
+  // suave y el foco durante los repintados del reproductor y del sondeo.
+  const cambio = L._hiloHTML !== html;
+  if(cambio){ L.innerHTML = html; L._hiloHTML = html; }
   /* UN solo oyente por bloque de hilo: la raiz y sus respuestas comparten la misma
      decision (que boton se pulso, o si fue el cuerpo). Antes era un oyente por nota;
      con respuestas serian el doble de cierres por repintado. */
@@ -2351,15 +2305,26 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       $("#ta").value = "";
       setDirty(false);
       drawCanvas(); renderList(); updateEditor();
+      x2SeguirNota(raiz.dataset.id);
     };
   }
-  const fin = Math.min(filtradas.length, ini + list.length);
-  $("#x2Page").textContent = "Página " + (st.x2Page + 1) + " de " + pages + " · " + fin + " de " + filtradas.length;
-  $("#x2Prev").disabled = st.x2Page <= 0;
-  $("#x2Next").disabled = st.x2Page >= pages - 1;
+  $("#hiloCount").textContent = filtradas.length + " de " + todos.length;
+  if(cambio){
+    const actual = anclaId && L.querySelector('[data-hilo="' + CSS.escape(anclaId) + '"]');
+    L.scrollTop = actual ? top + actual.getBoundingClientRect().top - borde - offset : top;
+  }
   // los botones de cada tarjeta nacen en cada pintado: su nombre accesible sale
   // del data-tip que ya traen (P6), no de un segundo texto que mantener
-  if(typeof p6Nombrar === "function") p6Nombrar($("#list"));
+  if(typeof p6Nombrar === "function") p6Nombrar(L);
+  // Incluye el coste de layout y accesibilidad. Si supera 80 ms, diferir tarjetas.
+  void L.scrollHeight;
+  const ms = performance.now() - inicio;
+  L.dataset.renderMs = ms.toFixed(2);
+  if(ms > 80 && !L.classList.contains("hilo-lazy")){
+    L.classList.add("hilo-lazy");
+    const actual = anclaId && L.querySelector('[data-hilo="' + CSS.escape(anclaId) + '"]');
+    if(actual) L.scrollTop += actual.getBoundingClientRect().top - borde - offset;
+  }
 }
 async function x2Aprobar(id){
   if(esInvitado) return;
@@ -2873,6 +2838,7 @@ function crearNotaParaDibujar(){
   st.selId = nota.id;
   pushHist(nota);
   drawCanvas(); renderList(); updateMarks(); updateEditor();
+  x2SeguirNota(nota.id);
   return nota;
 }
 
@@ -3004,6 +2970,7 @@ async function saveReply(){
       {tipo:"crear", antes:snapNota(saved), despues:snapNota(saved)});
     st.plegados[raiz.id] = false;
     renderList(); renderVideos(); updateMarks(); updateEditor();
+    x2SeguirNota(saved ? saved.id : raiz.id);
     toast("Respuesta enviada en " + raiz.timecode);
   }catch(e){
     $("#ta").value = val; setDirty(true);
@@ -3038,6 +3005,7 @@ async function x2GuardarAjuste(){
     pushUndo("ajuste pedido en "+x2Numero(c), {tipo:"multi",acciones:acciones});
     $("#ta").value=""; setDirty(false); x2SalirAjuste(); $("#bCancel").style.display="none";
     await pullDetail(); renderList(); renderVideos(); updateMarks(); updateEditor();
+    x2SeguirNota(reply ? reply.id : c.id);
     toast("Ajuste pedido al Agente");
   }catch(e){ toast("No se pudo pedir el ajuste: "+e.message,4000); }
 }
@@ -3092,8 +3060,7 @@ async function saveNote(){
     if(saved){
       if(esBorrador) st.notas = st.notas.filter(n => n.id !== existing.id);
       upsertNote(saved);
-      // con la lista paginada, tu propia nota puede nacer en otra pagina
-      x2SeguirNota(saved.id);
+      st.selId = raizDe(saved).id;
     }else{
       const d = await api(P(st.slug));
       absorbDetail(d);
@@ -3118,11 +3085,14 @@ async function saveNote(){
     st.pend = {frame: f, time: frameT(f)};
     // si ya hay una nota tuya en este fotograma, Enter responde en su hilo en vez de
     // crear otra nota (asi no se duplican: habia un par duplicado en los datos)
-    const miaAqui = st.notas.find(n => n.video === st.vid && n.frame === f
+    const miaAqui = saved || st.notas.find(n => n.video === st.vid && n.frame === f
       && esMia(n) && !n.parent && !esRespuesta(n));
-    if(miaAqui && !existing){ setTimeout(() => startReply(miaAqui.id), 120); }
+    if(miaAqui && !existing){ setTimeout(() => {
+      if(st.selId === miaAqui.id) startReply(miaAqui.id);
+    }, 120); }
     $("#bCancel").style.display = "none";
     renderList(); renderVideos(); updateMarks(); updateEditor();
+    if(saved) x2SeguirNota(saved.id);
     toast((existing && !esBorrador ? "Nota actualizada en " : "Nota enviada en ") + tc(null, f));
   }catch(e){
     // si fallo, devolver el texto al cuadro para no perderlo
@@ -3370,14 +3340,11 @@ $("#bMax").onclick = () => {
   const el = cmpEstado().on ? $("#screen") : v;
   (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);
 };
-$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Prev").onclick = () => { if(st.x2Page>0){ st.x2Page--; renderList(); } };
-$("#x2Next").onclick = () => { st.x2Page++; renderList(); };
-new ResizeObserver(() => renderList()).observe($("#list"));
+$("#cPend").onchange = e => { st.onlyPend = e.target.checked; renderList(); };
+$("#x2Search").oninput = e => { st.x2Search=e.target.value; renderList(); };
+$("#x2Type").onchange = e => { st.x2Type=e.target.value; renderList(); };
+$("#x2Person").onchange = e => { st.x2Person=e.target.value; renderList(); };
+$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; renderList(); };
 /* Dos casillas para el MISMO ajuste (la de la barra superior y la del panel de
    notas). Solo una de las dos sincronizaba a la otra, asi que marcar la de abajo
    dejaba la de arriba desmarcada diciendo lo contrario. Un solo handler. */
@@ -3456,9 +3423,8 @@ document.addEventListener("focusin", e => {
 document.addEventListener("focusout", hideTip);
 window.addEventListener("scroll", hideTip, true);
 window.addEventListener("resize", hideTip);
-window.addEventListener("resize", () => { x2OlvidarTamano(); renderList(); });
 window.addEventListener("blur", hideTip);
-$("#vfilter").onchange = e => { st.filterVid = e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#vfilter").onchange = e => { st.filterVid = e.target.value; renderList(); };
 
 /* ── ATajos: una sola tabla, un solo dueñо por tecla ──
    Antes habia DOS cadenas if en paralelo comparando contra la misma tecla, asi que
@@ -3737,8 +3703,7 @@ function jumpNote(dir){
   seek(target.frame/fps);
   editingId = null; $("#ta").value = ""; setDirty(false);
   drawCanvas(); renderList(); updateEditor(); updateMarks();
-  const el = $("#list").querySelector(".note[data-id=\""+target.id+"\"]");
-  if(el) el.scrollIntoView({block:"nearest"});
+  x2SeguirNota(target.id);
   toast("f"+target.frame+" · "+target.timecode, 1200);
 }
 
@@ -3867,6 +3832,7 @@ function tlIrANota(direccion){
   $("#ta").value = mejor.text || "";
   tlPaint();
   drawCanvas(); renderList(); updateEditor();
+  x2SeguirNota(mejor.id);
   toast("Nota " + (idx+1) + "/" + vis.length + " · " + mejor.timecode +
         (gap > 0 ? "  ·  pegada, vista a " + Math.round(st.tl.zoom) + "×" : ""), 2400);
 }
@@ -3901,6 +3867,7 @@ function irACambio(dir){
   tlCenter(c.frame/fps);          // centra la ventana ANTES de mover el cursor
   seek(c.frame/fps);
   drawCanvas(); renderList(); updateEditor();
+  x2SeguirNota(c.id);
   toast("Cambio " + (idx+1) + "/" + cs.length + " · " + c.timecode, 2400);
 }
 $("#tlChg").onclick = () => {
@@ -4001,13 +3968,15 @@ function pintarRail(){
 async function saltarANota(id){
   const n = st.notas.find(x => x.id === id); if(!n) return;
   if(n.video !== st.vid) openVideo(n.video);
-  st.selId = n.id;
+  st.selId = raizDe(n).id;
+  if(esRespuesta(n)) st.plegados[st.selId] = false;
   st.pend = {frame:n.frame, time:n.frame/fps};
   editingId = null;
   seek(n.frame/fps);
   $("#ta").value = (n.kind === "cambio") ? "" : (n.text||"");
   setDirty(false);
   pintarRail(); drawCanvas(); renderList(); updateMarks(); updateEditor(); updateUI();
+  x2SeguirNota(n.id);
   if(n.kind !== "cambio") toast("Nota de " + n.timecode + " · f" + n.frame, 2200);
   else toast("Cambio en " + n.timecode + " · f" + n.frame, 2200);
 }
@@ -4300,9 +4269,12 @@ let drag = null;
       reales, no en "% del ancho") se funde en UN `.cluster-marker` con el
       numero de miembros: nunca quedan dos cajas pisandose. */
 function activarMarcador(n){
+  st.selId = raizDe(n).id;
+  if(esRespuesta(n)) st.plegados[st.selId] = false;
   st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
   if(n.kind === "cambio"){ editingId = null; setDirty(false); }
   $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor();
+  x2SeguirNota(n.id);
 }
 // hora/autor/estado en una linea, para el aria-label y la vista previa (P4-d)
 function etiquetaMarcador(n){
