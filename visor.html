@@ -67,7 +67,10 @@
     --track-h:5px;
     --mark-base:9px;     /* la fila 0 de marcadores arranca justo sobre la pista */
     --mark-h:9px;        /* alto de un marcador */
-    --lane-px:11px;      /* separacion entre filas de marcadores apilados */
+    /* separacion ENTRE LOS DOS CARRILES (notas / cambios, Fase 4/P4). Tiene que
+       caber el .cluster-marker mas alto (16px) con hueco de sobra en el peor
+       caso (un grupo pegado a la linea del otro carril): 16 + 4px de margen. */
+    --lane-px:20px;
     --rule-h:6px;        /* la regleta del video entero, pegada bajo la pista */
     --radius:7px;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
@@ -215,14 +218,18 @@
   .scrub-head{position:absolute;bottom:calc(var(--track-y) + var(--track-h) / 2 - 6px);
     width:12px;height:12px;margin-left:-6px;border-radius:50%;
     background:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);pointer-events:none}
-  /* la FILA del marcador la pone el JS en --fila (0 = sobre la pista, 1 = encima).
-     Toda la geometria vive aqui: el JS ya no escribe top/bottom/height/transform
-     en linea, que era la via por la que el zoom movia cajas. */
+  /* la FILA del marcador la pone el JS en --fila: DOS CARRILES fijos por tipo
+     (0 = notas, 1 = cambios de Agente), no colision — Fase 4/P4. Toda la
+     geometria vive aqui: el JS ya no escribe top/bottom/height/transform en
+     linea, que era la via por la que el zoom movia cajas. */
   .mark{position:absolute;bottom:calc(var(--mark-base) + var(--fila,0) * var(--lane-px));
-    width:3px;height:var(--mark-h);margin-left:-1.5px;border-radius:3px;
+    width:var(--mark-h);height:var(--mark-h);margin-left:calc(var(--mark-h) * -0.5);
+    border-radius:50%;border:0;padding:0;margin-top:0;appearance:none;font:inherit;color:inherit;
     background:var(--own,var(--fg-mute));pointer-events:auto;cursor:grab;z-index:2}
   .mark:hover{filter:brightness(1.25)}
   .mark:active{cursor:grabbing}
+  .mark:focus-visible,.cluster-marker:focus-visible{outline:2px solid var(--sel-bar);outline-offset:2px}
+  .mark.sel{box-shadow:0 0 0 2px var(--sel-bar);z-index:4}
   .mark.done{opacity:.4}
   /* Los botones NO pueden encogerse: con flex-wrap y sin flex-shrink:0 el navegador
      los estrujaba a 16px de ancho con un icono de 14px dentro — el de reproducir
@@ -518,8 +525,9 @@
      resto de controles. Eso elimina de raiz el desfase de eje que obligaba a poner
      `margin:0 28px` en la regleta para que su 50 % cayera sobre el 50 % de la pista. */
   .scrub-fill{background:var(--accent-dim)}
-  /* zona de agarre invisible mas ancha que el marcador (6px -> 22px) */
-  .mark::before{content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+  /* zona de agarre invisible mas ancha que el marcador: 9 + 9.5*2 = 28px,
+     el objetivo tactil minimo que pide la tarea (d), sin tocar el dibujo visual */
+  .mark::before{content:"";position:absolute;left:-9.5px;right:-9.5px;top:-9.5px;bottom:-9.5px}
   .mark::after{border-radius:3px}
   .tlinfo{font-family:var(--mono);font-size:10px;color:var(--fg-mute);letter-spacing:.2px}
   /* height:22px = misma altura que los botones de zoom. Los cuatro .xs viven en
@@ -539,22 +547,14 @@
 
 
   /* ── Marcadores de CAMBIO (kind:"cambio") ──
-     Agente los pone donde toco algo. Punto verde, sin texto: solo una senal para
-     saltar directo al cambio y no ver el video entero. */
-  .mark.cambio{background:var(--cambio) !important;border-color:var(--cambio) !important}
-  /* el anillo del punto de cambio tambien es redondo: con inset:-2.5px -1px y
-     border-radius:3px (heredados de .mark::after) quedaba un cuadrado alrededor
-     de un circulo */
-  .mark.cambio::after{border-color:var(--cambio) !important;opacity:.85;
-    inset:-2.5px;border-radius:50%}
-  .mark.cambio::before{ /* area de agarre igual de comoda */
-    content:"";position:absolute;left:-9px;right:-9px;top:-9px;bottom:-9px}
+     Agente los pone donde toco algo. Dos carriles por TIPO (P4): notas = circulo
+     (forma base de .mark), cambios = rombo — mismo tamano, gira 45deg. La zona
+     de agarre (::before) y el anillo (::after) heredan el giro del padre, asi
+     que el objetivo tactil sigue siendo generoso sin tocar el dibujo. */
+  .mark.cambio{background:var(--cambio) !important;border-color:var(--cambio) !important;
+    border-radius:2px;transform:rotate(45deg)}
+  .mark.cambio::after{border-color:var(--cambio) !important;opacity:.85}
   .mark.cambio:hover{filter:brightness(1.3)}
-  /* el punto de cambio es una esfera, no una linea: se distingue de un vistazo.
-     Sin `top`: con top + bottom + height a la vez la caja queda sobre-restringida y
-     el navegador descarta el bottom — el marcador se iba de su fila. */
-  .mark.cambio{width:var(--mark-h);height:var(--mark-h);margin-left:calc(var(--mark-h) * -0.5);
-    border-radius:50%;border:0;background:var(--cambio)}
 
   /* ── MARCADOR DE HILO ──
      Una nota con respuestas es la MISMA marca con una muesca encima: un hilo no es
@@ -697,9 +697,33 @@
      Medidas reales de la banda, de abajo arriba (ver :root):
        regleta   0..6px   bajo la banda, solo con zoom
        pista     4..9px   desde el suelo de la banda
-       fila 0    9..18px  marcadores
-       fila 1   20..29px  marcadores apilados (tope: TL_LANES = 2)
-       alto total 32px — FIJO. Ningun pintado lo cambia. */
+       fila 0    9..18px (hasta 25px si hay grupo)  carril de NOTAS (circulo)
+       fila 1   29..38px (hasta 45px si hay grupo)  carril de CAMBIOS (rombo)
+       Fase 4/P4: dos carriles fijos por tipo, no por colision; lo que se solapa
+       DENTRO de un carril se agrupa (.cluster-marker, 16px — de ahi el hueco
+       de 20px entre carriles, no 11: un grupo no se puede comer al otro carril).
+       alto de LA BANDA (pista+regleta+fila 0 sin agrupar) 32px — FIJO, el mismo
+       de siempre; el .cluster-marker puede sobresalir un poco por arriba (igual
+       que ya hacia la zona de agarre invisible de .mark, position:absolute no
+       mueve layout ni mete scroll). */
+  /* ── Agrupar marcadores que se solapan (P4) ──
+     Mismo lenguaje de forma que .mark: circulo para el carril de notas, rombo
+     para el de cambios — solo cambia el tamano (mas grande, cabe el numero) y
+     que es hueco (panel/borde) en vez de solido: así se lee de un vistazo que
+     es UN grupo y no una nota suelta. B/N, ningun color nuevo. */
+  .cluster-marker{position:absolute;bottom:calc(var(--mark-base) + var(--fila,0) * var(--lane-px));
+    width:16px;height:16px;margin-left:-8px;border-radius:50%;appearance:none;padding:0;
+    display:grid;place-items:center;border:1.5px solid var(--fg);background:var(--panel);
+    color:var(--fg);font:700 9px/1 var(--sans);cursor:pointer;pointer-events:auto;z-index:3}
+  .cluster-marker::before{content:"";position:absolute;inset:-6px}   /* agarre >= 28px */
+  .cluster-marker:hover{filter:brightness(1.15)}
+  .cluster-marker.cambio{border-radius:2px;transform:rotate(45deg)}
+  .cluster-marker.cambio > span{display:block;transform:rotate(-45deg)}   /* el numero no gira */
+  .cluster-marker.has-sel{box-shadow:0 0 0 2px var(--sel-bar)}
+  /* tarjeta de vista previa (hover/foco): reutiliza la capa de etiquetas
+     [data-tip] que ya existe para TODA la UI (showTip()); solo permite varias
+     lineas cuando el objetivo es un marcador o un grupo (ver "rich" en JS) */
+  #tipLayer.rich{white-space:normal;max-width:280px;text-align:left}
   .tlinesa{display:flex;align-items:flex-end;gap:10px;padding:0 10px;flex:0 0 auto}
   .tlstack{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0}
   .tlctrls{display:flex;align-items:center;gap:4px;flex:0 0 auto;padding-bottom:2px}
@@ -3345,6 +3369,9 @@ function showTip(el){
   const html = tipText(el);
   if(!html){ hideTip(); return; }
   tipFor = el;
+  // los marcadores y sus grupos pueden traer varias lineas (vista previa P4-b):
+  // solo ellos permiten el salto de linea, el resto sigue en una sola linea
+  tipEl.classList.toggle("rich", el.matches(".mark,.cluster-marker"));
   tipEl.innerHTML = html;
   tipEl.classList.add("on");
   // medir con la capa ya visible: si no, el rect sale vacio y la posicion se va a (0,0)
@@ -3424,6 +3451,10 @@ document.addEventListener("keydown", e => {
   if($("#invDlg").classList.contains("on")) return;     // sin nombre no hay atajos (ni Escape)
   const tag = (e.target.tagName||"").toLowerCase();
   if(tag==="textarea"||tag==="input"||tag==="select") return;
+  // un marcador o un grupo con el foco: Enter/Espacio los activa a ÉL (nativo
+  // del <button>), no al atajo global (si no, Espacio pausaba el video en vez
+  // de abrir/acercar el marcador — P4-d)
+  if(e.target.closest && e.target.closest(".mark,.cluster-marker")) return;
   if(!st.vid) return;
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase() === "z"){
     e.preventDefault();
@@ -3794,10 +3825,12 @@ $("#tlPrev").onclick = () => tlIrANota(-1);
 const TL_ZOOM_MIN = 1, TL_ZOOM_MAX = 20000;
 const TL_ZOOM_PASO = 2.4;      // un clic de boton
 const TL_ZOOM_RUEDA = 1.5;     // un paso de rueda
-const TL_LANES = 2;            // filas de marcadores que CABEN en el alto fijo de la barra
-const TL_GRAB_PX = 13;         // dos marcadores a menos de esto se estorban: suben de fila
+const TL_GRAB_PX = 13;         // umbral (px) para decidir el zoom de "ir a nota" (tlIrANota)
 const TL_FOLLOW_EDGE = 0.12;   // margen en el que el cursor arrastra la ventana
 const TL_ANCHO_FALLBACK = 480; // ancho de la barra si aun no esta en pantalla
+const TL_CLUSTER_GAP = 4;      // hueco (px) entre cajas por debajo del cual se agrupan (P4)
+const MK_W = 9;                 // == --mark-h: diametro/lado de un marcador suelto
+const CLUSTER_W = 16;           // == ancho de .cluster-marker en CSS: la insignia de grupo
 
 /* ── 1. El modelo (puro: lee st.tl, no lo escribe) ── */
 
@@ -4011,12 +4044,106 @@ let drag = null;
    a) Solo se crean los marcadores que caen DENTRO de la ventana. Antes se creaban
       todos y los de fuera se recortaban a 0 % / 100 % con tlPct(), asi que al
       acercar se apilaban decenas de notas en los dos extremos.
-   b) La colision se mide en PIXELES reales (TL_GRAB_PX), no en "0.6 % del ancho".
-      Un umbral en % cambia de significado con el zoom y con el ancho de la ventana;
-      lo que importa es si caben dos dedos, y eso son pixeles.
-   c) El numero de filas esta ACOTADO (TL_LANES) y aqui no se escribe ningun tamano.
-      La pila ya no puede empujar la barra, el transporte ni la pantalla del video.
-      La geometria de cada fila la pone el CSS, leyendo la variable --fila. */
+   b) El carril de cada marcador es FIJO por tipo (notas / cambios), no por
+      colision — Fase 4/P4, dos carriles en vez de una sola banda.
+   c) Lo que se solapa DENTRO de un carril (hueco < TL_CLUSTER_GAP en pixeles
+      reales, no en "% del ancho") se funde en UN `.cluster-marker` con el
+      numero de miembros: nunca quedan dos cajas pisandose. */
+function activarMarcador(n){
+  st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
+  if(n.kind === "cambio"){ editingId = null; setDirty(false); }
+  $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor();
+}
+// hora/autor/estado en una linea, para el aria-label y la vista previa (P4-d)
+function etiquetaMarcador(n){
+  const estado = n.resolved ? "resuelta" :
+    (n.kind === "cambio" ? (n.decision ? (n.decision === "approved" ? "aprobado" : "ajuste pedido") : "pendiente")
+                          : "abierta");
+  return n.timecode + " · " + (n.kind === "cambio" ? "Cambio de Agente" : nombreAutor(n)) + " · " + estado;
+}
+function filaDe(n){ return n.kind === "cambio" ? 1 : 0; }   // 0 = notas, 1 = cambios
+// agrupa por cadena (como REPORT-B de la maqueta): hueco real en pixeles entre
+// cajas vecinas, no un porcentaje — un umbral en % cambia de significado con
+// el zoom. `items` ya es de UN solo carril.
+//
+// Punto fijo, no una sola pasada: un grupo de 2+ se pinta como .cluster-marker,
+// que mide MAS (CLUSTER_W) que un marcador suelto (MK_W). Con una sola pasada,
+// dos grupos vecinos podian quedar "justo separados" segun el ancho de un
+// marcador suelto y acabar solapando de verdad una vez pintada la insignia,
+// mas ancha. Por eso se repite la fusion con el ancho YA actualizado hasta que
+// una pasada no funde a nadie mas: en ese punto, todo hueco final es >=
+// TL_CLUSTER_GAP medido con el ancho que de verdad se va a pintar.
+//
+// El carril de CAMBIOS esta rotado 45deg (rombo): su caja real en pantalla
+// (getBoundingClientRect, sin rotar) es ~1.41x mas ancha que el lado del
+// cuadrado (la diagonal). Si se agrupa con el ancho SIN rotar, dos rombos
+// "justo separados" sobre el papel acababan solapando ya pintados — por eso
+// `esCambios` ensancha el umbral exactamente lo que crece la caja al rotar.
+function planClusters(items, esCambios){
+  const k = esCambios ? Math.SQRT2 : 1;
+  let nodos = items.map(it => ({miembros:[it], px:it.px, ancho:MK_W * k}));
+  for(let pasada = 0; pasada < 30; pasada++){
+    nodos.sort((a, b) => a.px - b.px);
+    const fusion = [];
+    let actual = null;
+    for(const nd of nodos){
+      const lo = nd.px - nd.ancho / 2, hi = nd.px + nd.ancho / 2;
+      if(actual && (lo - actual.hi) < TL_CLUSTER_GAP){
+        actual.miembros = actual.miembros.concat(nd.miembros);
+        actual.hi = Math.max(actual.hi, hi);
+      } else {
+        actual = {miembros:nd.miembros.slice(), lo:lo, hi:hi};
+        fusion.push(actual);
+      }
+    }
+    const siguiente = fusion.map(g => ({
+      miembros: g.miembros, px: (g.lo + g.hi) / 2,
+      ancho: (g.miembros.length > 1 ? CLUSTER_W : MK_W) * k
+    }));
+    if(siguiente.length === nodos.length) { nodos = siguiente; break; }
+    nodos = siguiente;
+  }
+  return nodos.map(nd => ({miembros:nd.miembros, lo:nd.px - nd.ancho / 2, hi:nd.px + nd.ancho / 2}));
+}
+// clic en un grupo: duplica el zoom centrado en el grupo (tope TL_ZOOM_MAX,
+// el mismo limite que ya respeta tlZoom). Si a ese zoom siguen juntos, se
+// vuelven a agrupar en el siguiente render — nunca quedan solapados.
+function zoomAGrupo(miembros){
+  const frames = miembros.map(m => m.n.frame);
+  const centro = ((Math.min(...frames) + Math.max(...frames)) / 2) / fps;
+  st.tl.zoom = clamp(st.tl.zoom * TL_ZOOM_PASO, TL_ZOOM_MIN, TL_ZOOM_MAX);
+  tlCenter(centro);
+}
+function construirClusterMarker(fila, grupo, anchoPx){
+  const esCambios = fila === 1;
+  const miembros = grupo.miembros.map(m => m.n).sort((a, b) => a.frame - b.frame);
+  const centroPx = (grupo.lo + grupo.hi) / 2;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "cluster-marker" + (esCambios ? " cambio" : "");
+  b.style.left = ((centroPx / anchoPx) * 100) + "%";
+  b.style.setProperty("--fila", String(fila));
+  b.dataset.ids = miembros.map(n => n.id).join(",");
+  const cuenta = document.createElement("span");
+  cuenta.textContent = String(miembros.length);
+  b.appendChild(cuenta);
+  // el seleccionado se absorbe en el grupo (has-sel) en vez de tapar la cuenta
+  const haySel = miembros.some(n => n.id === st.selId);
+  if(haySel) b.classList.add("has-sel");
+  b.setAttribute("aria-label", "Grupo de " + miembros.length + " " + (esCambios ? "cambios" : "notas") +
+    ", de " + miembros[0].timecode + " a " + miembros[miembros.length - 1].timecode + ". Clic para acercar.");
+  // la fila de la seleccionada va primero en la vista previa, igual que en la maqueta (H1)
+  const orden = miembros.slice();
+  const idxSel = orden.findIndex(n => n.id === st.selId);
+  if(idxSel > 0) orden.unshift(orden.splice(idxSel, 1)[0]);
+  const filas = orden.slice(0, 4).map(n => esc(n.timecode + " · " +
+    (n.kind === "cambio" ? "Cambio de Agente" : nombreAutor(n)) + (n.id === st.selId ? " · seleccionada" : "") +
+    (n.text ? " — " + n.text.slice(0, 40) : "")));
+  if(miembros.length > 4) filas.push("+" + (miembros.length - 4) + " más");
+  b.dataset.tip = filas.join("<br>");
+  b.onclick = ev => { ev.stopPropagation(); zoomAGrupo(grupo.miembros); };
+  return b;
+}
 function updateMarks(){
   const host = $("#head").parentElement;
   // el ancho se mide ANTES de tocar el DOM: medir despues de pintar fuerza al
@@ -4028,37 +4155,43 @@ function updateMarks(){
   // a mitad de un arrastre NO se reconstruyen: el elemento que el usuario tiene
   // agarrado se destruiria. updateEditor() llama aqui dentro del propio pointermove.
   if(drag) return;
-  $$(".mark", host).forEach(e => e.remove());
+  $$(".mark,.cluster-marker", host).forEach(e => e.remove());
   if(!vmeta()) return;
-  const puestos = [];
+  const porCarril = [[], []];   // 0 = notas, 1 = cambios
   for(const n of st.notas){
     if(n.video !== st.vid) continue;
     const t = n.frame / fps;
     if(!tlVisible(t)) continue;              // fuera de la ventana: no se dibuja
     const frac = clamp(tlFrac(t), 0, 1);
     const px = frac * anchoPx;
-    let fila = 0;
-    while(fila < TL_LANES - 1 &&
-          puestos.some(p => p.fila === fila && Math.abs(p.px - px) < TL_GRAB_PX)) fila++;
-    puestos.push({px:px, fila:fila});
+    const fila = filaDe(n);
 
-    const e = document.createElement("div");
+    const e = document.createElement("button");
+    e.type = "button";
     const q = quienEs(n);
-    e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "") + (q === "invitado" ? " inv" : "");
+    e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "") +
+      (q === "invitado" ? " inv" : "") + (n.id === st.selId ? " sel" : "");
     e.style.left = (frac * 100) + "%";
     e.style.setProperty("--fila", String(fila));
     // el marcador hereda el color del autor: mismo mecanismo que la tarjeta
     e.style.setProperty("--own", q === "claude" ? "var(--claude)" : q === "invitado" ? "var(--invitado)" : "var(--yo)");
     e.dataset.nid = n.id;   // para arrastrarlo sobre la barra
     e.dataset.t = t;
-    e.title = n.kind === "cambio"
-      ? "Cambio de Agente · " + n.timecode + " · clic para ver"
-      : nombreAutor(n) + " · " + n.timecode + " — " + (n.text||"");
-    e.onclick = ev => { ev.stopPropagation();
-      st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
-      if(n.kind === "cambio"){ editingId = null; setDirty(false); }
-      $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor(); };
+    e.dataset.tip = esc(etiquetaMarcador(n) + (n.text ? " — " + n.text.slice(0, 90) : ""));
+    e.setAttribute("aria-label", etiquetaMarcador(n));
+    e.onclick = ev => { ev.stopPropagation(); activarMarcador(n); };
     host.appendChild(e);
+    porCarril[fila].push({n:n, px:px, el:e});
+  }
+  // agrupar lo que se solapa DENTRO de cada carril (nunca entre carriles: son
+  // tipos distintos y ya estan separados en altura)
+  for(let fila = 0; fila < porCarril.length; fila++){
+    const grupos = planClusters(porCarril[fila], fila === 1);
+    for(const g of grupos){
+      if(g.miembros.length < 2) continue;
+      for(const m of g.miembros){ m.el.hidden = true; m.el.dataset.clustered = "true"; }
+      host.appendChild(construirClusterMarker(fila, g, anchoPx));
+    }
   }
 }
 function updateEditor(){

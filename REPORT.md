@@ -1,0 +1,10 @@
+# REPORT · TASK-P4 (Fase 4: densidad de marcadores) · agente P4
+
+**Cambios:** solo `visor.html` (+181/−48). Dos carriles fijos por tipo en `--fila` (0 notas/círculo, 1 cambios/rombo; antes una banda con apilado por colisión). Agrupar por hueco real en px con punto fijo (`planClusters`, ≤30 pasadas): la insignia de grupo (16px) es más ancha que un marcador suelto (9px) y los rombos rotados 45° miden ×√2 más sin rotar — con una sola pasada quedaban pares solapados (105 fallos en mi propia suite → 0 tras el punto fijo + ancho rotado). Clic en grupo = zoom×2.4 centrado (`zoomAGrupo`). Seleccionado se absorbe (`has-sel` + marcador real oculto), nunca tapa al grupo. `.mark`/`.cluster-marker` son `<button>` reales (role/tabindex/Enter/Espacio nativos), `aria-label` hora·autor·estado, objetivo táctil 28px (medido con `getComputedStyle(el,'::before')`). Vista previa reutiliza `[data-tip]`/`showTip` con clase `rich` nueva. `ve_otras` ya filtraba en el servidor, sin tocar nada ahí.
+
+**Pruebas — `tools/test-p4.py` (nueva, 27 checks, server 9441/Chrome 9443):** **0 solapes** con 5 y 60 notas, 40 semillas LCG × 4 zooms = **320 combinaciones** (`getBoundingClientRect` real). Más: carriles, formas, objetivo táctil, insignia+conteo, vista previa, `has-sel`, zoom al clic, `<button>` nativo, Espacio sin pausar video, invitado intacto, 0 excepciones, sin scroll — **27/27 ✔**.
+
+**Regresión (una a la vez):** `run-attack.sh` **159/159** ✔ · `test-guest.py` **619/619** ✔ · `test-inv.py` **50/54** · `e2e-invitado.py` **116/120** (ya documentado en PORTE-COMUN, no mío) · `test-x2.py` **9/11** (fixture «Prueba X2» no existe en este clon, `data/` no va en git). Por A/B: los fallos de `test-inv.py`/`test-x2.py` son **idénticos con el `visor.html` original** — no son míos.
+
+## NO verifiqué
+Enter por CDP: `Input.dispatchKeyEvent` no dispara la activación nativa de `<button>` en headless (probado con un botón plano sin código mío; Espacio sí). Anillo `::after` del rombo algo asimétrico (heredó el inset de la barra vieja), cosmético. No medí con lector de pantalla.
