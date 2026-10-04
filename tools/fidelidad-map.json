@@ -988,38 +988,421 @@
     "r": ".transport"
    },
    "pares": [
-    {"n":"panel-tinta-y-borde","m":".timeline-panel","r":".transport","props":["alignSelf","backgroundColor","borderBottomColor","borderBottomWidth"]},
-    {"n":"fila-transporte","m":".tl-bar","r":".tp-row","props":["h","display","alignItems","columnGap","minWidth"]},
-    {"n":"grupo-reproduccion","m":".tl-bar .group:first-child","r":".tp-row .group:first-child","props":["h","display","alignItems","columnGap","paddingLeft","paddingRight","borderTopWidth","borderTopColor","borderRadius","backgroundColor"]},
-    {"n":"boton-retroceder","m":"#backSecond","r":"#bBack","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"boton-play","m":"#bandPlay","r":"#bPlay","props":["w","h","borderRadius","backgroundColor","color"]},
-    {"n":"icono-play","m":"#bandPlay svg","r":"#bPlay svg","props":["w","h"]},
-    {"n":"reloj","m":".tl-bar .time","r":".tp-row .time","props":["display","alignItems","columnGap","fontFamily","fontVariantNumeric","whiteSpace"]},
-    {"n":"reloj-actual","m":"#bandClock","r":"#tcTC","props":["fontFamily","fontSize","fontWeight","letterSpacing","lineHeight"]},
-    {"n":"reloj-total","m":".tl-bar .time span","r":"#tcTotal","props":["fontSize","color"]},
-    {"n":"velocidad","m":"#speed","r":"#speed","props":["h","minWidth","paddingLeft","paddingRight","borderTopWidth","borderTopColor","borderRadius","backgroundColor","fontSize","display","alignItems","justifyContent","columnGap"]},
-    {"n":"velocidad-numero","m":"#speed b","r":"#speed b","props":["fontSize","fontWeight"]},
-    {"n":"velocidad-normal","m":"#speed small","r":"#speed small","props":["fontSize","color"]},
-    {"n":"grupo-zoom","m":".tl-bar .group:last-child","r":".tp-row [aria-label='Zoom de la línea de tiempo']","props":["h","display","alignItems","columnGap","paddingLeft","paddingRight","borderTopWidth","borderTopColor","borderRadius","backgroundColor"]},
-    {"n":"boton-zoom","m":"#zoomOut","r":"#tlZin","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"rejilla-tiempo","m":".timeline-panel .tl","r":".tlinesa .tl","props":["display","gridTemplateColumns","columnGap","minHeight"]},
-    {"n":"gutter","m":".tl-gutter","r":".tl-gutter","props":["display","rowGap","minWidth"]},
-    {"n":"rotulo-linea","m":".tl-corner","r":".tl-corner","props":["fontSize","fontWeight","letterSpacing","textTransform","color","whiteSpace","alignSelf"]},
-    {"n":"rotulo-carril","m":".lane-label","r":".lane-label","props":["display","alignItems","columnGap","fontSize","fontWeight","whiteSpace"]},
-    {"n":"flecha-carril","m":"#prevNote","r":"#tlPrev","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"regla","m":".ruler","r":".ruler","props":["position","h"]},
-    {"n":"lectura-regla","m":".ruler span","r":".ruler span","props":["position","fontFamily","fontSize","lineHeight","color","whiteSpace"]},
-    {"n":"carril-notas","m":"#laneNotes","r":".lane-bg.note","props":["backgroundColor","borderRadius","position"]},
-    {"n":"carril-cambios","m":"#laneChanges","r":".lane-bg.cambio","props":["backgroundColor","borderRadius","position"]},
-    {"n":"forma-nota-gutter","m":".shape.note","r":".shape.note","props":["w","h","borderRadius","backgroundColor"]},
-    {"n":"forma-cambio-gutter","m":".shape.change","r":".shape.cambio","props":["w","h","borderTopWidth","borderTopColor","borderRadius","transform"]},
-    {"n":"cabezal","m":"#playhead","r":"#head","props":["w","backgroundColor","position","zIndex","pointerEvents"]},
-    {"n":"marcador-nota","m":".marker.note:not(.sel)","r":".mark:not(.cambio):not(.sel):not([hidden])","props":["w","h","borderRadius","backgroundColor","color","fontFamily","fontSize","fontWeight","lineHeight","boxShadow","display","placeItems"]},
-    {"n":"marcador-seleccionado","m":".marker.note.sel","r":".mark:not(.cambio).sel:not([hidden])","props":["w","h","borderRadius","backgroundColor","color","boxShadow","transform","zIndex"]},
-    {"n":"rombo-cambio","m":".marker.change:not(.sel)","r":".mark.cambio:not(.sel):not([hidden])","props":["w","h","borderTopWidth","borderTopColor","borderRadius","backgroundColor","color","boxShadow","transform"]},
-    {"n":"rombo-texto","m":".marker.change b","r":".mark.cambio b","props":["fontFamily","fontSize","fontWeight","lineHeight","transform"]},
-    {"n":"tramo","m":".a-rangebar","r":".a-rangebar","props":["h","position","display","alignItems","zIndex","transform"]},
-    {"n":"tramo-linea","m":".a-rangebar i","r":".a-rangebar i","props":["h","borderTopWidth","borderTopColor","borderRadius","backgroundColor","display"]}
+    {
+     "n": "panel-tinta-y-borde",
+     "m": ".timeline-panel",
+     "r": ".transport",
+     "props": [
+      "alignSelf",
+      "backgroundColor",
+      "borderBottomColor",
+      "borderBottomWidth"
+     ]
+    },
+    {
+     "n": "fila-transporte",
+     "m": ".tl-bar",
+     "r": ".tp-row",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "minWidth"
+     ]
+    },
+    {
+     "n": "grupo-reproduccion",
+     "m": ".tl-bar .group:first-child",
+     "r": ".tp-row .group:first-child",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "paddingRight",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "boton-retroceder",
+     "m": "#backSecond",
+     "r": "#bBack",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "boton-play",
+     "m": "#bandPlay",
+     "r": "#bPlay",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor",
+      "color"
+     ]
+    },
+    {
+     "n": "icono-play",
+     "m": "#bandPlay svg",
+     "r": "#bPlay svg",
+     "props": [
+      "w",
+      "h"
+     ]
+    },
+    {
+     "n": "reloj",
+     "m": ".tl-bar .time",
+     "r": ".tp-row .time",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap",
+      "fontFamily",
+      "fontVariantNumeric",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "reloj-actual",
+     "m": "#bandClock",
+     "r": "#tcTC",
+     "props": [
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "lineHeight"
+     ]
+    },
+    {
+     "n": "reloj-total",
+     "m": ".tl-bar .time span",
+     "r": "#tcTotal",
+     "props": [
+      "fontSize",
+      "color"
+     ]
+    },
+    {
+     "n": "velocidad",
+     "m": "#speed",
+     "r": "#speed",
+     "props": [
+      "h",
+      "minWidth",
+      "paddingLeft",
+      "paddingRight",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "fontSize",
+      "display",
+      "alignItems",
+      "justifyContent",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "velocidad-numero",
+     "m": "#speed b",
+     "r": "#speed b",
+     "props": [
+      "fontSize",
+      "fontWeight"
+     ]
+    },
+    {
+     "n": "velocidad-normal",
+     "m": "#speed small",
+     "r": "#speed small",
+     "props": [
+      "fontSize",
+      "color"
+     ]
+    },
+    {
+     "n": "grupo-zoom",
+     "m": ".tl-bar .group:last-child",
+     "r": ".tp-row [aria-label='Zoom de la línea de tiempo']",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "paddingRight",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "boton-zoom",
+     "m": "#zoomOut",
+     "r": "#tlZin",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "rejilla-tiempo",
+     "m": ".timeline-panel .tl",
+     "r": ".tlinesa .tl",
+     "props": [
+      "display",
+      "columnGap",
+      "minHeight"
+     ],
+     "nota": "gridTemplateColumns se compara por .tl-gutter (148 px): el real es 30 px mas estrecho por el rail de proyectos plegado (diferencia permitida 3)"
+    },
+    {
+     "n": "gutter",
+     "m": ".tl-gutter",
+     "r": ".tl-gutter",
+     "props": [
+      "display",
+      "rowGap",
+      "minWidth"
+     ]
+    },
+    {
+     "n": "rotulo-linea",
+     "m": ".tl-corner",
+     "r": ".tl-corner",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "textTransform",
+      "color",
+      "whiteSpace",
+      "alignSelf"
+     ]
+    },
+    {
+     "n": "rotulo-carril",
+     "m": ".lane-label",
+     "r": ".lane-label",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap",
+      "fontSize",
+      "fontWeight",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "flecha-carril",
+     "m": "#prevNote",
+     "r": "#tlPrev",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "regla",
+     "m": ".ruler",
+     "r": ".ruler",
+     "props": [
+      "position",
+      "h"
+     ]
+    },
+    {
+     "n": "lectura-regla",
+     "m": ".ruler span",
+     "r": ".ruler span",
+     "props": [
+      "position",
+      "fontFamily",
+      "fontSize",
+      "lineHeight",
+      "color",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "carril-notas",
+     "m": "#laneNotes",
+     "r": ".lane-bg.note",
+     "props": [
+      "backgroundColor",
+      "borderRadius"
+     ],
+     "nota": "el real pinta el carril en absoluto sobre el rail; la geometria (h/relx/rely) se sigue comparando"
+    },
+    {
+     "n": "carril-cambios",
+     "m": "#laneChanges",
+     "r": ".lane-bg.cambio",
+     "props": [
+      "backgroundColor",
+      "borderRadius"
+     ],
+     "nota": "el real pinta el carril en absoluto sobre el rail; la geometria (h/relx/rely) se sigue comparando"
+    },
+    {
+     "n": "forma-nota-gutter",
+     "m": ".shape.note",
+     "r": ".shape.note",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "forma-cambio-gutter",
+     "m": ".shape.change",
+     "r": ".shape.cambio",
+     "props": [
+      "w",
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "transform"
+     ]
+    },
+    {
+     "n": "cabezal",
+     "m": "#playhead",
+     "r": "#head",
+     "props": [
+      "w",
+      "backgroundColor",
+      "position",
+      "zIndex",
+      "pointerEvents"
+     ]
+    },
+    {
+     "n": "marcador-nota",
+     "m": ".marker.note:not(.sel)",
+     "r": ".mark:not(.cambio):not(.sel):not([hidden])",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor",
+      "color",
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "lineHeight",
+      "boxShadow",
+      "display",
+      "placeItems"
+     ]
+    },
+    {
+     "n": "marcador-seleccionado",
+     "m": ".marker.note.sel",
+     "r": ".mark:not(.cambio).sel:not([hidden])",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor",
+      "color",
+      "boxShadow",
+      "transform",
+      "zIndex"
+     ]
+    },
+    {
+     "n": "rombo-cambio",
+     "m": ".marker.change:not(.sel)",
+     "r": ".mark.cambio:not(.sel):not([hidden])",
+     "props": [
+      "w",
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "color",
+      "boxShadow",
+      "transform"
+     ],
+     "vp": [
+      1600
+     ],
+     "nota": "a 1440 los cambios se agrupan en un cluster (densidad B): solo se mide donde hay rombo suelto"
+    },
+    {
+     "n": "rombo-texto",
+     "m": ".marker.change b",
+     "r": ".mark.cambio b",
+     "props": [
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "lineHeight",
+      "transform"
+     ]
+    },
+    {
+     "n": "tramo",
+     "m": ".a-rangebar",
+     "r": ".a-rangebar",
+     "props": [
+      "h",
+      "position",
+      "display",
+      "alignItems",
+      "zIndex",
+      "transform"
+     ]
+    },
+    {
+     "n": "tramo-linea",
+     "m": ".a-rangebar i",
+     "r": ".a-rangebar i",
+     "props": [
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "display"
+     ]
+    },
+    {
+     "n": "gutter-ancho",
+     "m": ".tl-gutter",
+     "r": ".tl-gutter",
+     "props": [
+      "w"
+     ]
+    }
    ]
   },
   {
@@ -1029,30 +1412,302 @@
     "r": "#tools"
    },
    "pares": [
-    {"n":"barra-anotar","m":".dock","r":"#tools","props":["h","display","alignItems","columnGap","paddingLeft","paddingRight","backgroundColor","borderTopWidth","borderTopColor","whiteSpace"]},
-    {"n":"titulo-anotar","m":".dock-title","r":".dock-title","props":["display","alignItems","columnGap","fontSize","fontWeight","letterSpacing","textTransform","color"]},
-    {"n":"icono-titulo","m":".dock-title svg","r":".dock-title svg","props":["w","h"]},
-    {"n":"grupo-herramientas","m":".dock [data-drag='tools']","r":"#tools [data-drag='tools']","props":["h","display","alignItems","columnGap","paddingLeft","paddingRight","borderTopWidth","borderTopColor","borderRadius","backgroundColor"]},
-    {"n":"agarre","m":".dock .grip","r":"#tools .grip","props":["w","h","display","placeItems","color","cursor"]},
-    {"n":"icono-agarre","m":".dock .grip svg","r":"#tools .grip svg","props":["w","h"]},
-    {"n":"herramienta-lapiz","m":".dock [data-tool='pen']","r":"#tools [data-tool='pen']","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"icono-lapiz","m":".dock [data-tool='pen'] svg","r":"#tools [data-tool='pen'] svg","props":["w","h"]},
-    {"n":"grupo-color","m":".dock [data-drag='color']","r":"#tools [data-drag='color']","props":["h","borderTopWidth","borderTopColor","borderRadius","backgroundColor","columnGap"]},
-    {"n":"boton-color","m":"#inkColor","r":"#swBtn","props":["h","display","alignItems","columnGap","paddingLeft","paddingRight","borderRadius","fontSize","whiteSpace"]},
-    {"n":"muestra-color","m":"#inkColor .sw","r":"#swBtn .sw","props":["w","h","borderRadius","backgroundColor","boxShadow"]},
-    {"n":"nombre-color","m":"#inkColor .ink-name","r":"#swBtn .ink-name","props":["fontSize","fontWeight","color"]},
-    {"n":"grupo-grosores","m":".dock [data-drag='weight']","r":"#tools [data-drag='weight']","props":["h","borderTopWidth","borderTopColor","borderRadius","backgroundColor","columnGap"]},
-    {"n":"contenedor-grosores","m":".dock .weights","r":"#ws","props":["display","columnGap"]},
-    {"n":"grosor-fino","m":".dock .weight:first-child","r":"#ws .weight:first-child","props":["w","h","display","placeItems","borderRadius"]},
-    {"n":"linea-fina","m":".dock .weight:first-child i","r":"#ws .weight:first-child i","props":["w","h","backgroundColor","borderRadius"]},
-    {"n":"grosor-activo","m":".dock .weight.on","r":"#ws .weight.on","props":["w","h","borderRadius","backgroundColor","display","placeItems"]},
-    {"n":"linea-activa","m":".dock .weight.on i","r":"#ws .weight.on i","props":["w","h","backgroundColor","borderRadius"]},
-    {"n":"grupo-historial","m":".dock [data-drag='history']","r":"#tools [data-drag='history']","props":["h","borderTopWidth","borderTopColor","borderRadius","backgroundColor","columnGap"]},
-    {"n":"deshacer","m":"#undoDrawing","r":"#bUndo","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"rehacer","m":"#redoDrawing","r":"#bRedo","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"papelera","m":"#clearDrawing","r":"#bErase","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"pantalla-completa","m":"#fullscreen","r":"#bMax","props":["w","h","display","placeItems","borderRadius","color"]},
-    {"n":"icono-pantalla-completa","m":"#fullscreen svg","r":"#bMax svg","props":["w","h"]}
+    {
+     "n": "barra-anotar",
+     "m": ".dock",
+     "r": "#tools",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "paddingRight",
+      "backgroundColor",
+      "borderTopWidth",
+      "borderTopColor",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "titulo-anotar",
+     "m": ".dock-title",
+     "r": ".dock-title",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap",
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "textTransform",
+      "color"
+     ]
+    },
+    {
+     "n": "icono-titulo",
+     "m": ".dock-title svg",
+     "r": ".dock-title svg",
+     "props": [
+      "w",
+      "h"
+     ]
+    },
+    {
+     "n": "grupo-herramientas",
+     "m": ".dock [data-drag='tools']",
+     "r": "#tools [data-drag='tools']",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "paddingRight",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "agarre",
+     "m": ".dock .grip",
+     "r": "#tools .grip",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "color",
+      "cursor"
+     ]
+    },
+    {
+     "n": "icono-agarre",
+     "m": ".dock .grip svg",
+     "r": "#tools .grip svg",
+     "props": [
+      "w",
+      "h"
+     ]
+    },
+    {
+     "n": "herramienta-lapiz",
+     "m": ".dock [data-tool='pen']",
+     "r": "#tools [data-tool='pen']",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "icono-lapiz",
+     "m": ".dock [data-tool='pen'] svg",
+     "r": "#tools [data-tool='pen'] svg",
+     "props": [
+      "w",
+      "h"
+     ]
+    },
+    {
+     "n": "grupo-color",
+     "m": ".dock [data-drag='color']",
+     "r": "#tools [data-drag='color']",
+     "props": [
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "boton-color",
+     "m": "#inkColor",
+     "r": "#swBtn",
+     "props": [
+      "h",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "paddingRight",
+      "borderRadius",
+      "fontSize",
+      "whiteSpace"
+     ],
+     "nota": "flex vs inline-flex: sin efecto visual"
+    },
+    {
+     "n": "muestra-color",
+     "m": "#inkColor .sw",
+     "r": "#swBtn .sw",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor",
+      "boxShadow"
+     ]
+    },
+    {
+     "n": "nombre-color",
+     "m": "#inkColor .ink-name",
+     "r": "#swBtn .ink-name",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "color"
+     ]
+    },
+    {
+     "n": "grupo-grosores",
+     "m": ".dock [data-drag='weight']",
+     "r": "#tools [data-drag='weight']",
+     "props": [
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "contenedor-grosores",
+     "m": ".dock .weights",
+     "r": "#ws",
+     "props": [
+      "display",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "grosor-fino",
+     "m": ".dock .weight:first-child",
+     "r": "#ws .weight:first-child",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius"
+     ]
+    },
+    {
+     "n": "linea-fina",
+     "m": ".dock .weight:first-child i",
+     "r": "#ws .weight:first-child i",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "borderRadius"
+     ]
+    },
+    {
+     "n": "grosor-activo",
+     "m": ".dock .weight.on",
+     "r": "#ws .weight.on",
+     "props": [
+      "w",
+      "h",
+      "borderRadius",
+      "backgroundColor",
+      "display",
+      "placeItems"
+     ]
+    },
+    {
+     "n": "linea-activa",
+     "m": ".dock .weight.on i",
+     "r": "#ws .weight.on i",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "borderRadius"
+     ]
+    },
+    {
+     "n": "grupo-historial",
+     "m": ".dock [data-drag='history']",
+     "r": "#tools [data-drag='history']",
+     "props": [
+      "h",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderRadius",
+      "backgroundColor",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "deshacer",
+     "m": "#undoDrawing",
+     "r": "#bUndo",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "rehacer",
+     "m": "#redoDrawing",
+     "r": "#bRedo",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "papelera",
+     "m": "#clearDrawing",
+     "r": "#bErase",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "pantalla-completa",
+     "m": "#fullscreen",
+     "r": "#bMax",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "placeItems",
+      "borderRadius",
+      "color"
+     ]
+    },
+    {
+     "n": "icono-pantalla-completa",
+     "m": "#fullscreen svg",
+     "r": "#bMax svg",
+     "props": [
+      "w",
+      "h"
+     ]
+    }
    ]
   },
   {
