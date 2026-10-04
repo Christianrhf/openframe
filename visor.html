@@ -592,6 +592,7 @@
 /* DIFERENCIA 1: hilo continuo con scroll propio, no páginas (decisión del usuario) */
 .feed-content{overflow-x:hidden;overflow-y:auto;column-count:auto;overscroll-behavior:contain;overflow-anchor:none}
 .hilo-b{display:block}
+.item{scroll-margin-block:10px}
 .list.hilo-lazy .hilo-b{content-visibility:auto;contain-intrinsic-size:auto 160px}
 .item p{white-space:pre-wrap}
 .item p.p-empty{color:var(--muted);font-style:italic}
@@ -2508,11 +2509,13 @@ function x2Filtradas(){
 }
 /* Solo una accion explicita sigue una tarjeta; el sondeo nunca llama aqui.
    Las respuestas se buscan dentro de su hilo, sin alterar los filtros. */
+let _x2Seguir = null;   // ventana en la que cada repintado vuelve a dejar la tarjeta seguida a la vista
 function x2SeguirNota(id){
   if(!id) return false;
   const L = $("#list"), key = CSS.escape(String(id));
   const el = L.querySelector('[data-rid="' + key + '"], .note[data-id="' + key + '"]');
   if(!el) return false;
+  _x2Seguir = {id: id, hasta: performance.now() + 900};
   // Instantaneo a proposito: "smooth" depende de vsync/rAF del compositor, que
   // en Chrome headless (sin pantalla real) puede no avanzar o quedarse a medias
   // si se encadenan dos desplazamientos seguidos — la tarjeta no llegaba a la
@@ -2759,6 +2762,10 @@ function renderList(){
     L.classList.add("hilo-lazy");
     const actual = anclaId && L.querySelector('[data-hilo="' + CSS.escape(anclaId) + '"]');
     if(actual) L.scrollTop += actual.getBoundingClientRect().top - borde - offset;
+  }
+  if(_x2Seguir && performance.now() < _x2Seguir.hasta){
+    const e2 = L.querySelector('[data-id="' + CSS.escape(String(_x2Seguir.id)) + '"]');
+    if(e2) e2.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
   }
   pintarVistoChip();
 }
