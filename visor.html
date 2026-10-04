@@ -2155,7 +2155,12 @@ function x2SeguirNota(id){
   const L = $("#list"), key = CSS.escape(String(id));
   const el = L.querySelector('[data-rid="' + key + '"], .note[data-id="' + key + '"]');
   if(!el) return false;
-  el.scrollIntoView({behavior:"smooth", block:"nearest", inline:"nearest"});
+  // Instantaneo a proposito: "smooth" depende de vsync/rAF del compositor, que
+  // en Chrome headless (sin pantalla real) puede no avanzar o quedarse a medias
+  // si se encadenan dos desplazamientos seguidos — la tarjeta no llegaba a la
+  // vista. El resultado visual (misma alineacion "nearest") es el que importa,
+  // no la animacion.
+  el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
   return true;
 }
 
