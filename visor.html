@@ -23,35 +23,49 @@
      gris para lo inactivo. El unico color que queda es el ambar del timecode,
      porque es el dato que hay que leer. */
   :root{
-    --bg:#ffffff;--panel:#ffffff;--panel-2:#f6f6f5;--raised:#ffffff;
-    --line:#dcdcdc;--line-soft:#ebebeb;
-    --fg:#111111;--fg-dim:#4a4a4a;--fg-mute:#6b6b6b;
+    /* ═══ TOKENS DE LA MAQUETA (ref/maqueta/src/app.css) ═══
+       Fuente de verdad del aspecto. Los nombres viejos del visor siguen existiendo
+       MAS ABAJO pero ya no tienen valor propio: son alias de estos. Un solo sitio
+       decide el color, la tipografia y los radios. */
+    color-scheme:light;
+    --ink:#171717;--muted:#6b6b6b;--faint:#8c8c8c;--ondark:#ddd;
+    --line:#e7e7e5;--line2:#d4d4cf;--paper:#fff;--wash:#f5f5f2;--tint:#f5f5f2;
+    --hover:#eaeae6;--fill:#e4e4e0;
+    --ctl:34px;--grp:40px;
+    --tl:160px;   /* alto MINIMO del panel de tiempo (maqueta) */
+    --dock:56px;  /* barra de anotar (maqueta) */
+    --hdr:56px;   /* alto de la cabecera (maqueta: header{height:56px}) */
+    /* ═══ ALIAS: los nombres viejos apuntan a los tokens de la maqueta ═══ */
+    --bg:var(--wash);--panel:var(--paper);--panel-2:var(--tint);--raised:var(--paper);
+    --line-soft:var(--line);
+    --fg:var(--ink);--fg-dim:var(--ink);--fg-mute:var(--muted);
     /* acento = negro. Todo lo activo es negro. */
-    --accent:#111111;--accent-dim:#555555;--accent-ink:#ffffff;--accent-hover:#000000;
-    --danger:#111111;--ok:#1a1a1a;--info:#333333;
+    --accent:var(--ink);--accent-dim:var(--faint);--accent-ink:#ffffff;--accent-hover:#000000;
+    --danger:var(--ink);--ok:var(--ink);--info:var(--muted);
     --accent-soft:rgba(0,0,0,.06);--accent-glow:rgba(0,0,0,.16);
     --accent-glow-2:rgba(0,0,0,.30);--ok-soft:rgba(0,0,0,.07);
     --ok-glow:rgba(0,0,0,.26);--info-soft:rgba(0,0,0,.06);
-    --track:#e0e0e0;--hover:#f2f2f2;--hover-ink:#111111;
-    --pri-ink:#ffffff;--pri-hover:#000000;--on-border:#c8c8c8;
-    --scroll:#c4c4c4;--scroll-h:#a8a8a8;
-    --chk-border:#b4b4b4;--strike:#9a9a9a;
-    --screen-a:#fbfbfb;--screen-b:#ededed;
+    --track:var(--fill);--hover-ink:var(--ink);
+    --pri-ink:#ffffff;--pri-hover:#000000;--on-border:var(--line2);
+    --scroll:var(--line2);--scroll-h:var(--faint);
+    --chk-border:var(--line2);--strike:var(--faint);
+    --screen-a:var(--wash);--screen-b:var(--wash);
     --nocodec-bg:rgba(255,255,255,.97);--modal-bg:rgba(0,0,0,.35);
-    --shadow:rgba(0,0,0,.14);--shadow-soft:rgba(0,0,0,.09);
-    --sheet-shadow:0 18px 48px rgba(0,0,0,.16);
-    --badge-no-bg:#f2f2f2;--badge-no-line:#c8c8c8;
-    --line-c:#d0d0d0;--line-y:#d0d0d0;
+    --shadow:rgba(0,0,0,.16);--shadow-soft:rgba(0,0,0,.09);
+    /* sombra de popover de la maqueta: 0 8px 28px rgba(0,0,0,.16) */
+    --sheet-shadow:0 8px 28px rgba(0,0,0,.16);
+    --badge-no-bg:var(--tint);--badge-no-line:var(--line2);
+    --line-c:var(--line2);--line-y:var(--line2);
     /* seleccion: negra, no violeta */
-    --sel-bg:#f0f0f0;--sel-line:#b8b8b8;--sel-bar:#000000;
+    --sel-bg:var(--tint);--sel-line:var(--ink);--sel-bar:var(--ink);
     /* autores: se distinguen por TONO DE GRIS y por forma, no por color */
-    --yo:#111111;        /* Cristian: negro solido, 3px */
-    --yo-ring:#555555;
-    --claude:#8a8a8a;     /* Agente: gris medio */
-    --claude-ring:#b4b4b4;
-    /* el ambar del chip se queda: es el dato, y a blanco y negro seria un gris mas */
-    --tcf:#1a1a1a;--tcb:#f0f0f0;
-    --cambio:#111111;--cambio-ring:#111111;--cambio-soft:#f0f0f0;
+    --yo:var(--ink);
+    --yo-ring:var(--faint);
+    --claude:var(--faint);
+    --claude-ring:var(--line2);
+    /* chip de timecode = .time-link de la maqueta (fondo --fill, tinta --ink) */
+    --tcf:var(--ink);--tcb:var(--fill);
+    --cambio:var(--ink);--cambio-ring:var(--ink);--cambio-soft:var(--tint);
     /* ── GEOMETRIA FIJA DE LA BARRA DE TIEMPO ──
        Un solo sitio decide el tamano de la barra y de los marcadores, y ese tamano
        NO depende del zoom. Antes el JS escribia host.style.minHeight segun cuantos
@@ -72,38 +86,18 @@
        caso (un grupo pegado a la linea del otro carril): 16 + 4px de margen. */
     --lane-px:20px;
     --rule-h:6px;        /* la regleta del video entero, pegada bajo la pista */
-    --radius:7px;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
+    /* radios y tipografia: los de la maqueta (tarjeta 8, control 6, pieza menuda 4) */
+    --radius:8px;--radius-ctl:6px;--radius-xs:4px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
-  /* ═══ TEMA OSCURO ═══ */
-  [data-theme="dark"]{
-    --bg:#111111;--panel:#151515;--panel-2:#1c1c1c;--raised:#212121;
-    --line:#2e2e2e;--line-soft:#242424;
-    --fg:#f0f0f0;--fg-dim:#c0c0c0;--fg-mute:#8f8f8f;
-    --accent:#f0f0f0;--accent-dim:#a0a0a0;--accent-ink:#111111;--accent-hover:#ffffff;
-    --danger:#e0e0e0;--ok:#d0d0d0;--info:#a0a0a0;
-    --accent-soft:rgba(255,255,255,.08);--accent-glow:rgba(255,255,255,.18);
-    --accent-glow-2:rgba(255,255,255,.32);--ok-soft:rgba(255,255,255,.09);
-    --ok-glow:rgba(255,255,255,.28);--info-soft:rgba(255,255,255,.08);
-    --track:#333333;--hover:#242424;--hover-ink:#f0f0f0;
-    --pri-ink:#111111;--pri-hover:#ffffff;--on-border:#3a3a3a;
-    --scroll:#3a3a3a;--scroll-h:#4a4a4a;
-    --chk-border:#4a4a4a;--strike:#6a6a6a;
-    --screen-a:#0d0d0d;--screen-b:#1a1a1a;
-    --nocodec-bg:rgba(20,20,20,.97);--modal-bg:rgba(0,0,0,.55);
-    --shadow:rgba(0,0,0,.5);--shadow-soft:rgba(0,0,0,.35);
-    --sheet-shadow:0 18px 48px rgba(0,0,0,.55);
-    --badge-no-bg:#242424;--badge-no-line:#3a3a3a;
-    --line-c:#333333;--line-y:#333333;
-    --sel-bg:#242424;--sel-line:#4a4a4a;--sel-bar:#ffffff;
-    --yo:#f0f0f0;--yo-ring:#a0a0a0;--claude:#9a9a9a;--claude-ring:#6a6a6a;
-    --tcf:#e0e0e0;--tcb:#262626;
-    --cambio:#f0f0f0;--cambio-ring:#f0f0f0;--cambio-soft:#242424;
-  }
+  /* El tema oscuro se borró: la réplica literal es a tema claro (color-scheme:light).
+     Nadie escribía data-theme="dark" (el único setAttribute pone "light"). */
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
+  /* maqueta: body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif} */
   body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px;line-height:1.5;
-    -webkit-font-smoothing:antialiased;overflow:hidden;display:flex;flex-direction:column}
+    overflow:hidden;display:flex;flex-direction:column}
   button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   input,textarea,select{font:inherit;color:inherit;background:none;border:none}
   input:not(:focus-visible),textarea:not(:focus-visible),select:not(:focus-visible){outline:none}
@@ -112,34 +106,89 @@
   ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:9px;border:2px solid var(--bg)}
   ::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
 
-  .topbar{height:46px;flex:0 0 46px;display:flex;align-items:center;gap:10px;padding:0 12px;
-    background:var(--panel);border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
-  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent-glow-2)}
+  /* ── CABECERA · réplica literal del <header> de la maqueta ──
+     maqueta: header{height:56px;...;gap:30px;padding:0 24px}. El elemento sigue
+     llamándose .topbar porque las suites y el modo invitado lo nombran así. */
+  .topbar{height:var(--hdr);flex:0 0 var(--hdr);background:var(--paper);
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:30px;padding:0 24px}
+  .brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:750;letter-spacing:-1px}
+  .brandmark{width:23px;height:23px;border:2px solid;border-right-width:7px;flex:0 0 23px}
+  .crumb{display:flex;align-items:baseline;gap:8px;margin-left:14px;font-size:12px;color:var(--muted);min-width:0;flex:1 1 auto}
+  .crumb-sep{color:var(--muted)}
+  .crumb strong{font-size:16px;font-weight:600;color:var(--ink);letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .pill{display:inline-flex;align-items:center;min-height:28px;border:1px solid var(--line);
+    border-radius:99px;padding:4px 11px;font-size:11px}
+  .avatar{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
+    background:var(--hover);font-size:11px;font-weight:700;flex:0 0 28px}
+  /* .ctl: el botón de icono de la maqueta (34 px, radio 6, negro cuando está activo) */
+  .ctl{flex:0 0 var(--ctl);width:var(--ctl);height:var(--ctl);display:grid;place-items:center;
+    border-radius:var(--radius-ctl);color:var(--ink);background:transparent;border:0}
+  .ctl:hover:not(:disabled){background:var(--hover)}
+  .ctl:disabled{opacity:.3}
+  .ctl.on,.ctl[aria-pressed=true]{background:var(--ink);color:#fff}
+  .ctl svg{width:18px;height:18px;flex:0 0 18px}
+  /* la casilla de miniaturas se ve como un .ctl: la casilla real queda invisible pero
+     presente (el JS y las suites la nombran #cThumbs, y «.topbar .chk» sigue existiendo) */
+  .ctl.chk{position:relative;cursor:pointer}
+  .ctl.chk input{position:absolute;width:1px;height:1px;opacity:0;margin:0}
+  .ctl.chk:has(input:checked){background:var(--ink);color:#fff}
+  .ctl.chk:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
   .sep{width:1px;height:20px;background:var(--line);flex:0 0 1px}
   .conn{font-size:11px;color:var(--fg-mute);display:flex;align-items:center;gap:5px;white-space:nowrap}
   .conn i{width:6px;height:6px;border-radius:50%;background:var(--fg-mute);flex:0 0 6px}
-  .conn.live i{background:var(--ok);box-shadow:0 0 7px var(--ok-glow)}
-  .conn.live{color:var(--ok)}
+  .conn.live i{background:var(--ok)}
+  .conn.live{color:var(--ink)}
   .spacer{flex:1}
   .sello{font-family:var(--mono);font-size:11px;color:var(--fg-mute);
-    background:var(--panel-2);border:1px solid var(--line);padding:1px 5px;border-radius:4px;white-space:nowrap}
+    background:var(--panel-2);border:1px solid var(--line);padding:1px 5px;border-radius:var(--radius-xs);white-space:nowrap}
+  /* ── Menú «⋯»: lo que el encabezado viejo tenía suelto y la maqueta no dibuja.
+     Mismo popover de la maqueta (borde --line2, radio 8, sombra 0 8px 28px). ── */
+  .hdrpop{position:fixed;z-index:900;min-width:230px;background:#fff;border:1px solid var(--line2);
+    border-radius:var(--radius);padding:6px;box-shadow:var(--sheet-shadow);
+    display:flex;flex-direction:column;gap:2px}
+  .hdrpop[hidden]{display:none}
+  .hdrpop .btn{width:100%;justify-content:flex-start;border:0;background:transparent;height:30px;padding:0 8px}
+  .hdrpop .btn:hover{background:var(--hover)}
+  .hdrpop .hdrpop-pie{display:flex;align-items:center;gap:8px;padding:6px 8px 2px;
+    margin-top:4px;border-top:1px solid var(--line)}
+  /* ── Selector «Corte vNN»: la lista real de cortes del proyecto ── */
+  .cortepop{position:fixed;z-index:900;min-width:230px;max-width:320px;max-height:320px;overflow:auto;
+    background:#fff;border:1px solid var(--line2);border-radius:var(--radius);padding:6px;
+    box-shadow:var(--sheet-shadow);display:flex;flex-direction:column;gap:2px}
+  .cortepop[hidden]{display:none}
+  .cortepop button{display:flex;align-items:center;gap:8px;width:100%;min-height:28px;
+    padding:6px 8px;border-radius:var(--radius-xs);font-size:11px;text-align:left;color:var(--ink)}
+  .cortepop button:hover{background:var(--hover)}
+  .cortepop button.on{background:var(--hover);font-weight:600}
+  .cortepop .cp-nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cortepop .cp-meta{margin-left:auto;flex:0 0 auto;font:11px var(--mono);color:var(--muted)}
 
-  .btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--radius);
-    border:1px solid var(--line);background:var(--panel-2);color:var(--fg-dim);font-size:12px;white-space:nowrap}
-  .btn:hover{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
+  /* maqueta: .btn{height:34px;padding:0 14px;border:1px solid var(--line2);border-radius:6px;
+     background:#fff;font-weight:550;font-size:12px} · .btn.black = el botón primario */
+  .btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:var(--radius-ctl);
+    border:1px solid var(--line2);background:#fff;color:var(--ink);font-weight:550;font-size:12px;white-space:nowrap}
+  .btn:hover{background:var(--wash)}
   .btn svg{width:14px;height:14px;flex:0 0 14px}
-  .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-  .btn.pri:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:var(--accent-ink)}
+  .btn.black,.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.black:hover,.btn.pri:hover{background:#000;border-color:#000;color:#fff}
   .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
   .btn.danger:hover{filter:brightness(.92)}
-  .btn.on{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
-  .btn.icon{width:28px;padding:0;justify-content:center}
-  .btn.sm{min-height:28px;padding:0 8px;font-size:11px}
+  .btn.on{background:var(--hover);border-color:var(--ink)}
+  .btn.icon{width:34px;padding:0;justify-content:center}
+  .btn.sm{height:28px;min-height:28px;padding:0 8px;font-size:11px}
+  .btn.sm.icon{width:28px;padding:0}
   .btn:disabled{opacity:.3;cursor:default}
-  .btn:disabled:hover{background:var(--panel-2);color:var(--fg-dim);border-color:var(--line)}
+  .btn:disabled:hover{background:#fff}
 
   .main{flex:1;display:flex;min-height:0}
+  /* ── REJILLA GENERAL · la de la maqueta ──
+     main.workspace{padding:16px 24px} > .main-grid{grid-template-columns:minmax(0,1fr)
+     clamp(380px,29vw,460px);gap:16px}. A la izquierda, fuera de la rejilla, queda la
+     barra de proyectos (plegada por defecto), que la maqueta no tiene. */
+  .workspace{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column;padding:16px 24px 16px}
+  .main-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(380px,29vw,460px);gap:16px}
 
   /* ── Barra de proyectos ── */
   .rail{flex:0 0 216px;width:216px;background:var(--panel);border-right:1px solid var(--line);
@@ -182,9 +231,10 @@
   .vitem .vn2{font-size:11px;font-family:var(--mono);color:var(--fg-mute)}
 
   /* ── Reproductor ── */
-  .stage{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);min-height:0}
-  .screen{flex:1;display:grid;place-items:center;min-height:0;padding:16px;position:relative;
-    background:radial-gradient(ellipse at 50% 0%,var(--screen-a) 0%,var(--screen-b) 70%)}
+  /* .stage = la columna izquierda de .main-grid (el «viewer» de la maqueta) */
+  .stage{display:flex;flex-direction:column;min-width:0;min-height:0;background:transparent}
+  .screen{flex:1;display:grid;place-items:center;min-height:0;position:relative;
+    background:var(--wash)}
   .framewrap{position:relative;line-height:0;max-width:100%;max-height:100%;display:none}
   .framewrap.on{display:block}
   .framewrap video{max-width:100%;max-height:100%;display:block;background:#000;border-radius:2px}
@@ -199,7 +249,10 @@
 
   /* tres bandas con rango distinto: linea de tiempo > transporte > dibujo.
      Antes las separaba el mismo gap:7px y ninguna mandaba. */
-  .transport{flex:0 0 auto;background:var(--panel);border-top:1px solid var(--line);
+  /* la maqueta hace UNA tarjeta de video + tiempo + anotar: aquí el transporte es la
+     mitad inferior de esa tarjeta (R3/R4 rehacen su contenido). */
+  .transport{flex:0 0 auto;background:var(--paper);border:1px solid var(--line);
+    border-radius:0 0 var(--radius) var(--radius);
     padding:8px 12px 7px;display:flex;flex-direction:column;gap:0}
   .transport > .tlinesa{padding-bottom:9px}
   .transport > .tp-row{border-top:1px solid var(--line-soft);padding-top:7px}
@@ -260,8 +313,10 @@
   .wsize button.on{background:var(--accent);transform:scale(1.25)}
 
   /* ── Panel de notas ── */
-  .side{flex:0 0 360px;width:360px;background:var(--panel);border-left:1px solid var(--line);
-    display:flex;flex-direction:column;min-height:0}
+  /* .side = el <aside class="sidebar"> de la maqueta: tarjeta blanca con borde y radio 8.
+     El ancho ya no es suyo: lo fija la columna de .main-grid (clamp(380px,29vw,460px)). */
+  .side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
   .side-head{flex:0 0 auto;padding:8px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap;row-gap:4px}
   /* con el texto a 11px (P6) el contador ya no cabe en la misma linea a 1280px:
      antes se partia POR DENTRO («3 / cambios»). Ahora salta entero a la segunda. */
@@ -677,12 +732,13 @@
   /* El asa plegada mide 30px y va pegada al borde izquierdo. El contenido tiene que
      empezar a su derecha: antes se metia debajo y el primer boton de la barra de
      dibujo (lapiz) quedaba tapado. El main ya no existe en esa zona porque el rail
-     esta a width:0, asi que el margen va en el stage. */
-  body.nav-plegado .stage{padding-left:30px}
+     esta a width:0, asi que el margen va en la zona de trabajo (antes en el stage,
+     que ya no toca el borde: ahora vive dentro de .workspace con su padding de 24px). */
+  body.nav-plegado .workspace{padding-left:54px}   /* 30 del asa + 24 de la maqueta */
   /* el asa vive pegada al borde del stage cuando el panel esta plegado */
   /* El asa plegada va DEBAJO de la cabecera, no encima. Antes era top:0 bottom:0 con
      z-index:20 y tapaba el nombre del programa, el estado y el boton de la build. */
-  .navhandle{position:absolute;left:0;top:46px;bottom:0;width:30px;z-index:5;
+  .navhandle{position:absolute;left:0;top:var(--hdr);bottom:0;width:30px;z-index:5;
     display:none;align-items:center;flex-direction:column;gap:9px;padding-top:9px;
     background:var(--panel);border-right:1px solid var(--line)}
   body.nav-plegado .navhandle{display:flex}
@@ -808,9 +864,10 @@
   .srow .btn{height:30px;padding:0 11px}
   h4{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);margin:17px 0 8px;font-weight:600}
   h4:first-child{margin-top:0}
-  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--raised);
-    border:1px solid var(--on-border);color:var(--fg);padding:9px 14px;border-radius:8px;font-size:12px;opacity:0;
-    transition:.19s;z-index:200;box-shadow:0 10px 30px var(--shadow-soft);pointer-events:none;white-space:nowrap;max-width:88vw}
+  /* maqueta: .toast{bottom:24px;padding:10px 18px;border-radius:6px;background:var(--ink);color:#fff;font-size:12px} */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);
+    border:0;color:#fff;padding:10px 18px;border-radius:var(--radius-ctl);font-size:12px;opacity:0;
+    transition:.19s;z-index:200;pointer-events:none;white-space:nowrap;max-width:88vw}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
   .warn{color:var(--danger)}
   .lbl{font-size:11px;color:var(--fg-mute);display:block;margin-bottom:5px}
@@ -841,11 +898,12 @@
   body.invitado .rail, body.invitado .vcol, body.invitado .navhandle,
   body.invitado #bProj, body.invitado .topbar .chk, body.invitado #bClaude, body.invitado #bCopy,
   body.invitado #bOut, body.invitado #sello, body.invitado .undoBox,
+  body.invitado #hdrMore, body.invitado #hdrPop, body.invitado #hdrCorte, body.invitado #cortePop,
   body.invitado #bDel, body.invitado #bMove, body.invitado #tlChg, body.invitado #vfilter,
   body.invitado #bShare, body.invitado #bHer, body.invitado #bUp,
   body.invitado .note .acts .ok, body.invitado .note .acts .mv, body.invitado .note .acts .del,
   body.invitado .rep .racts .del{display:none !important}
-  body.invitado .stage{padding-left:0 !important}
+  body.invitado .workspace{padding-left:24px !important}
   body.invitado .tp-row .tlinfo{flex:0 0 200px;width:200px}
   /* enlace caducado: se ve, no se escribe */
   body.inv-caducado #ta, body.inv-caducado .tools, body.inv-caducado #bEnd,
@@ -964,7 +1022,8 @@
      Antes `input,textarea,select{outline:none}` lo apagaba en los campos y el
      resto de controles se quedaba con el anillo del navegador o con nada. */
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
-  input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  /* maqueta: un solo anillo de 2 px con offset 2 para TODO lo enfocable */
+  input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .btn.pri:focus-visible,button.pri:focus-visible{outline-color:var(--fg);outline-offset:2px}
   /* Movimiento reducido: ni transiciones ni animaciones (ni la del toast). */
   @media (prefers-reduced-motion: reduce){
@@ -1060,29 +1119,51 @@
     <g id="i-cols"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></g>
     <!-- i-curtain: tirador de la cortina (Lucide chevrons-left-right, geometria exacta de lucide-react) -->
     <g id="i-curtain"><path d="m9 7-5 5 5 5"/><path d="m15 7 5 5-5 5"/></g>
+    <!-- i-chevdown: selector «Corte vNN» (Lucide chevron-down, geometria exacta de lucide-react) -->
+    <g id="i-chevdown"><path d="m6 9 6 6 6-6"/></g>
+    <!-- i-more: menu «⋯» de la cabecera (Lucide ellipsis, geometria exacta de lucide-react) -->
+    <g id="i-more"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></g>
+    <!-- i-images: miniaturas (Lucide images, geometria exacta de lucide-react) -->
+    <g id="i-images"><path d="m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16"/><path d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2"/><circle cx="13" cy="7" r="1" fill="currentColor"/><rect x="8" y="2" width="14" height="14" rx="2"/></g>
   </defs>
 </svg>
 
-<div class="topbar">
-  <div class="brand"><span class="dot"></span>OpenFrame</div>
-  <div class="sep"></div>
-  <div class="conn" id="conn"><i></i><span id="connTxt">conectando…</span></div>
-  <div class="sep"></div>
-  <div class="undoBox">
-    <button class="btn icon has-tip" id="bUndoAccion" data-tip="Deshacer" title="⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
-    <button class="btn icon has-tip" id="bRedoAccion" data-tip="Rehacer" title="⇧⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
-    <span class="undoLbl" id="undoLbl"></span>
-  </div>
-  <span class="sello" id="sello" title="Version que estas viendo">build —</span>
+<!-- CABECERA · réplica literal del <header> de la maqueta.
+     Sigue llamándose .topbar: el modo invitado y tres suites nombran ese selector.
+     Lo que el encabezado viejo tenía suelto (Nuevo proyecto, Para Agente, Copiar,
+     Exportar, la build y «en línea») vive ahora en el menú «⋯», con el mismo
+     popover de la maqueta. Ningún id cambia. -->
+<header class="topbar">
+  <div class="brand"><span class="brandmark" aria-hidden="true"></span>OpenFrame</div>
+  <div class="crumb"><span>Proyectos</span><span class="crumb-sep">/</span><strong id="crumbProj" title="">—</strong></div>
   <div class="invbanner" id="invBanner" role="status" aria-live="polite"></div>
-  <div class="spacer"></div>
-  <button class="btn icon has-tip" id="keysBtn" data-tip="Atajos de teclado" title="Atajos de teclado  ?" aria-label="Atajos de teclado" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="?"><svg viewBox="0 0 24 24"><use href="#i-keyboard"/></svg></button>
-  <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
-  <label class="chk" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><span>Miniaturas</span></label>
-  <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Agente</button>
-  <button class="btn" id="bCopy" title="Copiar las notas de este proyecto"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar para Agente</button>
-  <button class="btn" id="bOut"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Exportar</button>
-</div>
+  <div class="header-right">
+    <div class="undoBox">
+      <button class="btn icon sm has-tip" id="bUndoAccion" data-tip="Deshacer" title="⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
+      <button class="btn icon sm has-tip" id="bRedoAccion" data-tip="Rehacer" title="⇧⌘Z" style="display:none"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
+      <span class="undoLbl" id="undoLbl"></span>
+    </div>
+    <span class="pill" id="hdrPend" title="Notas pendientes de este corte">0 pendientes</span>
+    <button class="ctl has-tip" id="keysBtn" data-tip="Atajos de teclado" title="Atajos de teclado  ?" aria-label="Atajos de teclado" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="?"><svg viewBox="0 0 24 24"><use href="#i-keyboard"/></svg></button>
+    <label class="ctl chk has-tip" id="bThumbs" data-tip="Incluir miniaturas al exportar" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-images"/></svg></label>
+    <button class="btn" id="hdrCorte" aria-haspopup="dialog" aria-expanded="false" title="Cambiar de corte">Corte —<svg viewBox="0 0 24 24"><use href="#i-chevdown"/></svg></button>
+    <button class="btn black has-tip" id="bShare" data-tip="Compartir esta revisión con un enlace" aria-label="Compartir esta revisión con un enlace" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg>Compartir revisión</button>
+    <button class="ctl has-tip" id="hdrMore" data-tip="Más acciones" title="Más acciones" aria-haspopup="dialog" aria-expanded="false" aria-label="Más acciones"><svg viewBox="0 0 24 24"><use href="#i-more"/></svg></button>
+    <span class="avatar" id="hdrAvatar" title="Cristian Hernández">CH</span>
+  </div>
+  <div class="hdrpop" id="hdrPop" role="dialog" aria-label="Más acciones" hidden>
+    <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
+    <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Agente</button>
+    <button class="btn" id="bCopy" title="Copiar las notas de este proyecto"><svg viewBox="0 0 24 24"><use href="#i-copy"/></svg>Copiar para Agente</button>
+    <button class="btn" id="bOut"><svg viewBox="0 0 24 24"><use href="#i-dl"/></svg>Exportar</button>
+    <div class="hdrpop-pie">
+      <div class="conn" id="conn"><i></i><span id="connTxt">conectando…</span></div>
+      <span class="spacer"></span>
+      <span class="sello" id="sello" title="Version que estas viendo">build —</span>
+    </div>
+  </div>
+</header>
+<div class="cortepop" id="cortePop" role="dialog" aria-label="Cortes del proyecto" hidden></div>
 
 <div class="main">
     <div class="navhandle" id="navhandle">
@@ -1107,7 +1188,7 @@
     <div class="vcol-head">
       <svg viewBox="0 0 24 24" class="hdricon"><use href="#i-film"/></svg>
       <h3 id="vcolName">—</h3>
-      <button class="btn icon sm has-tip" id="bShare" data-tip="Compartir este video con un enlace" aria-label="Compartir este video con un enlace" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg></button>
+      <!-- «Compartir» se mudó al botón negro «Compartir revisión» de la cabecera (maqueta) -->
       <button class="btn icon sm has-tip" id="bHer" data-tip="Traer los hilos abiertos de otra versión a esta"><svg viewBox="0 0 24 24"><use href="#i-ver"/></svg></button>
       <button class="btn icon sm has-tip" id="bUp" data-tip="Subir un video" title="Subir un video"><svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>
       <input type="file" id="file" accept="video/*,.mov,.mp4,.m4v,.webm" multiple hidden>
@@ -1115,6 +1196,9 @@
     <div class="vlist" id="vlist"></div>
   </div>
 
+  <!-- REJILLA DE LA MAQUETA: main.workspace > .main-grid = video+tiempo | Conversación -->
+  <div class="workspace">
+  <div class="main-grid">
   <div class="stage">
     <div class="screen" id="screen">
       <div class="framewrap" id="fw">
@@ -1224,42 +1308,6 @@
     </div>
   </div>
 
-  <!-- Capa del selector de color: vive en el body, no dentro de la barra, para que
-       ningun ancestro con overflow la recorte ni la tape al plegar el panel. -->
-  <div class="swPop" id="swPop" hidden></div>
-
-  <!-- Compartir: popover de Cristian. Vive en el body (nada lo recorta). -->
-  <div class="shPop" id="shPop" role="dialog" aria-label="Compartir este video con un enlace" hidden>
-    <h3><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg><span id="shTitulo">Compartir</span>
-      <button class="shx" id="shCerrar" title="Cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></h3>
-    <div class="shst-line" id="shEstado"><i></i><span>—</span></div>
-    <div class="shform">
-      <select id="shDias" title="Cuántos días vale el enlace" aria-label="Caducidad del enlace">
-        <option value="1">1 día</option><option value="7" selected>7 días</option><option value="30">30 días</option>
-      </select>
-      <input id="shEtq" maxlength="60" placeholder="Etiqueta (opcional)" title="Para quién es este enlace" aria-label="Etiqueta del enlace">
-      <label class="chk" title="Si está marcado, el invitado ve también las notas tuyas y de Agente"><input type="checkbox" id="shVe"><span>ver las notas de otros</span></label>
-      <button class="btn sm pri" id="shCrear" title="Crear un enlace secreto para este video">Crear enlace</button>
-    </div>
-    <div class="shnuevo" id="shNuevo"></div>
-    <div class="shlist" id="shList"></div>
-  </div>
-
-  <!-- P5 · Cierre de ronda: resumen + las dos acciones. Vive en el body (nada lo
-       recorta) y se ancla bajo el estado del corte. El invitado no lo tiene. -->
-  <div class="p5pop" id="p5Pop" role="dialog" aria-label="Cierre de ronda" hidden>
-    <h3><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>Ronda</h3>
-    <div class="p5row">Notas nuevas <b id="p5Nuevas">0</b></div>
-    <div class="p5row">Con dibujo <b id="p5Dibujo">0</b></div>
-    <div class="p5row">Cambios sin revisar <b id="p5SinRev">0</b></div>
-    <div class="p5row">Cambios aprobados <b id="p5Aprob">0</b></div>
-    <div class="p5row">Cambios con ajuste <b id="p5Ajuste">0</b></div>
-    <div class="p5acts">
-      <button id="p5Send" title="Marcar las notas pendientes como enviadas y pasar el corte a «Con el Agente»"><svg viewBox="0 0 24 24"><use href="#i-send"/></svg>Enviar al Agente</button>
-      <button class="pri" id="p5Approve" title="Aprobar el corte (sin pendientes ni ajustes abiertos)"><svg viewBox="0 0 24 24"><use href="#i-badgecheck"/></svg>Aprobar corte</button>
-    </div>
-  </div>
-
   <div class="side">
     <div class="side-head">
       <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
@@ -1303,6 +1351,43 @@
         <button class="btn has-tip" id="bDel" data-tip="Eliminar la nota seleccionada"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>Borrar</button>
         <button class="btn pri has-tip" id="bSave" data-tip="Guardar la nota" data-key="Enter"><svg viewBox="0 0 24 24"><use href="#i-save"/></svg>Guardar</button>
       </div>
+    </div>
+  </div>
+  </div>
+  </div>
+  <!-- Capa del selector de color: vive en el body, no dentro de la barra, para que
+       ningun ancestro con overflow la recorte ni la tape al plegar el panel. -->
+  <div class="swPop" id="swPop" hidden></div>
+
+  <!-- Compartir: popover de Cristian. Vive en el body (nada lo recorta). -->
+  <div class="shPop" id="shPop" role="dialog" aria-label="Compartir este video con un enlace" hidden>
+    <h3><svg viewBox="0 0 24 24"><use href="#i-share2"/></svg><span id="shTitulo">Compartir</span>
+      <button class="shx" id="shCerrar" title="Cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></h3>
+    <div class="shst-line" id="shEstado"><i></i><span>—</span></div>
+    <div class="shform">
+      <select id="shDias" title="Cuántos días vale el enlace" aria-label="Caducidad del enlace">
+        <option value="1">1 día</option><option value="7" selected>7 días</option><option value="30">30 días</option>
+      </select>
+      <input id="shEtq" maxlength="60" placeholder="Etiqueta (opcional)" title="Para quién es este enlace" aria-label="Etiqueta del enlace">
+      <label class="chk" title="Si está marcado, el invitado ve también las notas tuyas y de Agente"><input type="checkbox" id="shVe"><span>ver las notas de otros</span></label>
+      <button class="btn sm pri" id="shCrear" title="Crear un enlace secreto para este video">Crear enlace</button>
+    </div>
+    <div class="shnuevo" id="shNuevo"></div>
+    <div class="shlist" id="shList"></div>
+  </div>
+
+  <!-- P5 · Cierre de ronda: resumen + las dos acciones. Vive en el body (nada lo
+       recorta) y se ancla bajo el estado del corte. El invitado no lo tiene. -->
+  <div class="p5pop" id="p5Pop" role="dialog" aria-label="Cierre de ronda" hidden>
+    <h3><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>Ronda</h3>
+    <div class="p5row">Notas nuevas <b id="p5Nuevas">0</b></div>
+    <div class="p5row">Con dibujo <b id="p5Dibujo">0</b></div>
+    <div class="p5row">Cambios sin revisar <b id="p5SinRev">0</b></div>
+    <div class="p5row">Cambios aprobados <b id="p5Aprob">0</b></div>
+    <div class="p5row">Cambios con ajuste <b id="p5Ajuste">0</b></div>
+    <div class="p5acts">
+      <button id="p5Send" title="Marcar las notas pendientes como enviadas y pasar el corte a «Con el Agente»"><svg viewBox="0 0 24 24"><use href="#i-send"/></svg>Enviar al Agente</button>
+      <button class="pri" id="p5Approve" title="Aprobar el corte (sin pendientes ni ajustes abiertos)"><svg viewBox="0 0 24 24"><use href="#i-badgecheck"/></svg>Aprobar corte</button>
     </div>
   </div>
 </div>
@@ -1944,10 +2029,93 @@ async function openVideo(vid){
 }
 
 /* ═══ videos ═══ */
+/* ═══ CABECERA (réplica de la maqueta) ═══
+   Migas «Proyectos / <proyecto>», píldora «N pendientes», selector «Corte vNN» con la
+   lista REAL de cortes y el menú «⋯». Todo sale de los datos: la cabecera no guarda
+   estado propio. */
+function hdrCorteNombre(m){
+  // la maqueta rotula «Corte v02»: si el archivo se llama v01.mp4 / corte-v3.mov se usa
+  // ese número; si no, el nombre tal cual (sin extensión).
+  if(!m) return "—";
+  const base = String(m.nombre || "").replace(/\.[a-z0-9]+$/i, "");
+  const mm = base.match(/v\s*0*(\d+)/i);
+  return mm ? "v" + String(mm[1]).padStart(2, "0") : base;
+}
+function hdrActualizar(){
+  const p = pro(), m = vmeta();
+  const c = $("#crumbProj");
+  if(c){ c.textContent = p ? p.nombre : "—"; c.title = p ? p.nombre : ""; }
+  const pend = $("#hdrPend");
+  if(pend){
+    const n = pendientesDe(st.vid || null);
+    pend.textContent = n + (n === 1 ? " pendiente" : " pendientes");
+  }
+  const corte = $("#hdrCorte");
+  if(corte){
+    corte.firstChild.nodeValue = "Corte " + hdrCorteNombre(m);
+    corte.disabled = !(st.videos || []).length;
+  }
+}
+function hdrPintarCortes(){
+  const pop = $("#cortePop"); if(!pop) return;
+  pop.innerHTML = "";
+  const vids = (st.videos || []).slice()
+    .sort((a, b) => String(b.created || "").localeCompare(String(a.created || "")));
+  if(!vids.length){ pop.innerHTML = '<div class="empty" style="padding:8px">Sin cortes.</div>'; return; }
+  for(const x of vids){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cortepop-item" + (x.id === st.vid ? " on" : "");
+    b.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;flex:0 0 14px"><use href="#i-film"/></svg>' +
+      '<span class="cp-nom">Corte ' + esc(hdrCorteNombre(x)) + '</span>' +
+      '<span class="cp-meta">' + st.notas.filter(n => n.video === x.id).length + '</span>';
+    b.title = x.nombre + (x.codec ? " · " + x.codec : "") + (x.fps ? " · " + x.fps + " fps" : "");
+    b.onclick = () => { hdrCerrarPops(); openVideo(x.id); };
+    pop.appendChild(b);
+  }
+}
+function hdrColocar(pop, boton){
+  pop.hidden = false;
+  const r = boton.getBoundingClientRect();
+  pop.style.top = Math.round(r.bottom + 6) + "px";
+  pop.style.right = Math.round(window.innerWidth - r.right) + "px";
+}
+function hdrCerrarPops(){
+  for(const [pid, bid] of [["#cortePop", "#hdrCorte"], ["#hdrPop", "#hdrMore"]]){
+    const p = $(pid), b = $(bid);
+    if(p) p.hidden = true;
+    if(b) b.setAttribute("aria-expanded", "false");
+  }
+}
+function hdrAlternar(pid, bid, antes){
+  const p = $(pid), b = $(bid);
+  if(!p || !b) return;
+  const abierto = !p.hidden;
+  hdrCerrarPops();
+  if(abierto) return;
+  if(antes) antes();
+  hdrColocar(p, b);
+  b.setAttribute("aria-expanded", "true");
+}
+if($("#hdrCorte")) $("#hdrCorte").onclick = ev => { ev.stopPropagation(); hdrAlternar("#cortePop", "#hdrCorte", hdrPintarCortes); };
+if($("#hdrMore")) $("#hdrMore").onclick = ev => { ev.stopPropagation(); hdrAlternar("#hdrPop", "#hdrMore", null); };
+document.addEventListener("click", ev => {
+  const t = ev.target.closest ? ev.target : null;
+  if(t && t.closest("#hdrPop")){
+    // una acción del menú lo cierra; pulsar el hueco del menú, no
+    if(t.closest(".btn")) hdrCerrarPops();
+    return;
+  }
+  if(t && t.closest("#cortePop")) return;
+  hdrCerrarPops();
+});
+document.addEventListener("keydown", ev => { if(ev.key === "Escape") hdrCerrarPops(); });
+
 function renderVideos(){
   const h = $("#vlist"); h.innerHTML = "";
   const p = pro();
   $("#vcolName").textContent = p ? p.nombre : "—";
+  hdrActualizar();
   cmpPintarControl();                   // «Comparar» depende de cuantos cortes hay
   // el corte mas reciente va ARRIBA: es el que se esta revisando. Antes salia abajo.
   const vids = p ? (st.videos||[]).slice().sort((a,b) => String(b.created||"").localeCompare(String(a.created||""))) : [];
@@ -2437,6 +2605,7 @@ function p5Resumen(){
   };
 }
 function p5Actualizar(){
+  hdrActualizar();                       // la píldora «N pendientes» de la cabecera
   const b = $("#roundStatus"); if(!b) return;
   const est = p5Estado(), r = p5Resumen();
   $("#roundIcon").setAttribute("href", P5_EST[est].icono);
@@ -3939,7 +4108,10 @@ function actualizarAsaNav(){
 }
 $("#bNavFold").onclick = () => plegarNav(true);
 $("#navOpen").onclick  = () => plegarNav(false);
-try{ if(localStorage.getItem(NAV_KEY) === "plegado") document.body.classList.add("nav-plegado"); }catch(e){}
+/* PLEGADA POR DEFECTO: es el estado que el usuario aprobó (ref/captura-rail.png).
+   Solo queda abierta si él la abrió antes en este navegador. */
+document.body.classList.add("nav-plegado");
+try{ if(localStorage.getItem(NAV_KEY) === "abierto") document.body.classList.remove("nav-plegado"); }catch(e){}
 
 /* ── CARRIL NAVEGADOR: coordenada pura frame/duracionTotal ──
    Los .mark del scrub se mueven con el zoom (tlPct depende de la ventana). Este carril

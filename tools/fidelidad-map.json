@@ -1,0 +1,89 @@
+{
+  "_": "Pares de fidelidad maqueta ↔ visor real. Cada agente de la tanda AÑADE su región (>= 15 pares) y no toca las de los demás. n=nombre, m=selector en la maqueta, r=selector en el real, props=lo que se compara (css camelCase + w/h/relx/rely), cm/cr=contenedor para relx/rely, tol=tolerancia px, vp=solo en estos anchos.",
+  "regiones": [
+    {
+      "region": "tokens",
+      "captura": {"m": "header", "r": ".topbar"},
+      "pares": [
+        {"n": "body/tipografia", "m": "body", "r": "body",
+         "props": ["fontFamily", "fontSize", "lineHeight", "color", "backgroundColor"]},
+        {"n": "boton-normal", "m": "#version", "r": "#hdrCorte",
+         "props": ["h", "paddingLeft", "paddingRight", "borderRadius", "borderTopWidth", "borderTopColor", "backgroundColor", "color", "fontSize", "fontWeight", "columnGap", "display", "alignItems"]},
+        {"n": "boton-primario-negro", "m": "#share", "r": "#bShare",
+         "props": ["h", "paddingLeft", "paddingRight", "borderRadius", "backgroundColor", "borderTopColor", "color", "fontSize", "fontWeight", "columnGap"]},
+        {"n": "boton-icono-ctl", "m": "#keysBtn", "r": "#keysBtn",
+         "props": ["w", "h", "borderRadius", "color", "display", "placeItems"]},
+        {"n": "pildora", "m": "#pendingBtn", "r": "#hdrPend",
+         "props": ["minHeight", "borderRadius", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "fontSize", "borderTopWidth", "borderTopColor", "display", "alignItems"]},
+        {"n": "avatar", "m": ".avatar", "r": "#hdrAvatar",
+         "props": ["w", "h", "borderRadius", "backgroundColor", "fontSize", "fontWeight", "display", "placeItems"]},
+        {"n": "popover", "m": "#roundPop", "r": "#hdrPop",
+         "props": ["backgroundColor", "borderTopColor", "borderTopWidth", "borderRadius", "boxShadow", "position"]},
+        {"n": "toast", "m": "#toast", "r": "#toast",
+         "props": ["backgroundColor", "color", "borderRadius", "fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "bottom", "position"]},
+        {"n": "tipografia-mono", "m": ".video-tag", "r": ".tc",
+         "props": ["fontFamily"]},
+        {"n": "anillo-de-foco", "m": "#version", "r": "#hdrCorte",
+         "props": ["outlineColor"]}
+      ]
+    },
+    {
+      "region": "encabezado",
+      "captura": {"m": "header", "r": ".topbar"},
+      "pares": [
+        {"n": "cabecera", "m": "header", "r": ".topbar",
+         "props": ["h", "backgroundColor", "borderBottomWidth", "borderBottomColor", "paddingLeft", "paddingRight", "columnGap", "display", "alignItems"]},
+        {"n": "cabecera-ancho", "m": "header", "r": ".topbar", "props": ["w"]},
+        {"n": "marca", "m": ".brand", "r": ".brand",
+         "props": ["fontSize", "fontWeight", "letterSpacing", "columnGap", "display", "alignItems"]},
+        {"n": "marca-posicion", "m": ".brand", "r": ".brand", "cm": "header", "cr": ".topbar",
+         "props": ["relx"]},
+        {"n": "logotipo", "m": ".brandmark", "r": ".brandmark",
+         "props": ["w", "h", "borderTopWidth", "borderRightWidth", "borderLeftWidth", "borderTopStyle"]},
+        {"n": "migas", "m": ".crumb", "r": ".crumb",
+         "props": ["fontSize", "color", "marginLeft", "columnGap", "display", "alignItems"]},
+        {"n": "migas-proyecto", "m": ".crumb strong", "r": "#crumbProj",
+         "props": ["fontSize", "fontWeight", "color", "letterSpacing", "whiteSpace", "textOverflow"]},
+        {"n": "migas-barra", "m": ".crumb-sep", "r": ".crumb-sep",
+         "props": ["color", "fontSize"]},
+        {"n": "grupo-derecha", "m": ".header-right", "r": ".header-right",
+         "props": ["columnGap", "display", "alignItems", "marginLeft"]},
+        {"n": "pendientes", "m": "#pendingBtn", "r": "#hdrPend",
+         "props": ["h", "fontSize", "borderRadius", "borderTopColor"]},
+        {"n": "atajos", "m": "#keysBtn", "r": "#keysBtn", "props": ["w", "h", "borderRadius"]},
+        {"n": "selector-de-corte", "m": "#version", "r": "#hdrCorte",
+         "props": ["h", "fontSize", "fontWeight", "borderRadius", "backgroundColor", "color"]},
+        {"n": "compartir-revision", "m": "#share", "r": "#bShare",
+         "props": ["h", "backgroundColor", "color", "borderRadius", "fontWeight", "fontSize"]},
+        {"n": "avatar-iniciales", "m": ".avatar", "r": "#hdrAvatar",
+         "props": ["w", "h", "borderRadius", "backgroundColor", "fontSize", "fontWeight"]},
+        {"n": "avatar-a-la-derecha", "m": ".avatar", "r": "#hdrAvatar", "cm": "header", "cr": ".topbar",
+         "props": ["rely"]},
+        {"n": "icono-de-la-cabecera", "m": "#keysBtn svg", "r": "#keysBtn svg",
+         "props": ["w", "h"]}
+      ]
+    },
+    {
+      "region": "rejilla",
+      "captura": {"m": ".main-grid", "r": ".main-grid"},
+      "pares": [
+        {"n": "zona-de-trabajo", "m": ".workspace", "r": ".workspace",
+         "props": ["paddingTop", "paddingRight", "paddingBottom", "display", "flexDirection"]},
+        {"n": "rejilla", "m": ".main-grid", "r": ".main-grid",
+         "props": ["display", "columnGap", "rowGap"]},
+        {"n": "rejilla-alto", "m": ".main-grid", "r": ".main-grid", "props": ["h"]},
+        {"n": "conversacion-ancho", "m": ".sidebar", "r": ".side", "props": ["w"]},
+        {"n": "conversacion-alto", "m": ".sidebar", "r": ".side", "props": ["h"]},
+        {"n": "conversacion-caja", "m": ".sidebar", "r": ".side",
+         "props": ["backgroundColor", "borderTopWidth", "borderTopColor", "borderRadius", "overflow", "display", "flexDirection"]},
+        {"n": "conversacion-arriba", "m": ".sidebar", "r": ".side", "cm": ".main-grid", "cr": ".main-grid",
+         "props": ["rely"]},
+        {"n": "visor-columna", "m": ".viewer", "r": ".stage",
+         "props": ["display", "flexDirection", "minWidth", "h"]},
+        {"n": "visor-arriba", "m": ".viewer", "r": ".stage", "cm": ".main-grid", "cr": ".main-grid",
+         "props": ["rely", "relx"]},
+        {"n": "fondo-de-la-pagina", "m": "body", "r": "body", "props": ["backgroundColor", "overflow"]}
+      ]
+    }
+  ]
+}
