@@ -747,7 +747,9 @@
     padding:2px 5px;cursor:pointer}
   .navhandle .hb.chg{background:var(--cambio-soft,#E4F0EA);color:var(--cambio,#277A5A);
     border-color:var(--cambio-ring,#4FB08C)}
-  .navhandle button{writing-mode:vertical-rl;padding:7px 3px;border-radius:0 5px 5px 0;
+  /* 28px de ancho: el asa es ahora el estado POR DEFECTO, así que su botón tiene que
+     cumplir el objetivo mínimo de agarre (antes medía 23.5px y casi nunca se veía). */
+  .navhandle button{writing-mode:vertical-rl;width:28px;padding:7px 3px;border-radius:0 5px 5px 0;
     background:transparent;border:0;border-right:1px solid var(--line);
     color:var(--fg-mute);cursor:pointer;font-size:11px;letter-spacing:.06em}
   .navhandle button:hover{background:var(--hover);color:var(--fg)}

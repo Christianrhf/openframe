@@ -184,7 +184,10 @@ def parte_estatica():
           "input:not(:focus-visible),textarea:not(:focus-visible),select:not(:focus-visible){outline:none}" in css)
     check("prefers-reduced-motion apaga transiciones y animaciones",
           "@media (prefers-reduced-motion: reduce){\n    *,*::before,*::after{transition:none !important;animation:none !important" in css)
-    check("el gris de texto llega a 4.5:1 (--fg-mute #6b6b6b)", "--fg-mute:#6b6b6b" in css)
+    # Réplica literal (R1): el gris de texto ya no se declara aquí, es el --muted de la
+    # maqueta (mismo #6b6b6b, mismo 4.5:1) y --fg-mute es su alias. Se comprueban los dos.
+    check("el gris de texto llega a 4.5:1 (--muted #6b6b6b, --fg-mute es su alias)",
+          "--muted:#6b6b6b" in css and "--fg-mute:var(--muted)" in css)
     check("el toast se anuncia (aria-live polite)",
           '<div class="toast" id="toast" role="status" aria-live="polite"' in html)
     check("la chuleta es un dialogo con nombre accesible",
