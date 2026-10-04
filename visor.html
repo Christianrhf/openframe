@@ -25,7 +25,7 @@
   :root{
     --bg:#ffffff;--panel:#ffffff;--panel-2:#f6f6f5;--raised:#ffffff;
     --line:#dcdcdc;--line-soft:#ebebeb;
-    --fg:#111111;--fg-dim:#4a4a4a;--fg-mute:#8a8a8a;
+    --fg:#111111;--fg-dim:#4a4a4a;--fg-mute:#6b6b6b;
     /* acento = negro. Todo lo activo es negro. */
     --accent:#111111;--accent-dim:#555555;--accent-ink:#ffffff;--accent-hover:#000000;
     --danger:#111111;--ok:#1a1a1a;--info:#333333;
@@ -105,7 +105,8 @@
   body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:13px;line-height:1.5;
     -webkit-font-smoothing:antialiased;overflow:hidden;display:flex;flex-direction:column}
   button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-  input,textarea,select{font:inherit;color:inherit;background:none;border:none;outline:none}
+  input,textarea,select{font:inherit;color:inherit;background:none;border:none}
+  input:not(:focus-visible),textarea:not(:focus-visible),select:not(:focus-visible){outline:none}
   ::-webkit-scrollbar{width:9px;height:9px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:9px;border:2px solid var(--bg)}
@@ -121,7 +122,7 @@
   .conn.live i{background:var(--ok);box-shadow:0 0 7px var(--ok-glow)}
   .conn.live{color:var(--ok)}
   .spacer{flex:1}
-  .sello{font-family:var(--mono);font-size:9.5px;color:var(--fg-mute);
+  .sello{font-family:var(--mono);font-size:11px;color:var(--fg-mute);
     background:var(--panel-2);border:1px solid var(--line);padding:1px 5px;border-radius:4px;white-space:nowrap}
 
   .btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:var(--radius);
@@ -134,7 +135,7 @@
   .btn.danger:hover{filter:brightness(.92)}
   .btn.on{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
   .btn.icon{width:28px;padding:0;justify-content:center}
-  .btn.sm{height:24px;padding:0 8px;font-size:11px}
+  .btn.sm{min-height:28px;padding:0 8px;font-size:11px}
   .btn:disabled{opacity:.3;cursor:default}
   .btn:disabled:hover{background:var(--panel-2);color:var(--fg-dim);border-color:var(--line)}
 
@@ -153,7 +154,7 @@
   .pitem.on .pname{color:var(--fg)}
   .pname{font-size:12.5px;font-weight:500;color:var(--fg-dim);margin-bottom:3px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pmeta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--fg-mute);font-family:var(--mono)}
+  .pmeta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-mute);font-family:var(--mono)}
   .pmeta .vd{color:var(--info)}
   .pmeta .pn{color:var(--accent)}
   .pmeta .pz{color:var(--ok)}
@@ -170,14 +171,14 @@
   .vitem.on{background:var(--raised);border-color:var(--on-border)}
   .vitem .vn{font-size:12px;font-weight:500;margin-bottom:4px;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
-  .vitem .vc{font-size:10px;color:var(--fg-mute);font-family:var(--mono);display:flex;gap:7px;flex-wrap:wrap}
-  .badge{font-size:9.5px;padding:1px 5px;border-radius:3px;background:var(--raised);
+  .vitem .vc{font-size:11px;color:var(--fg-mute);font-family:var(--mono);display:flex;gap:7px;flex-wrap:wrap}
+  .badge{font-size:11px;padding:1px 5px;border-radius:3px;background:var(--raised);
     color:var(--fg-mute);border:1px solid var(--line);font-family:var(--mono);flex:0 0 auto}
   .badge.no{color:var(--danger);border-color:var(--badge-no-line);background:var(--badge-no-bg)}
   .vitem .vrow{display:flex;align-items:center;gap:8px;margin-top:5px}
   .bar{flex:1;height:3px;background:var(--track);border-radius:3px;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--ok)}
-  .vitem .vn2{font-size:10px;font-family:var(--mono);color:var(--fg-mute)}
+  .vitem .vn2{font-size:11px;font-family:var(--mono);color:var(--fg-mute)}
 
   /* ── Reproductor ── */
   .stage{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);min-height:0}
@@ -250,7 +251,8 @@
   .sw{width:15px;height:15px;border-radius:50%;border:2px solid transparent;cursor:pointer}
   .sw.on{border-color:var(--fg);transform:scale(1.12)}
   .wsize{display:flex;align-items:center;gap:5px;padding:2px 7px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
-  .wsize button{width:8px;height:8px;border-radius:50%;background:var(--fg-dim);cursor:pointer}
+  .wsize button{width:8px;height:8px;border-radius:50%;background:var(--fg-dim);cursor:pointer;position:relative}
+  .wsize button::before{content:"";position:absolute;inset:-12px}   /* agarre >= 28px, el punto no crece */
   .wsize button.on{background:var(--accent);transform:scale(1.25)}
 
   /* ── Panel de notas ── */
@@ -260,9 +262,9 @@
   .side-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1}
   .cnt{font-family:var(--mono);font-size:11px;color:var(--fg-mute)}
   .filter{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:6px 11px;border-bottom:1px solid var(--line-soft);font-size:11px}
-  .vfilter{padding:3px 6px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);
-    font-size:10.5px;color:var(--fg-dim);max-width:118px}
-  .chk{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 0}
+  .vfilter{padding:3px 6px;min-height:28px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);
+    font-size:11px;color:var(--fg-dim);max-width:118px}
+  .chk{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 0;min-height:28px}
   .chk input{appearance:none;width:13px;height:13px;border:1px solid var(--chk-border);border-radius:3.5px;cursor:pointer;position:relative;flex:0 0 13px}
   .chk input:checked{background:var(--accent);border-color:var(--accent)}
   .chk input:checked::after{content:"";position:absolute;left:4px;top:1px;width:3.5px;height:7px;
@@ -292,7 +294,7 @@
   /* el chip del timecode ya no usa color (todo es gris). Se destaca por
      fondo, borde y peso de fuente — igual que hace Frame.io, pero sin tono. */
   .note .tcx{
-    font-family:var(--mono);font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums;
+    font-family:var(--mono);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;
     color:var(--tcf);background:var(--tcb);padding:1px 5px;border-radius:5px;
     letter-spacing:.2px;border:1px solid var(--line);
   }
@@ -330,7 +332,7 @@
   /* ── P5 · cierre de ronda ──
      El estado del corte se lee por TEXTO + FORMA (reloj / avion / roseta), nunca
      por color: el visor es blanco y negro y el color vive solo en los pinceles. */
-  .x2round{font:10px var(--mono);color:var(--fg-dim);white-space:nowrap;display:inline-flex;
+  .x2round{font:11px var(--mono);color:var(--fg-dim);white-space:nowrap;display:inline-flex;min-height:28px;
     align-items:center;gap:4px;height:20px;padding:0 6px;border:1px solid var(--line);
     border-radius:10px;background:var(--panel-2)}
   .x2round svg{width:11px;height:11px;flex:0 0 11px}
@@ -373,15 +375,15 @@
   .editor.adjusting{border-top-style:dashed}
   .note .meta{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
   /* (la regla vieja de .tcx que pisaba el chip la borramos) */
-  .note .frx,.note .rng{font-family:var(--mono);font-size:10px;color:var(--fg-mute)}
-  .note .who{font-size:9.5px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+  .note .frx,.note .rng{font-family:var(--mono);font-size:11px;color:var(--fg-mute)}
+  .note .who{font-size:11px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
   .note .who.c{background:var(--info-soft);color:var(--info);border:1px solid var(--line-c)}
   .note .who.y{background:var(--ok-soft);color:var(--ok);border:1px solid var(--line-y)}
   .note .txt{font-size:12.5px;white-space:pre-wrap;word-break:break-word;line-height:1.55}
   .note .thumb{width:54px;height:31px;border-radius:4px;object-fit:cover;flex:0 0 54px;border:1px solid var(--line);background:#000}
   .note .acts{display:flex;gap:1px;opacity:0;flex:0 0 auto}
   .note:hover .acts,.note.on .acts{opacity:1}
-  .note .acts button{width:21px;height:21px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
+  .note .acts button{width:28px;height:28px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
   .note .acts button:hover{background:var(--hover);color:var(--hover-ink)}
   .note .acts button svg{width:12px;height:12px}
   .note .acts button.ok:hover{color:var(--ok)}
@@ -415,7 +417,7 @@
     background:var(--line)}
   .rep .rbody{flex:1;min-width:0}
   .rep .rmeta{display:flex;align-items:center;gap:5px;margin-bottom:2px}
-  .rep .rwho{font-size:9.5px;font-family:var(--mono);color:var(--fg-mute);
+  .rep .rwho{font-size:11px;font-family:var(--mono);color:var(--fg-mute);
     display:flex;align-items:center;gap:4px}
   /* el punto de identidad de quien responde: mismo mecanismo de anillo, en pequeno */
   .rep .rwho::before{content:"";width:6px;height:6px;border-radius:50%;
@@ -431,7 +433,7 @@
      pendiente  = sin pastilla (el caso normal no gasta tinta)
      respondida = pastilla con la cuenta de respuestas, borde solido
      cerrada    = pastilla con check, borde punteado y texto tachado (ya lo hacia .res) */
-  .hst{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:9px;
+  .hst{font-size:11px;font-family:var(--mono);padding:1px 5px;border-radius:9px;
     border:1px solid var(--line);color:var(--fg-mute);background:var(--panel-2);
     cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
   .hst:hover{border-color:var(--on-border);color:var(--fg)}
@@ -441,7 +443,7 @@
     border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-bottom:2px}
   .hst.plegado .cv{transform:rotate(-45deg);margin:0 0 0 1px}
   /* chip "viene de la version anterior" */
-  .vfrom{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:5px;
+  .vfrom{font-size:11px;font-family:var(--mono);padding:1px 5px;border-radius:5px;
     border:1px dashed var(--line);color:var(--fg-mute);white-space:nowrap}
   /* la caja de respuesta abierta: el editor de abajo cambia de modo, y aqui se marca
      a QUE hilo esta apuntando para que no se responda a ciegas */
@@ -454,12 +456,12 @@
   .ed-head .at{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-soft);
     padding:2px 6px;border-radius:4px;font-variant-numeric:tabular-nums}
   .ed-head .lbl{font-size:11px;color:var(--fg-mute);flex:1}
-  .ed-head button{font-size:10.5px;color:var(--fg-dim);padding:2px 5px;border-radius:4px;display:flex;align-items:center;gap:3px}
+  .ed-head button{font-size:11px;min-height:28px;color:var(--fg-dim);padding:2px 5px;border-radius:4px;display:flex;align-items:center;gap:3px}
   .ed-head button:hover{background:var(--hover);color:var(--hover-ink)}
   .ed-head button svg{width:11px;height:11px}
   /* aviso de nota sin guardar */
   .dirty{
-    font-size:10px;color:var(--accent);display:none;align-items:center;gap:4px;
+    font-size:11px;color:var(--accent);display:none;align-items:center;gap:4px;
     padding:2px 6px;border-radius:4px;background:var(--accent-soft);white-space:nowrap;
   }
   .dirty.on{display:flex}
@@ -472,7 +474,7 @@
   /* Los atajos ya no se imprimen aqui: ocupan dos lineas y empujaban el boton de
      borrar. Ahora viven en el tooltip del boton Guardar y en el panel de ayuda. */
   .hint{flex:1;min-width:0}
-  kbd{font-family:var(--mono);font-size:9.5px;background:var(--track);border:1px solid var(--line);
+  kbd{font-family:var(--mono);font-size:11px;background:var(--track);border:1px solid var(--line);
     border-bottom-width:2px;border-radius:3.5px;padding:1px 4px;color:var(--fg-dim)}
 
 
@@ -529,12 +531,12 @@
      el objetivo tactil minimo que pide la tarea (d), sin tocar el dibujo visual */
   .mark::before{content:"";position:absolute;left:-9.5px;right:-9.5px;top:-9.5px;bottom:-9.5px}
   .mark::after{border-radius:3px}
-  .tlinfo{font-family:var(--mono);font-size:10px;color:var(--fg-mute);letter-spacing:.2px}
+  .tlinfo{font-family:var(--mono);font-size:11px;color:var(--fg-mute);letter-spacing:.2px}
   /* height:22px = misma altura que los botones de zoom. Los cuatro .xs viven en
      .tlctrls y son el mismo grupo: tienen que medir lo mismo. */
-  .btn.xs{height:22px;padding:0 7px;font-size:10.5px;border-radius:4px;font-family:var(--sans)}
+  .btn.xs{min-height:28px;padding:0 7px;font-size:11px;border-radius:4px;font-family:var(--sans)}
   /* los .xs con icono: mismo cuadro que los de zoom, geometria en vez de texto */
-  .btn.xs.icon{width:22px;height:22px;padding:0;justify-content:center}
+  .btn.xs.icon{width:28px;height:28px;padding:0;justify-content:center}
   .btn.xs svg{width:13px;height:13px;flex:0 0 13px}
 
 
@@ -626,7 +628,7 @@
   .tlwin.on{display:block}
   /* la cuenta de cambios/notas se fue con los controles: en una regleta de 6px no
      hay sitio para texto, y de todas formas es una lectura, no parte del mapa */
-  .rlbl{font-family:var(--mono);font-size:9.5px;color:var(--fg-mute);
+  .rlbl{font-family:var(--mono);font-size:11px;color:var(--fg-mute);
     letter-spacing:.2px;pointer-events:none;white-space:nowrap;padding-right:2px}
 
 
@@ -657,7 +659,7 @@
      .plegar (26px, svg 13px) y el otro .btn.icon.sm (28px, svg 16px): se veian
      descuadrados uno al lado del otro. */
   .plegar{display:flex;align-items:center;justify-content:center;
-    width:26px;height:26px;flex:0 0 26px;padding:0;border-radius:6px;
+    width:28px;height:28px;flex:0 0 28px;padding:0;border-radius:6px;
     background:transparent;border:1px solid transparent;color:var(--fg-mute);
     cursor:pointer;transition:color .12s,background .12s}
   .plegar:hover{background:var(--hover);color:var(--fg)}
@@ -678,7 +680,7 @@
     display:none;align-items:center;flex-direction:column;gap:9px;padding-top:9px;
     background:var(--panel);border-right:1px solid var(--line)}
   body.nav-plegado .navhandle{display:flex}
-  .navhandle .hb{font-family:var(--mono);font-size:10px;color:var(--fg-dim);
+  .navhandle .hb{font-family:var(--mono);font-size:11px;color:var(--fg-dim);
     background:var(--panel-2);border:1px solid var(--line);border-radius:5px;
     padding:2px 5px;cursor:pointer}
   .navhandle .hb.chg{background:var(--cambio-soft,#E4F0EA);color:var(--cambio,#277A5A);
@@ -715,7 +717,7 @@
     width:16px;height:16px;margin-left:-8px;border-radius:50%;appearance:none;padding:0;
     display:grid;place-items:center;border:1.5px solid var(--fg);background:var(--panel);
     color:var(--fg);font:700 9px/1 var(--sans);cursor:pointer;pointer-events:auto;z-index:3}
-  .cluster-marker::before{content:"";position:absolute;inset:-6px}   /* agarre >= 28px */
+  .cluster-marker::before{content:"";position:absolute;inset:-9px}   /* agarre >= 28px (medido) */
   .cluster-marker:hover{filter:brightness(1.15)}
   .cluster-marker.cambio{border-radius:2px;transform:rotate(45deg)}
   .cluster-marker.cambio > span{display:block;transform:rotate(-45deg)}   /* el numero no gira */
@@ -733,10 +735,10 @@
      ANCHO FIJO a proposito: el texto cambia de largo con el zoom ("todo el video" ->
      "00:00:12:04 – 00:00:14:16 · 8× · 60 f"). Si la caja creciera con el texto, cada
      paso de zoom empujaria todos los botones de la fila. Lo que sobra se recorta. */
-  .tp-row .tlinfo{font-family:var(--mono);font-size:10.5px;color:var(--fg-mute);
+  .tp-row .tlinfo{font-family:var(--mono);font-size:11px;color:var(--fg-mute);
     letter-spacing:.2px;white-space:nowrap;margin:0;
     flex:0 0 252px;width:252px;overflow:hidden;text-overflow:ellipsis}
-  .fpsv{font-family:var(--mono);font-size:10.5px;color:var(--fg-mute);white-space:nowrap}
+  .fpsv{font-family:var(--mono);font-size:11px;color:var(--fg-mute);white-space:nowrap}
 
 
   /* ── Color: UN circulito que se despliega ──
@@ -744,7 +746,7 @@
      la sensacion de "menu que no se entiende". Ahora: un circulito con el color actual,
      y al hacer clic se despliegan los demas. */
   .colorWrap{position:relative;flex:0 0 auto}
-  .swatchBtn{width:26px;height:26px;border-radius:50%;padding:3px;cursor:pointer;
+  .swatchBtn{width:28px;height:28px;border-radius:50%;padding:3px;cursor:pointer;
     border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
   .swatchBtn:hover{border-color:var(--fg)}
   .swatchDot{width:16px;height:16px;border-radius:50%;background:var(--pincel,#ff4d4d);
@@ -761,7 +763,7 @@
   .pitem:hover .parch, .pitem:focus-within .parch{display:grid}
   .pitem.arch{opacity:.62}
   .pitem.arch .parch{display:grid}
-  .psecc{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+  .psecc{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
     color:var(--fg-dim);padding:14px 10px 6px;margin-top:6px;border-top:1px solid var(--line-soft)}
   /* La banda ocupa TODO el ancho. Antes .tlctrls estaba dentro de .tlinesa y le
      robaba 301px a la pista. */
@@ -827,7 +829,7 @@
   .invbanner{display:none;align-items:center;gap:5px;font-size:12px;color:var(--fg-dim);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
   .invbanner b{color:var(--fg);font-weight:600}
-  .invbanner .who.i{font-size:9.5px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+  .invbanner .who.i{font-size:11px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
   body.invitado .invbanner{display:flex}
   /* lo que un invitado NO ve: oculto (display:none), no deshabilitado */
   body.invitado .rail, body.invitado .vcol, body.invitado .navhandle,
@@ -867,7 +869,7 @@
   .shform .btn.sm{flex:0 0 auto}
   .shnuevo{display:none;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:11px}
   .shnuevo.on{display:flex}
-  .shurl{font-family:var(--mono);font-size:10.5px;color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .shurl{font-family:var(--mono);font-size:11px;color:var(--fg);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .shlist{overflow-y:auto;min-height:0}
   .shempty{font-size:11.5px;color:var(--fg-mute);padding:9px 0 3px}
   .shlink{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:11.5px}
@@ -875,8 +877,8 @@
   .shlink .shb{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
   .shlink .shn{display:flex;align-items:center;gap:6px;min-width:0}
   .shlink .shetq{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-  .shlink .shm{font-family:var(--mono);font-size:10px;color:var(--fg-mute);white-space:nowrap}
-  .shst{font-size:9.5px;font-family:var(--mono);padding:1px 5px;border-radius:9px;border:1px solid var(--line);
+  .shlink .shm{font-family:var(--mono);font-size:11px;color:var(--fg-mute);white-space:nowrap}
+  .shst{font-size:11px;font-family:var(--mono);padding:1px 5px;border-radius:9px;border:1px solid var(--line);
     color:var(--fg-mute);background:var(--panel-2);white-space:nowrap;flex:0 0 auto}
   .shst.activo{border-color:var(--fg);color:var(--fg);font-weight:600}
   .shst.caducado{border-style:dashed}
@@ -910,16 +912,16 @@
     pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.3)}
   .cmphandle svg{width:14px;height:14px;color:#111;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .cmphandle:focus-visible{outline:2px solid #111;outline-offset:2px}
-  .cmplbl{position:absolute;left:8px;top:8px;z-index:5;font-family:var(--mono);font-size:10px;line-height:1.5;
+  .cmplbl{position:absolute;left:8px;top:8px;z-index:5;font-family:var(--mono);font-size:11px;line-height:1.5;
     color:#fff;background:rgba(0,0,0,.62);padding:2px 6px;border-radius:3px;pointer-events:none;
     max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cmplbl[hidden]{display:none}
   .screen.cmp-curtain .cmplbl-cur{left:auto;top:auto;right:8px;bottom:8px}
   .cmpctl{position:absolute;top:10px;right:12px;z-index:6;display:flex;align-items:center;gap:4px}
   .cmpctl select{height:22px;padding:0 6px;border:1px solid var(--line);border-radius:4px;
-    background:var(--panel-2);font-size:10.5px;max-width:170px;color:var(--fg-dim)}
+    background:var(--panel-2);font-size:11px;max-width:170px;color:var(--fg-dim)}
   .cmpctl [hidden]{display:none !important}
-  .cmppill{position:absolute;left:12px;bottom:10px;z-index:6;font-family:var(--mono);font-size:10px;
+  .cmppill{position:absolute;left:12px;bottom:10px;z-index:6;font-family:var(--mono);font-size:11px;
     color:var(--fg);background:var(--panel);border:1px solid var(--line);padding:2px 7px;border-radius:4px;
     max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cmppill[hidden]{display:none}
@@ -950,6 +952,35 @@
        en vez de desbordar y dejar botones fuera del encuadre */
     .tp-row{flex-wrap:wrap;row-gap:6px}
   }
+
+  /* ═══ P6 · FOCO, MOVIMIENTO Y CHULETA DE ATAJOS ═══ */
+  /* Foco visible en TODO control, con UN SOLO trazo de 2px (nada de doble aro).
+     Antes `input,textarea,select{outline:none}` lo apagaba en los campos y el
+     resto de controles se quedaba con el anillo del navegador o con nada. */
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .btn.pri:focus-visible,button.pri:focus-visible{outline-color:var(--fg);outline-offset:2px}
+  /* Movimiento reducido: ni transiciones ni animaciones (ni la del toast). */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+  }
+  /* Chuleta de atajos: mismo lenguaje que los demas popovers (.p5pop / .shPop). */
+  .keysPop{position:fixed;z-index:960;width:328px;max-height:calc(100vh - 24px);
+    background:var(--raised);border:1px solid var(--line);border-radius:9px;
+    box-shadow:var(--sheet-shadow);padding:11px 13px 13px;display:none;flex-direction:column;gap:9px}
+  .keysPop.on{display:flex}
+  .keysPop[hidden]{display:none}
+  .keysPop h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--fg-mute);display:flex;align-items:center;gap:6px;margin:0}
+  .keysPop h3 svg{width:12px;height:12px;flex:0 0 12px}
+  .keysGrupo{display:flex;flex-direction:column;gap:3px}
+  .keysGrupo > b{font-size:11px;font-weight:600;color:var(--fg);letter-spacing:.02em}
+  .keysFila{display:flex;align-items:center;gap:8px;min-height:19px}
+  .keysFila > span:last-child{font-size:11px;color:var(--fg-dim);flex:1}
+  .keysTeclas{display:flex;align-items:center;gap:3px;flex:0 0 108px}
+  .keysSep{font-size:11px;color:var(--fg-mute)}
+  .keysPop:focus-visible{outline:none}   /* su propio marco lo delimita: sin doble trazo */
+
 </style>
 </head>
 <body>
@@ -975,6 +1006,8 @@
     <g id="i-redo"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></g>
     <g id="i-check"><path d="M20 6 9 17l-5-5"/></g>
     <g id="i-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></g>
+    <!-- lucide `keyboard` (__iconNode literal): la chuleta de atajos -->
+    <g id="i-keyboard"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></g>
     <g id="i-trash"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></g>
     <g id="i-copy"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>
     <g id="i-dl"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></g>
@@ -1037,6 +1070,7 @@
   <span class="sello" id="sello" title="Version que estas viendo">build —</span>
   <div class="invbanner" id="invBanner" role="status" aria-live="polite"></div>
   <div class="spacer"></div>
+  <button class="btn icon has-tip" id="keysBtn" data-tip="Atajos de teclado" title="Atajos de teclado  ?" aria-label="Atajos de teclado" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="?"><svg viewBox="0 0 24 24"><use href="#i-keyboard"/></svg></button>
   <button class="btn" id="bProj"><svg viewBox="0 0 24 24"><use href="#i-folder"/></svg>Nuevo proyecto</button>
   <label class="chk" title="Incluir miniaturas al exportar"><input type="checkbox" id="cThumbs"><span>Miniaturas</span></label>
   <button class="btn" id="bClaude"><svg viewBox="0 0 24 24"><use href="#i-nav"/></svg>Para Agente</button>
@@ -1168,7 +1202,7 @@
         <button class="tool has-tip" data-tip="Dibujar a mano alzada" data-tool="pen" data-key="B"><svg viewBox="0 0 24 24"><use href="#i-brush"/></svg></button>
         <button class="tool has-tip" data-tip="Dibujar una flecha" data-tool="arrow" data-key="F"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
         <button class="tool has-tip" data-tip="Dibujar un rectángulo" data-tool="rect" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-rect"/></svg></button>
-        <button class="tool has-tip" data-tip="Dibujar un círculo" data-tool="ellipse" data-key="C"><svg viewBox="0 0 24 24"><use href="#i-ellipse"/></svg></button>
+        <button class="tool has-tip" data-tip="Dibujar un círculo" data-tool="ellipse"><svg viewBox="0 0 24 24"><use href="#i-ellipse"/></svg></button>
         <div class="sep"></div>
         <div class="colorWrap">
           <button class="swatchBtn has-tip" id="swBtn" data-tip="Cambiar el color  C" aria-label="Cambiar el color del pincel">
@@ -1247,7 +1281,7 @@
       <div class="ed-head">
         <span class="at" id="edAt">00:00:00:00</span>
         <span class="lbl" id="edLbl">—</span>
-        <span class="dirty" id="edDirty">sin guardar</span>
+        <span class="dirty" id="edDirty" role="status" aria-live="polite">sin guardar</span>
         <button class="has-tip" id="bCancel" style="display:none" data-tip="Dejar la nota como estaba">cancelar</button>
         <button class="has-tip" id="bEnd" data-tip="Marcar aquí el final del intervalo"><svg viewBox="0 0 24 24"><use href="#i-out"/></svg>fin</button>
         <button class="has-tip" id="bMove" data-tip="Mover la nota a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg>mover</button>
@@ -1279,7 +1313,16 @@
       <button class="btn pri" id="invDlgOk" title="Guardar tu nombre y empezar a revisar">Entrar</button></div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+<!-- P6 · chuleta de atajos: dialogo con foco atrapado, Esc cierra. Vive en el
+     body para que ningun ancestro con overflow lo recorte. Se rellena desde
+     P6_ATAJOS (una sola fuente de verdad, la misma de los title/aria-keyshortcuts). -->
+<div class="keysPop" id="keysPop" role="dialog" aria-modal="true" aria-labelledby="keysPopT" hidden>
+  <h3 id="keysPopT"><svg viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>Atajos
+    <span style="flex:1"></span>
+    <button class="plegar" id="keysX" title="Cerrar" aria-label="Cerrar los atajos"><svg viewBox="0 0 24 24"><use href="#i-x"/></svg></button></h3>
+  <div id="keysBody"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 "use strict";
@@ -2303,6 +2346,9 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
   $("#x2Page").textContent = "Página " + (st.x2Page + 1) + " de " + pages + " · " + fin + " de " + filtradas.length;
   $("#x2Prev").disabled = st.x2Page <= 0;
   $("#x2Next").disabled = st.x2Page >= pages - 1;
+  // los botones de cada tarjeta nacen en cada pintado: su nombre accesible sale
+  // del data-tip que ya traen (P6), no de un segundo texto que mantener
+  if(typeof p6Nombrar === "function") p6Nombrar($("#list"));
 }
 async function x2Aprobar(id){
   if(esInvitado) return;
@@ -3089,11 +3135,18 @@ $("#ta").addEventListener("input", () => {
   setDirty(true);          // no se envia nada hasta Enter o Guardar
 });
 $("#ta").addEventListener("keydown", e => {
+  // Ctrl/Cmd+Entrar = enviar, aunque se haya escrito con Shift pulsado
+  if(e.key === "Enter" && (e.metaKey || e.ctrlKey)){
+    e.preventDefault(); saveNote(); return;
+  }
   if(e.key === "Enter" && !e.shiftKey){
     e.preventDefault(); saveNote();          // Enter = guardar
   }
   // Shift+Enter = salto de linea normal
 });
+/* Regla del PORTE: el video se PAUSA al enfocar el cuadro de texto (si no, se sigue
+   reproduciendo mientras escribes y la nota acaba apuntando a otro fotograma). */
+$("#ta").addEventListener("focus", () => { if(!v.paused) pause(); });
 $("#bSave").onclick = saveNote;
 $("#bCancel").onclick = () => {
   if(st.adjustTo){ x2SalirAjuste(); $("#ta").value=""; setDirty(false); updateEditor(); toast("Ajuste cancelado",1500); return; }
@@ -3434,6 +3487,192 @@ ATAJOS["b"] = () => $('[data-tool=pen]').click();
 ATAJOS["B"] = () => $('[data-tool=pen]').click();
 delete ATAJOS["p"];   // "p" minúscula = nota anterior (jumpNote). El lapiz es "b".
 
+/* ═══ P6 · ATAJOS NUEVOS Y CHULETA ═══
+   Regla de choque (PORTE): si la tecla ya tenia dueño en ATAJOS, GANA EL EXISTENTE.
+   Por eso «nota nueva» sigue en E y no en N: en el visor real `n` ya es nota
+   siguiente y `N` (⇧N) ya recorre los cambios del Agente. `[`/`]` tambien eran ya
+   nota anterior/siguiente, y se quedan. */
+function p6MarcarInicio(){
+  if(!st.vid) return;
+  if(esInvitado && typeof puedeEscribir === "function" && !puedeEscribir()){
+    toast("Este enlace caducó"); return;
+  }
+  const f = snap(v.currentTime);
+  if(!editingId && !st.replyTo) st.selId = null;
+  st.pend = {frame:f, time:frameT(f)};
+  if(esInvitado) st.invTramo = null;        // el tramo se vuelve a cerrar con «fin»
+  drawCanvas(); renderList(); updateMarks(); updateEditor();
+  toast("Entrada del tramo en " + tc(null, f));
+}
+/* «Salida del tramo» es EXACTAMENTE el boton «fin» (anfitrion: end_frame de la nota;
+   invitado: st.invTramo, que viaja en el POST). Una sola implementacion. */
+function p6MarcarFin(){ const b = $("#bEnd"); if(b && !b.disabled) b.click(); }
+
+const P6_NUEVAS = {
+  "i": p6MarcarInicio, "I": p6MarcarInicio,
+  "o": p6MarcarFin,    "O": p6MarcarFin,
+  "j": () => stepS(-1), "J": () => stepS(-1),
+  "k": () => pause(),   "K": () => pause(),
+  "l": () => play(),    "L": () => play(),
+};
+for(const k of Object.keys(P6_NUEVAS)) if(!ATAJOS[k]) ATAJOS[k] = P6_NUEVAS[k];
+
+/* Una sola tabla para la chuleta Y para los title/aria-keyshortcuts de los botones.
+   `inv` = el atajo tiene sentido en el flujo del invitado; `btn` = el control al que
+   se le cuelga la pista de teclado. */
+const P6_ATAJOS = [
+  {g:"Reproducción", t:["Espacio"],   d:"Reproducir o pausar",              inv:true, btn:"#bPlay"},
+  {g:"Reproducción", t:["K"],         d:"Pausar",                           inv:true},
+  {g:"Reproducción", t:["L"],         d:"Reproducir",                       inv:true},
+  {g:"Reproducción", t:["J"],         d:"Un segundo atrás",                 inv:true, btn:"#bBack"},
+  {g:"Reproducción", t:["←","→"],     d:"Fotograma atrás o adelante",       inv:true, btn:"#bPrev"},
+  {g:"Reproducción", t:["⇧←","⇧→"],   d:"Un segundo atrás o adelante",      inv:true, btn:"#bFwd"},
+  {g:"Navegación",   t:["[","]"],     d:"Nota anterior o siguiente",        inv:true, btn:"#tlPrev"},
+  {g:"Navegación",   t:["n"],         d:"Saltar a la nota siguiente",       inv:true},
+  {g:"Navegación",   t:["⇧N","⇧P"],   d:"Cambio del Agente siguiente o anterior",    btn:"#tlChg"},
+  {g:"Navegación",   t:["+","−","0"], d:"Acercar, alejar, ver todo",        inv:true, btn:"#tlZfit"},
+  {g:"Notas",        t:["E"],         d:"Nota nueva en este fotograma",     inv:true},
+  {g:"Notas",        t:["I"],         d:"Entrada del tramo",                inv:true},
+  {g:"Notas",        t:["O"],         d:"Salida del tramo",                 inv:true, btn:"#bEnd"},
+  {g:"Notas",        t:["S"],         d:"Guardar la nota",                  inv:true},
+  {g:"Notas",        t:["Ctrl+Entrar"], d:"Enviar la nota o la respuesta",  inv:true, btn:"#bSave"},
+  {g:"Dibujo",       t:["B","F","R"], d:"Lápiz, flecha, rectángulo",        inv:true},
+  {g:"Dibujo",       t:["C"],         d:"Cambiar el color del pincel",      inv:true, btn:"#swBtn"},
+  {g:"Dibujo",       t:["⌫"],         d:"Borrar el dibujo del fotograma",   inv:true, btn:"#bErase"},
+  {g:"Dibujo",       t:["Ctrl+Z"],    d:"Deshacer",                         inv:true, btn:"#bUndo"},
+  {g:"Dibujo",       t:["Ctrl+⇧+Z"],  d:"Rehacer",                          inv:true, btn:"#bRedo"},
+  {g:"General",      t:["Esc"],       d:"Cerrar lo que esté abierto",       inv:true},
+  {g:"General",      t:["?"],         d:"Esta chuleta de atajos",           inv:true, btn:"#keysBtn"},
+];
+function p6Filas(){ return esInvitado ? P6_ATAJOS.filter(x => x.inv) : P6_ATAJOS.slice(); }
+/* La chuleta se construye UNA vez. Nada del texto viene del servidor, pero se pinta
+   con createElement/textContent igual que el resto del visor. */
+let p6KeysHecha = false;
+function p6KeysPintar(){
+  if(p6KeysHecha) return;
+  const cuerpo = $("#keysBody"); if(!cuerpo) return;
+  cuerpo.textContent = "";
+  const grupos = [];
+  for(const a of p6Filas()){
+    let g = grupos.find(x => x.nombre === a.g);
+    if(!g){ g = {nombre:a.g, filas:[]}; grupos.push(g); }
+    g.filas.push(a);
+  }
+  for(const g of grupos){
+    const caja = document.createElement("div"); caja.className = "keysGrupo";
+    const tit = document.createElement("b"); tit.textContent = g.nombre; caja.appendChild(tit);
+    for(const a of g.filas){
+      const fila = document.createElement("div"); fila.className = "keysFila";
+      const teclas = document.createElement("span"); teclas.className = "keysTeclas";
+      a.t.forEach((k, i) => {
+        if(i){ const sep = document.createElement("span"); sep.className = "keysSep";
+               sep.textContent = "·"; teclas.appendChild(sep); }
+        const kb = document.createElement("kbd"); kb.textContent = k; teclas.appendChild(kb);
+      });
+      const txt = document.createElement("span"); txt.textContent = a.d;
+      fila.appendChild(teclas); fila.appendChild(txt); caja.appendChild(fila);
+    }
+    cuerpo.appendChild(caja);
+  }
+  p6KeysHecha = true;
+}
+/* Pista de teclado en los botones que YA existen: no hay un segundo texto que
+   mantener, sale de la misma tabla. */
+function p6KeysEnBotones(){
+  for(const a of p6Filas()){
+    if(!a.btn) continue;
+    const el = $(a.btn); if(!el) continue;
+    el.setAttribute("aria-keyshortcuts", a.t.join(" "));
+    const base = (el.getAttribute("data-tip") || el.getAttribute("aria-label") || a.d).trim();
+    el.title = base + "  ·  " + a.t.join(" / ");
+  }
+}
+function p6KeysAbierta(){ const p = $("#keysPop"); return !!p && !p.hidden; }
+function p6KeysColocar(){
+  const pop = $("#keysPop"), b = $("#keysBtn");
+  if(!pop || !b) return;
+  const r = b.getBoundingClientRect(), M = 8;
+  pop.style.top = "0px"; pop.style.left = "0px"; pop.style.right = "auto";
+  const p = pop.getBoundingClientRect();
+  let top = r.bottom + 6;
+  if(top + p.height > window.innerHeight - M) top = Math.max(M, window.innerHeight - M - p.height);
+  let left = r.right - p.width;
+  left = Math.max(M, Math.min(left, window.innerWidth - p.width - M));
+  pop.style.top = Math.round(top) + "px";
+  pop.style.left = Math.round(left) + "px";
+}
+let p6KeysFoco = null;
+function p6KeysAbrir(){
+  const pop = $("#keysPop"), b = $("#keysBtn");
+  if(!pop || !b || !pop.hidden) return;
+  p6KeysPintar();
+  if(typeof p5PopCerrar === "function") p5PopCerrar();
+  if(typeof shCerrar === "function" && typeof shAbierto === "function" && shAbierto()) shCerrar();
+  p6KeysFoco = document.activeElement;
+  pop.hidden = false; pop.classList.add("on");
+  b.setAttribute("aria-expanded", "true");
+  p6KeysColocar();
+  const x = $("#keysX"); if(x) x.focus();
+}
+function p6KeysCerrar(){
+  const pop = $("#keysPop"), b = $("#keysBtn");
+  if(!pop || pop.hidden) return;
+  pop.hidden = true; pop.classList.remove("on");
+  if(b) b.setAttribute("aria-expanded", "false");
+  const volver = (p6KeysFoco && p6KeysFoco.isConnected) ? p6KeysFoco : b;
+  p6KeysFoco = null;
+  if(volver && volver.focus) volver.focus();
+}
+function p6KeysAlternar(){ p6KeysAbierta() ? p6KeysCerrar() : p6KeysAbrir(); }
+/* Foco ATRAPADO: Tab y ⇧Tab no salen del dialogo mientras esta abierto. */
+function p6KeysEnfocables(){
+  return [...$("#keysPop").querySelectorAll("button, [href], input, select, textarea, [tabindex]")]
+    .filter(el => !el.disabled && el.getAttribute("tabindex") !== "-1" && el.offsetParent !== null);
+}
+$("#keysBtn").onclick = ev => { ev.stopPropagation(); p6KeysAlternar(); };
+$("#keysX").onclick = () => p6KeysCerrar();
+$("#keysPop").addEventListener("keydown", ev => {
+  if(ev.key === "Escape"){ ev.preventDefault(); p6KeysCerrar(); return; }
+  if(ev.key !== "Tab") return;
+  const f = p6KeysEnfocables();
+  if(!f.length){ ev.preventDefault(); return; }
+  const i = f.indexOf(document.activeElement);
+  ev.preventDefault();
+  const sig = ev.shiftKey ? (i <= 0 ? f.length-1 : i-1) : (i < 0 || i === f.length-1 ? 0 : i+1);
+  f[sig].focus();
+});
+document.addEventListener("pointerdown", ev => {
+  if(p6KeysAbierta() && !$("#keysPop").contains(ev.target) && !$("#keysBtn").contains(ev.target))
+    p6KeysCerrar();
+}, true);
+window.addEventListener("resize", () => { if(p6KeysAbierta()) p6KeysColocar(); });
+
+/* Nombre accesible para todo control de solo icono: se saca del data-tip/title que YA
+   existe (o de la etiqueta que envuelve la casilla). Un solo texto que mantener. */
+function p6Nombrar(raiz){
+  const r = raiz || document;
+  for(const el of r.querySelectorAll("button, select, input, [role=slider]")){
+    if((el.getAttribute("aria-label") || "").trim()) continue;
+    if((el.getAttribute("title") || "").trim()) continue;
+    if(el.textContent.trim()) continue;
+    const lab = el.closest("label");
+    const n = (el.dataset && el.dataset.tip) ||
+              (lab && ((lab.getAttribute("title") || "").trim() || lab.textContent.trim())) ||
+              (el.getAttribute("placeholder") || "").trim();
+    if(n) el.setAttribute("aria-label", n);
+  }
+}
+/* aria-pressed donde hay estado de dos posiciones (herramienta y grosor del pincel),
+   aria-expanded en las asas de las columnas. */
+function p6EstadoAria(){
+  for(const el of $$("[data-tool]")) el.setAttribute("aria-pressed", el.classList.contains("on") ? "true" : "false");
+  for(const el of $$("#ws button")) el.setAttribute("aria-pressed", el.classList.contains("on") ? "true" : "false");
+  const plegado = document.body.classList.contains("nav-plegado");
+  for(const id of ["#bNavFold", "#navOpen"]){
+    const el = $(id); if(el) el.setAttribute("aria-expanded", plegado ? "false" : "true");
+  }
+}
+
 document.addEventListener("keydown", e => {
   if($("#modal").classList.contains("on")){ if(e.key==="Escape") closeModal(); return; }
   if($("#invDlg").classList.contains("on")) return;     // sin nombre no hay atajos (ni Escape)
@@ -3443,12 +3682,17 @@ document.addEventListener("keydown", e => {
   // del <button>), no al atajo global (si no, Espacio pausaba el video en vez
   // de abrir/acercar el marcador — P4-d)
   if(e.target.closest && e.target.closest(".mark,.cluster-marker")) return;
+  // la chuleta se abre SIEMPRE (tambien sin video cargado) y Esc la cierra primero
+  if(p6KeysAbierta()){ if(e.key === "Escape"){ e.preventDefault(); p6KeysCerrar(); } return; }
+  if(e.key === "?"){ e.preventDefault(); p6KeysAbrir(); return; }
   if(!st.vid) return;
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase() === "z"){
     e.preventDefault();
     e.shiftKey ? rehacer() : deshacer();
     return;
   }
+  // Ctrl/Cmd+Entrar envia la nota tambien con el foco FUERA del cuadro de texto
+  if((e.metaKey || e.ctrlKey) && e.key === "Enter"){ e.preventDefault(); saveNote(); return; }
   if(e.altKey || e.metaKey || e.ctrlKey) return;
   const fn = ATAJOS[e.key];
   if(!fn) return;
@@ -3661,6 +3905,7 @@ function plegarNav(v){
   document.body.classList.toggle("nav-plegado", plegar);
   try{ localStorage.setItem(NAV_KEY, plegar ? "plegado" : "abierto"); }catch(e){}
   if(!plegar && st.vid){ requestAnimationFrame(() => { fit(); tlPaint(); pintarRail(); }); }
+  if(typeof p6EstadoAria === "function") p6EstadoAria();
 }
 function actualizarAsaNav(){
   /* Las notas cuentan con la regla comun; los cambios son los SIN VER, no todos:
@@ -5036,8 +5281,16 @@ document.addEventListener("keydown", ev => {
   window.__cerrarPopover = cerrar;
 })();
 $("#ws").innerHTML = SIZES.map(s => '<button data-s="'+s+'" class="'+(s===st.size?"on":"")+'" style="width:'+(3+s)+'px;height:'+(3+s)+'px"></button>').join("");
-for(const el of $$("#ws button")) el.onclick = () => { st.size = +el.dataset.s; $$("#ws button").forEach(x => x.classList.toggle("on", x===el)); };
-for(const el of $$("[data-tool]")) el.onclick = () => { st.tool = el.dataset.tool; $$("[data-tool]").forEach(x => x.classList.toggle("on", x===el)); };
+for(const el of $$("#ws button")){
+  el.setAttribute("aria-label", "Grosor del pincel: " + el.dataset.s + " px");
+  el.onclick = () => { st.size = +el.dataset.s;
+    $$("#ws button").forEach(x => x.classList.toggle("on", x===el)); p6EstadoAria(); };
+}
+for(const el of $$("[data-tool]")) el.onclick = () => { st.tool = el.dataset.tool;
+  $$("[data-tool]").forEach(x => x.classList.toggle("on", x===el)); p6EstadoAria(); };
+/* Nombres accesibles y estados ARIA: una pasada al arrancar, y los controles que se
+   pintan en cada render los cubre renderList(). */
+p6Nombrar(); p6EstadoAria(); p6KeysEnBotones();
 
 (function init(){
   renderFilter(); renderList();
