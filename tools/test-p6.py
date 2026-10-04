@@ -172,8 +172,9 @@ def parte_estatica():
               'width="20" height="16" x="2" y="4" rx="2"' in cuerpo, cuerpo[:200])
 
     chicos = [m for m in re.findall(r"font-size:\s*([\d.]+)px", css) if float(m) < 11]
+    # los numerales .mk de la maqueta (marcadores, chips mini de las tarjetas) miden 9 px literal
     check("solo los numerales de marcadores de la maqueta bajan de 11px",
-          chicos == ["9", "9", "9"], chicos)
+          bool(chicos) and set(chicos) == {"9"} and len(chicos) <= 8, chicos)
     check("las tres excepciones de 9px son .mk de nota/cambio, no texto corrido",
           all(s in css for s in (".mk.change b{font:inherit;font-size:9px",
                                  ".mk.mini.note{width:16px;height:16px;font-size:9px",

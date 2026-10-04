@@ -609,6 +609,8 @@
 .composer .composer-bottom .send{margin-left:auto}
 .composer .send:disabled{opacity:.4;cursor:default}
 .composer .composer-hidden{display:none}
+.composer-bottom button.at{background:none;border:0;padding:0;cursor:pointer}
+.composer-bottom button.at:hover{color:var(--ink)}
 .filters-pop select{height:28px;min-width:0;border:1px solid var(--line2);border-radius:4px;background:#fff;font-size:11px;padding:0 6px}
 .filters-pop[hidden],.searchbox .x[hidden],.filters-btn .dot[hidden]{display:none}
 .sidebar .empty{padding:12px 0}
@@ -1070,6 +1072,7 @@
     .dock-title,.grip{display:none}
     .tp-row,.tools{gap:8px}
     .chip{min-width:0}
+    .tp-row #speed small{display:none}
   }
   @media (max-width:920px){
     .main{flex-wrap:wrap}
@@ -1501,9 +1504,9 @@
         <span class="dirty" id="edDirty" role="status" aria-live="polite">sin guardar</span>
         <button type="button" class="cancel" id="bCancel" style="display:none"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg>Cancelar</button></div>
       <textarea id="ta" aria-label="Texto de la nota" placeholder="Escribe una nota para el equipo…"></textarea>
-      <div class="composer-bottom"><span class="at"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"/></svg><span id="edAt">00:00:00:00</span></span><button class="send has-tip" type="submit" id="bSave" data-tip="Guardar la nota" data-key="Enter"><span id="bSaveTxt">Añadir</span> <svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-up"/></svg></button></div>
+      <div class="composer-bottom"><button type="button" class="at has-tip" id="bGo" data-tip="Llevar el cursor a esta nota" title="Llevar el cursor a esta nota"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"/></svg><span id="edAt">00:00:00:00</span></button><button class="send has-tip" type="submit" id="bSave" data-tip="Guardar la nota" data-key="Enter"><span id="bSaveTxt">Añadir</span> <svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-up"/></svg></button></div>
       <div class="composer-hidden" hidden>
-        <button type="button" id="bMove">mover</button><button type="button" id="bGo">ir</button><button type="button" id="bDel">borrar</button>
+        <button type="button" id="bMove">mover</button><button type="button" id="bDel">borrar</button>
       </div>
     </form>
   </aside>
