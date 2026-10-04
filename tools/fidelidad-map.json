@@ -1170,60 +1170,20 @@
      "r": ".tlinesa .tl",
      "props": [
       "display",
-      "columnGap",
       "minHeight"
      ],
-     "nota": "gridTemplateColumns se compara por .tl-gutter (148 px): el real es 30 px mas estrecho por el rail de proyectos plegado (diferencia permitida 3)"
-    },
-    {
-     "n": "gutter",
-     "m": ".tl-gutter",
-     "r": ".tl-gutter",
-     "props": [
-      "display",
-      "rowGap",
-      "minWidth"
-     ]
-    },
-    {
-     "n": "rotulo-linea",
-     "m": ".tl-corner",
-     "r": ".tl-corner",
-     "props": [
-      "fontSize",
-      "fontWeight",
-      "letterSpacing",
-      "textTransform",
-      "color",
-      "whiteSpace",
-      "alignSelf"
-     ]
-    },
-    {
-     "n": "rotulo-carril",
-     "m": ".lane-label",
-     "r": ".lane-label",
-     "props": [
-      "display",
-      "alignItems",
-      "columnGap",
-      "fontSize",
-      "fontWeight",
-      "whiteSpace"
-     ]
+     "nota": "una sola columna: el timeline ocupa todo el ancho (decision del usuario); sin columnGap"
     },
     {
      "n": "flecha-carril",
      "m": "#prevNote",
      "r": "#tlPrev",
      "props": [
-      "w",
-      "h",
       "display",
       "placeItems",
-      "borderRadius",
       "color"
-     ]
+     ],
+     "nota": "las flechas viven junto al zoom como .ctl de 34 px (decision del usuario), no en la columna de etiquetas"
     },
     {
      "n": "regla",
@@ -1266,30 +1226,6 @@
       "borderRadius"
      ],
      "nota": "el real pinta el carril en absoluto sobre el rail; la geometria (h/relx/rely) se sigue comparando"
-    },
-    {
-     "n": "forma-nota-gutter",
-     "m": ".shape.note",
-     "r": ".shape.note",
-     "props": [
-      "w",
-      "h",
-      "borderRadius",
-      "backgroundColor"
-     ]
-    },
-    {
-     "n": "forma-cambio-gutter",
-     "m": ".shape.change",
-     "r": ".shape.cambio",
-     "props": [
-      "w",
-      "h",
-      "borderTopWidth",
-      "borderTopColor",
-      "borderRadius",
-      "transform"
-     ]
     },
     {
      "n": "cabezal",
@@ -1393,14 +1329,6 @@
       "borderRadius",
       "backgroundColor",
       "display"
-     ]
-    },
-    {
-     "n": "gutter-ancho",
-     "m": ".tl-gutter",
-     "r": ".tl-gutter",
-     "props": [
-      "w"
      ]
     }
    ]

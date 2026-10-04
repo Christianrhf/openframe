@@ -328,19 +328,28 @@
     padding:0 16px;border-top:1px solid var(--line)}
 
   /* ── Línea de tiempo = .tl-gutter (148px, la maqueta) + .rail ── */
-  .tl{height:100%;min-height:0;display:grid;grid-template-columns:148px minmax(0,1fr);
-    grid-template-rows:minmax(0,1fr);column-gap:12px}
-  .tl-gutter{min-width:0;display:grid;grid-template-rows:20px minmax(32px,1fr) minmax(32px,1fr);row-gap:2px}
-  .tl-corner{align-self:end;font-size:11px;font-weight:600;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);white-space:nowrap}
-  .lane-label{display:flex;align-items:center;gap:6px;font-size:11px;
-    font-weight:600;white-space:nowrap}
-  .lane-label .nav{margin-left:auto;display:flex;gap:0}
-  .lane-label .nav button{display:grid;place-items:center;width:28px;height:28px;
-    border-radius:4px;color:var(--fg-dim)}
-  .lane-label .nav button:hover:not(:disabled){background:var(--hover)}
-  .lane-label .nav button:disabled{opacity:.3}
-  .lane-label .nav svg{width:14px;height:14px}
+  .tl{height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr)}
+  /* el timeline ocupa TODO el ancho: sin columna de etiquetas (decision del usuario).
+     «Línea de tiempo» queda solo para lectores de pantalla; el rótulo de cada carril vive
+     DENTRO del carril y las flechas de navegar junto al zoom. */
+  .tl-corner{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .lane-tag{position:absolute;left:8px;z-index:1;height:calc((100% - 2px)/2);display:flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none;color:var(--ink)}
+  .lane-tag.note{top:0}
+  .lane-tag.cambio{bottom:0}
+  .group.lane-nav{gap:0;padding:0 3px 0 8px;align-items:center}
+  .group.lane-nav .shape{margin-right:4px}
+  .group.lane-nav .shape.cambio{margin:1px 5px 1px 1px}
+  /* la fila del transporte se adapta al ANCHO REAL de la tarjeta (JS pone data-fit 0-4): primero se
+     quitan los textos accesorios, luego el total del reloj, luego formas y «medir», y en la tarjeta
+     mas estrecha (barra de proyectos desplegada) la fila baja a dos lineas en vez de desbordar */
+  .tp-row[data-fit="2"],.tp-row[data-fit="3"],.tp-row[data-fit="4"]{gap:8px}
+  .tp-row:not([data-fit="0"]) #cDetWrap,.tp-row:not([data-fit="0"]) #speed small{display:none}
+  .tp-row[data-fit="2"] .time span,.tp-row[data-fit="3"] .time span,.tp-row[data-fit="4"] .time span{display:none}
+  .tp-row[data-fit="3"] .lane-nav .shape,.tp-row[data-fit="4"] .lane-nav .shape{display:none}
+  .transport > .tp-row[data-fit="4"]{flex-wrap:wrap;row-gap:6px;flex:0 0 auto;height:auto;min-height:var(--grp)}
+  .tp-row[data-fit="4"] #speed{display:none}
   .shape{display:inline-block;flex:0 0 auto}
   .shape.note{width:10px;height:10px;border-radius:50%;background:var(--ink)}
   .shape.cambio{width:8px;height:8px;margin:1px;border:1.5px solid var(--ink);
@@ -1368,6 +1377,14 @@
              Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
         <span class="tlinfo" id="tlInfo">todo el video</span>
         <span class="spacer"></span>
+        <div class="group lane-nav" role="group" aria-label="Navegar por las notas"><i class="shape note" aria-hidden="true"></i>
+          <button class="ctl has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="[" aria-label="Nota anterior"><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
+          <button class="ctl has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]" aria-label="Nota siguiente"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
+        </div>
+        <div class="group lane-nav" role="group" aria-label="Navegar por los cambios del agente"><i class="shape cambio" aria-hidden="true"></i>
+          <button class="ctl has-tip" id="tlChgPrev" data-tip="Cambio anterior" data-key="⇧P" title="Shift+P" aria-label="Cambio anterior"><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
+          <button class="ctl has-tip" id="tlChg" data-tip="Cambio siguiente" data-key="⇧N" title="Shift+N" aria-label="Cambio siguiente"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
+        </div>
         <div class="group" role="group" aria-label="Zoom de la línea de tiempo">
             <button class="ctl has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomout"/></svg></button>
             <button class="ctl has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0" aria-label="Ver el video entero"><svg viewBox="0 0 24 24"><use href="#i-foldh"/></svg></button>
@@ -1386,27 +1403,15 @@
            la derecha con los demas controles: la banda ya no se parte por los lados. -->
       <div class="tlinesa">
         <div class="tl">
-          <div class="tl-gutter">
-            <div class="tl-corner">Línea de tiempo</div>
-            <div class="lane-label"><i class="shape note" aria-hidden="true"></i>Notas<span class="lane-total" id="laneNotasN"></span>
-              <span class="nav">
-                <button class="has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="["><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
-                <button class="has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
-              </span>
-            </div>
-            <div class="lane-label"><i class="shape cambio" aria-hidden="true"></i>Cambios<span class="lane-total" id="laneCambiosN"></span>
-              <span class="nav">
-                <button class="has-tip" id="tlChgPrev" data-tip="Cambio anterior" data-key="⇧P" title="Shift+P"><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
-                <button class="has-tip" id="tlChg" data-tip="Cambio siguiente" data-key="⇧N" title="Shift+N"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
-              </span>
-            </div>
-          </div>
+          <div class="tl-corner">Línea de tiempo</div>
           <div class="tl-rail" id="tlRail">
             <div class="ruler" id="ruler" aria-hidden="true"></div>
             <div class="scrub" id="scrub">
               <div class="rail-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
               <div class="lane-bg note" aria-hidden="true"></div>
               <div class="lane-bg cambio" aria-hidden="true"></div>
+              <div class="lane-tag note" aria-hidden="true"><i class="shape note"></i>Notas<span class="lane-total" id="laneNotasN"></span></div>
+              <div class="lane-tag cambio" aria-hidden="true"><i class="shape cambio"></i>Cambios<span class="lane-total" id="laneCambiosN"></span></div>
               <div class="played" id="fill"></div>
               <div class="playhead" id="head"></div>
             </div>
@@ -4964,6 +4969,12 @@ function updateMarks(){
   }
   pintarCarrilesGutter(porCarril);
 }
+(function(){
+  const t = document.querySelector(".transport"), r = document.querySelector(".tp-row");
+  if(!t || !r) return;
+  const f = () => { const w = t.getBoundingClientRect().width; r.dataset.fit = w > 1000 ? "0" : w > 830 ? "1" : w > 800 ? "2" : w > 660 ? "3" : "4"; };
+  new ResizeObserver(f).observe(t); f();
+})();
 /* «Notas N» / «Cambios N» del gutter (lane-label de la maqueta): cuenta TODO el
    video (no solo lo visible en la ventana con zoom, al contrario que porCarril). */
 function pintarCarrilesGutter(){
