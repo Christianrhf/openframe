@@ -345,7 +345,7 @@
      quitan los textos accesorios, luego el total del reloj, luego formas y «medir», y en la tarjeta
      mas estrecha (barra de proyectos desplegada) la fila baja a dos lineas en vez de desbordar */
   .tp-row[data-fit="2"],.tp-row[data-fit="3"],.tp-row[data-fit="4"]{gap:8px}
-  .tp-row:not([data-fit="0"]) #cDetWrap,.tp-row:not([data-fit="0"]) #speed small{display:none}
+  .tp-row:not([data-fit="0"]) #cDetWrap,.tp-row:not([data-fit="0"]) #speed small,.tp-row:not([data-fit="0"]) .tlinfo{display:none}
   .tp-row[data-fit="2"] .time span,.tp-row[data-fit="3"] .time span,.tp-row[data-fit="4"] .time span{display:none}
   .tp-row[data-fit="3"] .lane-nav .shape,.tp-row[data-fit="4"] .lane-nav .shape{display:none}
   .transport > .tp-row[data-fit="4"]{flex-wrap:wrap;row-gap:6px;flex:0 0 auto;height:auto;min-height:var(--grp)}
@@ -4970,10 +4970,25 @@ function updateMarks(){
   pintarCarrilesGutter(porCarril);
 }
 (function(){
+  /* La fila del transporte se mide contra su CONTENIDO real, no contra anchos fijos: se sube de nivel
+     (data-fit 0→4) hasta que scrollWidth <= clientWidth. Asi nada se sale de la tarjeta con relojes
+     largos, lecturas de ventana o cualquier ancho de pantalla. */
   const t = document.querySelector(".transport"), r = document.querySelector(".tp-row");
   if(!t || !r) return;
-  const f = () => { const w = t.getBoundingClientRect().width; r.dataset.fit = w > 1000 ? "0" : w > 830 ? "1" : w > 800 ? "2" : w > 660 ? "3" : "4"; };
-  new ResizeObserver(f).observe(t); f();
+  let pendiente = false;
+  const ajusta = () => {
+    pendiente = false;
+    for(let k = 0; k <= 4; k++){
+      r.dataset.fit = String(k);
+      if(r.scrollWidth <= r.clientWidth + 0.5) break;
+    }
+  };
+  const pide = () => { if(!pendiente){ pendiente = true; requestAnimationFrame(ajusta); } };
+  const ro = new ResizeObserver(pide);
+  ro.observe(t); [...r.children].forEach(c => ro.observe(c));
+  new MutationObserver(pide).observe(document.querySelector("#tcTotal") || r, {childList:true, characterData:true, subtree:true});
+  const info = document.querySelector("#tlInfo"); if(info) new MutationObserver(pide).observe(info, {childList:true, characterData:true, subtree:true});
+  ajusta();
 })();
 /* «Notas N» / «Cambios N» del gutter (lane-label de la maqueta): cuenta TODO el
    video (no solo lo visible en la ventana con zoom, al contrario que porCarril). */
