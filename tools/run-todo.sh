@@ -28,6 +28,9 @@ res test-p7 "$(CDP_PORT=9463 $PY tools/test-p7.py 2>&1 | grep -E 'checks|✘|FAL
 # p6 (arranca sus servidores: 9471 server, 9472 guest)
 rm -rf data logs; mkdir -p logs; tools/chrome.sh start 9473 >/dev/null
 res test-p6 "$(CDP_PORT=9473 $PY tools/test-p6.py 2>&1 | grep -E 'checks|FALLA' | tr '\n' ' ')"; limpia
+# bugs-r2 (los 4 hallazgos de R2 deben NO reproducirse)
+tools/chrome.sh start 9483 >/dev/null; sleep 2
+res bugs-r2 "$(CDP_PORT=9483 $PY tools/bugs-r2.py 2>&1 | tail -1)"; limpia
 # guest + ataque
 res test-guest "$(python3 tools/test-guest.py 2>&1 | tail -1)"; limpia
 res ataque "$(bash tools/run-attack.sh 2>&1 | grep -E 'SUMMARY|PASS.*FAIL|[0-9]+/[0-9]+' | tail -1)"; limpia

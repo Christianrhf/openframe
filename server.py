@@ -802,6 +802,19 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
         # guardaron notas con fps 8.0 y 3.43 medidos mal en el navegador.
         eff_fps = video_fps(slug, vid, fps)
         frame = int(frame)
+        # R2-2/R2-1: la misma regla que el PATCH (rango real del video; tramo no invertido).
+        # Heredar un hilo a otro corte (from_note) queda fuera: puede venir de un video mas largo.
+        if from_note is None:
+            _vm = read_json(os.path.join(vdir(slug, vid), "meta.json"), {})
+            _lim = int(round(float(_vm.get("duracion") or 0) * eff_fps))
+            if _lim and frame > _lim:
+                raise ValueError("fotograma %d fuera de rango (max %d)" % (frame, _lim))
+            if end_frame not in (None, "", 0):
+                _ef = int(end_frame)
+                if _ef < frame:
+                    raise ValueError("el fin del tramo (%d) no puede ser anterior al inicio (%d)" % (_ef, frame))
+                if _lim and _ef > _lim:
+                    end_frame = _lim
         n = {
             # note_id lo usa "deshacer un borrado": la nota vuelve con su MISMO id,
             # para que los marcadores de la barra y la seleccion sigan siendo validos.
@@ -1433,7 +1446,18 @@ class Handler(BaseHTTPRequestHandler):
                         limit = int(round(float(vm.get("duracion") or 0) * vfps))
                         if limit and nf > limit:
                             return self._json({"error": "fotograma %d fuera de rango (max %d)" % (nf, limit)}, 400)
+                        _oldf = int(n.get("frame") or 0)
                         n["frame"] = nf
+                        # R2-1: mover una nota con tramo conserva su duracion (antes el fin se
+                        # quedaba atras y el dibujo no aparecia en ningun fotograma)
+                        if "end_frame" not in d and n.get("end_frame") not in (None, "", 0):
+                            _ef = int(n["end_frame"]) + (nf - _oldf)
+                            if limit and _ef > limit:
+                                _ef = limit
+                            n["end_frame"] = _ef if _ef >= nf else None
+                    if ("frame" in d or "end_frame" in d) and n.get("end_frame") not in (None, "", 0) \
+                            and int(n["end_frame"]) < int(n["frame"]):
+                        return self._err(400, "el fin del tramo no puede ser anterior al inicio")
                     # recalcular timecode si se movio el frame
                     eff_fps = float(n.get("fps") or 0) or FPS_DEFAULT
                     n["timecode"] = tc_from(n["frame"], eff_fps)

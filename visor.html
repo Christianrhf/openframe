@@ -1887,7 +1887,7 @@ async function archivarProyecto(slug, archivar){
     if(r && r.ok === false){ toast("No se pudo archivar: " + (r.error||""), 3000); return; }
     // si se archivó el proyecto abierto, mover a otro para no dejar la UI colgada
     if(archivar && st.slug === slug){
-      st.slug = null; st.vid = null; guardarSesion();
+      cmpSalir(false); st.slug = null; st.vid = null; guardarSesion();   // R2-3: sin comparacion colgada
       const otro = st.proyectos.find(x => x.slug !== slug);
       if(otro) await openProject(otro.slug);
       else { renderProyectos(); toast("Proyecto archivado", 2000); }
@@ -3047,6 +3047,10 @@ async function saveNote(){
   if(!puedeEscribir()){ toast("Este enlace caducó: ya no se pueden enviar notas"); return; }
   if(st.adjustTo) return x2GuardarAjuste();
   if(st.replyTo) return saveReply();      // el cuadro esta en modo respuesta
+  if(st.replyHuerfano){                   // R2-4: la raiz se borro mientras se escribia la respuesta
+    st.replyHuerfano = false;
+    if(($("#ta").value || "").trim()){ toast("Se borr\u00f3 la nota a la que respond\u00edas. Pulsa Guardar otra vez para crearla como nota nueva.", 5000); return; }
+  }
   const val = $("#ta").value;
   // invitado con tramo marcado: la nota nace en el INICIO del tramo y llega hasta «fin»
   const tramo = (esInvitado && st.invTramo) ? st.invTramo : null;
@@ -4451,7 +4455,16 @@ function updateEditor(){
      quedaba pegado y Enter respondia al hilo viejo en silencio. Ahora, mientras haya
      un hilo apuntado, el rotulo, el placeholder y el boton lo dicen en grande; y si
      la nota apuntada ya no existe (borrada por el poll), se suelta solo. */
-  if(st.replyTo && !st.notas.find(x => x.id === st.replyTo)){ st.replyTo = null; editingId = null; }
+  if(st.replyTo && !st.notas.find(x => x.id === st.replyTo)){
+    // R2-4: la nota a la que respondias ya no existe: se suelta el hilo, pero NO en silencio
+    const hayTexto = ($("#ta").value || "").trim();
+    st.replyTo = null; editingId = null;
+    if(hayTexto){
+      // el primer Guardar solo avisa; el segundo crea la nota nueva (no se envia nada en silencio)
+      st.replyHuerfano = true;
+      toast("La nota a la que respond\u00edas se borr\u00f3. Pulsa Guardar otra vez para crear una nota nueva con tu texto en este fotograma.", 6000);
+    }
+  }
   const replying = !!st.replyTo;
   const rNota = replying ? st.notas.find(x => x.id === st.replyTo) : null;
   const lbl = $("#edLbl");
