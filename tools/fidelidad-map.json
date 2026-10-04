@@ -21,7 +21,7 @@
          "props": ["backgroundColor", "borderTopColor", "borderTopWidth", "borderRadius", "boxShadow", "position"]},
         {"n": "toast", "m": "#toast", "r": "#toast",
          "props": ["backgroundColor", "color", "borderRadius", "fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "bottom", "position"]},
-        {"n": "tipografia-mono", "m": ".video-tag", "r": ".tc",
+        {"n": "tipografia-mono", "m": ".video-tag", "r": ".time",
          "props": ["fontFamily"]},
         {"n": "anillo-de-foco", "m": "#version", "r": "#hdrCorte",
          "props": ["outlineColor"]}
@@ -83,6 +83,42 @@
         {"n": "visor-arriba", "m": ".viewer", "r": ".stage", "cm": ".main-grid", "cr": ".main-grid",
          "props": ["rely", "relx"]},
         {"n": "fondo-de-la-pagina", "m": "body", "r": "body", "props": ["backgroundColor", "overflow"]}
+      ]
+    },
+    {
+      "region": "video",
+      "captura": {"m": ".video", "r": "#screen"},
+      "pares": [
+        {"n": "video-caja", "m": ".video", "r": "#screen",
+         "props": ["backgroundColor", "borderTopLeftRadius", "borderTopRightRadius", "borderBottomLeftRadius", "overflow", "position"]},
+        {"n": "video-aspecto", "m": ".video", "r": "#screen", "props": ["aspectRatio"]},
+        {"n": "viendo-chip", "m": "#selPill", "r": "#selPill",
+         "props": ["height", "borderRadius", "backgroundColor", "color", "fontSize", "fontWeight", "display", "alignItems", "columnGap"]},
+        {"n": "viendo-chip-arriba", "m": "#selPill", "r": "#selPill", "cm": ".video", "cr": "#screen", "props": ["rely"]},
+        {"n": "viendo-chip-icono", "m": "#selPill svg", "r": "#selPill svg", "props": ["width", "height"]},
+        {"n": "segmentado", "m": "#cmpSeg", "r": "#cmpSeg",
+         "props": ["height", "borderRadius", "backgroundColor", "display", "overflow"]},
+        {"n": "segmentado-arriba", "m": "#cmpSeg", "r": "#cmpSeg", "cm": ".video", "cr": "#screen", "props": ["rely"]},
+        {"n": "segmentado-boton-activo", "m": ".vseg .vseg-btn.on", "r": "#cmpSegActual",
+         "props": ["height", "paddingLeft", "paddingRight", "borderRadius", "backgroundColor", "color", "fontFamily", "fontSize", "fontWeight"]},
+        {"n": "cortina-tirador", "m": ".cmp-handle", "r": "#cmpHandle",
+         "props": ["width", "height", "borderRadius", "borderTopWidth", "borderTopStyle", "backgroundColor"]},
+        {"n": "cortina-tirador-icono", "m": ".cmp-handle svg", "r": "#cmpHandle svg", "props": ["width", "height"]},
+        {"n": "cortina-rotulo", "m": ".cmp-tag", "r": "#cmpLblCur",
+         "props": ["borderRadius", "backgroundColor", "color", "fontFamily", "fontSize", "fontWeight", "paddingTop", "paddingLeft"]},
+        {"n": "comparando-chip", "m": ".vpill.cmp", "r": "#cmpPill",
+         "props": ["borderRadius", "backgroundColor", "color", "fontSize", "fontWeight"]},
+        {"n": "transporte-grupo", "m": ".tl-bar .group", "r": ".tp-row .group",
+         "props": ["height", "borderRadius", "borderTopWidth", "borderTopColor", "backgroundColor", "display", "alignItems", "columnGap"]},
+        {"n": "transporte-reloj", "m": ".tl-bar .time", "r": ".tp-row .time",
+         "props": ["display", "alignItems", "columnGap", "fontFamily"]},
+        {"n": "transporte-reloj-numero", "m": ".time b", "r": ".tp-row .time b",
+         "props": ["fontSize", "fontWeight", "letterSpacing"]},
+        {"n": "transporte-velocidad", "m": "#speed", "r": "#speed",
+         "props": ["height", "minWidth", "paddingLeft", "paddingRight", "borderRadius", "borderTopWidth", "borderTopColor", "backgroundColor", "fontSize", "display", "alignItems", "justifyContent", "columnGap"]},
+        {"n": "transporte-play", "m": "#bandPlay", "r": "#bPlay",
+         "props": ["width", "height", "borderRadius", "backgroundColor", "color"]},
+        {"n": "transporte-fila", "m": ".tl-bar", "r": ".tp-row", "props": ["display", "alignItems", "columnGap"]}
       ]
     }
   ]

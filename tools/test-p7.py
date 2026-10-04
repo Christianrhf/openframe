@@ -218,8 +218,12 @@ def main():
           pg.ev("[cmpWrap.style.clipPath, cmpHandle.getAttribute('aria-valuenow')]"))
     hc = r["h"]["x"] + r["h"]["w"] / 2
     check("tirador centrado en el 50 % del video (±1 px)", abs(hc - (r["fw"]["x"] + r["fw"]["w"] / 2)) <= 1, (hc, r["fw"]))
+    # y=0.65 (antes 0.3): la réplica literal (R3) puso el segmentado v02|otro|Dividir
+    # y el grupo chico «Lado a lado» arriba del video (como la maqueta); a 0.3 el punto
+    # de muestra caía ENCIMA de ese grupo en vez de sobre el video. Mismo chequeo
+    # (que capa gana a cada lado del divisor), mas abajo para no tocar esa chrome real.
     check("elementFromPoint: a la izquierda del divisor se ve el otro corte, a la derecha el actual",
-          pg.ev("(()=>{const f=fw.getBoundingClientRect();const y=f.top+f.height*0.3;"
+          pg.ev("(()=>{const f=fw.getBoundingClientRect();const y=f.top+f.height*0.65;"
                 "const a=document.elementFromPoint(f.left+f.width*0.25,y), b=document.elementFromPoint(f.left+f.width*0.75,y);"
                 "return a===v2 && (b===cv||b===v)})()"))
     # arrastre real del tirador: 25 % y 75 %
