@@ -77,10 +77,10 @@ def esperar_js(pg, expr, segundos=15, paso=0.3):
     return ultimo
 
 
-# Todas las raices deben existir simultaneamente y en el orden original.
+# Todas las raices de la pestaña activa deben existir simultaneamente y en orden.
 RECORRER = """(()=>{
   renderList();
-  return JSON.stringify({ids:[...document.querySelectorAll('#list .note')].map(n=>n.dataset.id),
+  return JSON.stringify({ids:[...document.querySelectorAll('#list .item')].map(n=>n.dataset.id),
     filtradas:x2Filtradas().length, raices:visibleNotes().length});
 })()"""
 
@@ -116,25 +116,31 @@ def main():
                      pg.ev("JSON.stringify({slug:st.slug, vid:st.vid})")):
             continue
         # todas las notas del proyecto, no solo las del video actual
-        pg.ev("st.filterVid = ''; st.x2Type='all'; st.x2Person='all'; "
+        pg.ev("st.filterVid = ''; st.x2Tab='abiertas'; st.x2Type='all'; st.x2Person='all'; "
               "st.x2Search=''; st.onlyPend=false; st.x2Drawing=false; "
               "renderList()")
-        m = json.loads(pg.ev(RECORRER))
+        abiertas = json.loads(pg.ev(RECORRER))
+        pg.ev("x2Tab('resueltas')")
+        resueltas = json.loads(pg.ev(RECORRER))
+        pg.ev("x2Tab('abiertas')")
+        ids = abiertas["ids"] + resueltas["ids"]
         disco = notas_en_disco(slug)
         # las respuestas viajan dentro de su hilo: las raices son las tarjetas
         raices_disco = [n for n in disco if not n.get("parent")]
         delvideo = [n for n in raices_disco if n.get("video") == pg.ev("st.vid")]
-        check("«%s»: %d notas en notes.json, %d raices, %d del video abierto, %d tarjetas en un hilo"
-              % (slug, len(disco), len(raices_disco), len(delvideo), len(m["ids"])),
-              len(m["ids"]) == len(delvideo) and m["filtradas"] == len(delvideo), (m, len(delvideo)))
-        check("«%s»: cada tarjeta se pinta una sola vez (sin duplicados en el hilo)" % slug,
-              len(set(m["ids"])) == len(m["ids"]), len(m["ids"]) - len(set(m["ids"])))
+        check("«%s»: Abiertas + Resueltas cubren %d notas, %d raices y %d del video abierto"
+              % (slug, len(disco), len(raices_disco), len(delvideo)),
+              len(ids) == len(delvideo) and abiertas["filtradas"] == len(abiertas["ids"])
+              and resueltas["filtradas"] == len(resueltas["ids"]),
+              (abiertas, resueltas, len(delvideo)))
+        check("«%s»: cada tarjeta aparece una sola vez entre ambas pestañas" % slug,
+              len(set(ids)) == len(ids), len(ids) - len(set(ids)))
         check("«%s»: caja desplazable y pagina fija" % slug,
               pg.ev("getComputedStyle(list).overflowY==='auto' && document.documentElement.scrollHeight<=innerHeight+2") is True)
         check("«%s»: sin controles de pagina" % slug,
               pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
         total_disco += len(delvideo)
-        total_pintadas += len(m["ids"])
+        total_pintadas += len(ids)
         pg.shot("i2-%s.png" % slug)
 
     check("en total se pintan TODAS las notas raiz de los videos abiertos (%d/%d)"
@@ -147,13 +153,14 @@ def main():
     viejas = [n for n in notas_en_disco("v02-golden-gate")
               if "drawing" not in n and "thumb" not in n]
     check("hay notas REALES sin los campos nuevos (drawing/thumb): %d" % len(viejas), len(viejas) > 0)
-    pg.ev("openProject('v02-golden-gate')")
-    esperar_js(pg, "st.slug === 'v02-golden-gate' ? 'si' : ''", 20)
+    pg.ev("openProject('v02-golden-gate')", await_promise=True)
+    esperar_js(pg, "st.slug === 'v02-golden-gate' && st.vid ? 'si' : ''", 20)
     check("una nota vieja sin drawing se pinta sin tarjeta de dibujo y sin excepcion",
-          pg.ev("(()=>{const n=st.notas.find(x=>!x.drawing && !x.parent);"
-                "if(!n) return false; x2SeguirNota(n.id); renderList();"
-                "const e=document.querySelector('.note[data-id=\"'+n.id+'\"]');"
+          pg.ev("(()=>{const n=st.notas.find(x=>x.video===st.vid && !x.drawing && !x.parent);"
+                "if(!n) return false; x2Tab(x2Abierta(n)?'abiertas':'resueltas'); x2SeguirNota(n.id);"
+                "const e=document.querySelector('.item[data-id=\"'+n.id+'\"]');"
                 "return !!e && !e.querySelector('img.thumb')})()"))
+    pg.ev("x2Tab('abiertas')")
 
     # ── reglas del hilo que el invitado tambien usa ──
     print("\n== hilo continuo: seguir solo acciones propias ==")
@@ -168,13 +175,13 @@ def main():
     check("hay un video real con mas de 5 notas raiz para probar el scroll",
           pg.ev("x2Filtradas().length") > 5, pg.ev("x2Filtradas().length"))
     check("todas las raices estan en el DOM simultaneamente",
-          pg.ev("document.querySelectorAll('#list .note').length===x2Filtradas().length") is True)
+          pg.ev("document.querySelectorAll('#list .item').length===x2Filtradas().length") is True)
     check("la lista tiene scroll propio", pg.ev("list.scrollHeight>list.clientHeight") is True)
     check("un id inexistente no mueve el hilo", pg.ev("x2SeguirNota('n_noexiste')===false") is True)
     pg.ev("renderList(); x2SeguirNota(x2Filtradas().at(-1).id)")
     time.sleep(.7)
     check("la ultima nota queda dentro del area visible",
-          pg.ev("(()=>{const a=list.querySelector('.hilo-b:last-child .note').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
+          pg.ev("(()=>{const a=list.querySelector('.hilo-b:last-child .item').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
     check("seguir una nota no anula los filtros",
           pg.ev("(()=>{const id=x2Filtradas().at(-1).id; st.x2Search='zzz-no-existe-nada';renderList();"
                 "const before=list.scrollTop,m=x2SeguirNota(id),ok=m===false&&list.scrollTop===before;"
@@ -211,7 +218,7 @@ def main():
     check("un borrador con trazos enciende «Guardar» y se marca «borrador» en la lista",
           not pg.ev("document.getElementById('bSave').disabled")
           and pg.ev("(()=>{x2SeguirNota('tmp_prueba'); renderList();"
-                    "const e=document.querySelector('.note[data-id=\"tmp_prueba\"]');"
+                    "const e=document.querySelector('.item[data-id=\"tmp_prueba\"]');"
                     "return !!e && !!e.querySelector('.draft-badge')})()"),
           pg.ev("document.getElementById('list').textContent"))
     check("x2Thumb del borrador devuelve un JPEG en data URL",

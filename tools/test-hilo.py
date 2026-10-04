@@ -139,7 +139,7 @@ def fixture():
     return slug, video, link
 
 
-BOXES = """[...document.querySelectorAll('.topbar,.tp-row,.tlctrls,.editor,.side-head,.filter')]
+BOXES = """[...document.querySelectorAll('.topbar,.tp-row,.tlctrls,.composer,.side-head,.filterbar')]
   .filter(e=>e.offsetParent!==null).every(e=>e.scrollHeight<=e.clientHeight+2&&e.scrollWidth<=e.clientWidth+2)"""
 
 
@@ -159,48 +159,49 @@ def browser(slug, video, link):
             pg.ev('invEnviarNombre()', await_promise=True)
         else:
             pg.ev('openProject(' + json.dumps(slug) + ')', await_promise=True)
-        check(('invitado' if guest else 'anfitrion') + ' carga fixture',
-              wait_js(pg, f'st.slug==={json.dumps(slug)} && x2Filtradas().length>=160'))
+        min_abiertas = 159 if guest else 161
+        check(('invitado' if guest else 'anfitrion') + ' carga fixture en Abiertas',
+              wait_js(pg, f'st.slug==={json.dumps(slug)} && st.x2Tab==="abiertas" && x2Filtradas().length>={min_abiertas}'))
         for w, h in ((1280, 800), (1440, 900), (1600, 1000)):
             tag = f'{"invitado" if guest else "anfitrion"} {w}x{h}'
             pg.viewport(w, h, reload=False)
-            pg.ev("st.x2Search='';st.x2Type='all';st.x2Person='all';st.onlyPend=false;st.x2Drawing=false;renderList()")
+            pg.ev("st.x2Tab='abiertas';st.x2Search='';st.x2Type='all';st.x2Person='all';st.onlyPend=false;st.x2Drawing=false;renderList()")
             first_ms = pg.ev('Number(list.dataset.renderMs)')
-            check(tag + ' todas las raices presentes', pg.ev("list.querySelectorAll('.note').length===x2Filtradas().length"))
+            check(tag + ' todas las entradas de Abiertas presentes', pg.ev("list.querySelectorAll('.item').length===x2Filtradas().length"))
             check(tag + ' sin controles de pagina', pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page,.x2pager')"))
             check(tag + ' scroll propio vertical', pg.ev("list.scrollHeight>list.clientHeight&&getComputedStyle(list).overflowY==='auto'"))
             check(tag + ' pagina sin scroll', pg.ev('document.documentElement.scrollHeight<=innerHeight+2&&document.documentElement.scrollWidth<=innerWidth+2&&scrollY===0'))
             check(tag + ' otras cajas sin scroll', pg.ev(BOXES))
-            check(tag + ' orden video/frame/id', pg.ev("JSON.stringify([...list.querySelectorAll('.note')].map(n=>n.dataset.id))===JSON.stringify(x2Filtradas().map(n=>n.id))"))
-            check(tag + ' respuesta anidada', pg.ev("!!list.querySelector('[data-hilo=h000] [data-rid=r001]')&&!list.querySelector('.note[data-id=r001]')"))
+            check(tag + ' orden video/frame/id', pg.ev("JSON.stringify([...list.querySelectorAll('.item')].map(n=>n.dataset.id))===JSON.stringify(x2Filtradas().map(n=>n.id))"))
+            check(tag + ' respuesta anidada', pg.ev("!!list.querySelector('[data-hilo=h000] .reply[data-rid=r001]')&&!list.querySelector('.item[data-id=r001]')"))
             pg.ev("activarMarcador(st.notas.find(n=>n.id==='h119'))")
             check(tag + ' marcador deja nota visible', wait_js(pg, "(()=>{const a=list.querySelector('[data-id=h119]').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()"))
-            check(tag + ' contorno unico de 2 px', pg.ev("list.querySelectorAll('.note.on').length===1&&getComputedStyle(list.querySelector('.note.on')).outlineWidth==='2px'&&getComputedStyle(list.querySelector('.note.on'),'::before').display==='none'"))
+            check(tag + ' contorno unico de 2 px', pg.ev("(()=>{const e=list.querySelector('.item.sel'),s=getComputedStyle(e),p=getComputedStyle(e,'::before');return list.querySelectorAll('.item.sel').length===1&&s.borderTopWidth==='1px'&&s.borderTopColor!=='rgba(0, 0, 0, 0)'&&s.boxShadow.includes(s.borderTopColor)&&s.boxShadow.includes('0px 0px 0px 1px')&&s.outlineStyle==='none'&&p.content==='none'})()"))
             pg.ev('list.scrollTop=0;saltarANota("h119")', await_promise=True)
             time.sleep(.7)
-            check(tag + ' repetir seleccion tambien desplaza', visible(pg, '.note[data-id=h119]'))
-            pg.click('.note[data-id=h000]')
+            check(tag + ' repetir seleccion tambien desplaza', visible(pg, '.item[data-id=h119]'))
+            pg.click('.item[data-id=h000]')
             time.sleep(.7)
-            check(tag + ' clic en tarjeta tambien sigue la seleccion', visible(pg, '.note[data-id=h000].on'))
+            check(tag + ' clic en tarjeta tambien sigue la seleccion', visible(pg, '.item[data-id=h000].sel'))
             pg.ev("ta.blur();document.body.focus()")
             pg.key('n')
             time.sleep(.7)
-            check(tag + ' atajo de nota recorre el hilo', visible(pg, '.note.on'))
+            check(tag + ' atajo de nota recorre el hilo', visible(pg, '.item.sel'))
             pg.ev("st.x2Drawing=true;renderList()")
-            check(tag + ' filtro de dibujo', pg.ev("list.querySelectorAll('.note').length===1&&!!list.querySelector('[data-id=h050]')"))
-            pg.ev("st.x2Drawing=false;st.onlyPend=true;renderList()")
-            check(tag + ' filtro pendientes', pg.ev("!list.querySelector('[data-id=h015]')&&list.querySelectorAll('.note').length>0"))
-            pg.ev("st.onlyPend=false;st.x2Person='invitado';renderList()")
-            check(tag + ' filtro autor', pg.ev("[...list.querySelectorAll('.note')].every(n=>n.dataset.who==='invitado')&&list.querySelectorAll('.note').length>=160"))
+            check(tag + ' filtro de dibujo', pg.ev("list.querySelectorAll('.item').length===1&&!!list.querySelector('[data-id=h050]')"))
+            pg.ev("st.x2Drawing=false;x2Tab('resueltas')")
+            check(tag + ' pestanas separan abiertas y resueltas', pg.ev("!!list.querySelector('.item[data-id=h015]')&&[...list.querySelectorAll('.item')].every(n=>!x2Abierta(st.notas.find(x=>x.id===n.dataset.id)))"))
+            pg.ev("x2Tab('abiertas');st.x2Person='invitado';renderList()")
+            check(tag + ' filtro autor', pg.ev("[...list.querySelectorAll('.item')].every(n=>n.dataset.who==='invitado')&&list.querySelectorAll('.item').length===x2Filtradas().length&&list.querySelectorAll('.item').length>=159"))
             pg.ev("st.x2Person='all';st.x2Type='cambio';renderList()")
-            check(tag + ' filtro tipo', pg.ev("list.querySelectorAll('.note').length===" + ('0' if guest else '1')))
+            check(tag + ' filtro tipo', pg.ev("list.querySelectorAll('.item').length===" + ('0' if guest else '1')))
             pg.ev("st.x2Type='all';renderList()")
             if not guest:
                 pg.ev('saltarANota("a001")', await_promise=True)
                 time.sleep(.7)
-                check(tag + ' cambio visible y seleccionado', visible(pg, '.note.change.on'))
+                check(tag + ' cambio visible y seleccionado', visible(pg, '.item.change.sel'))
             pg.ev("x2Search.value='HILO 159';x2Search.dispatchEvent(new Event('input'))")
-            check(tag + ' busqueda y contador N de M', pg.ev("list.querySelectorAll('.note').length===1&&/^1 de \\d+$/.test(hiloCount.textContent)"))
+            check(tag + ' busqueda y contador N de M', pg.ev("list.querySelectorAll('.item').length===1&&/^1 de \\d+$/.test(hiloCount.textContent)"))
             check(tag + ' filtro excluyente no mueve scroll', pg.ev("(()=>{const top=list.scrollTop;return x2SeguirNota('h001')===false&&list.scrollTop===top})()"))
             pg.ev("x2Search.value='';x2Search.dispatchEvent(new Event('input'))")
             pg.ev("cancelReply();list.scrollTop=200;window.__lectura={sel:st.selId,top:list.scrollTop};window.__ancla=[...list.children].find(n=>n.getBoundingClientRect().bottom>list.getBoundingClientRect().top);window.__aid=__ancla.dataset.hilo;window.__y=__ancla.getBoundingClientRect().top")
@@ -220,14 +221,14 @@ def browser(slug, video, link):
             time.sleep(.8)
             nid = pg.ev('st.notas.find(n=>n.text===' + json.dumps(text) + ')?.id')
             check(tag + ' nota nueva guardada', isinstance(nid, str))
-            check(tag + ' nota nueva dentro de caja', visible(pg, '.note[data-id=' + str(nid) + ']'))
+            check(tag + ' nota nueva dentro de caja', visible(pg, '.item[data-id=' + str(nid) + ']'))
             check(tag + ' nota nueva seleccionada', pg.ev('st.selId===' + json.dumps(nid)))
             pg.ev('startReply("h000");ta.value=' + json.dumps('Respuesta ' + tag))
             pg.ev('saveReply()', await_promise=True)
             time.sleep(.7)
             rid = pg.ev('st.notas.find(n=>n.text===' + json.dumps('Respuesta ' + tag) + ')?.id')
             check(tag + ' respuesta nueva guardada', isinstance(rid, str))
-            check(tag + ' respuesta nueva dentro de caja', visible(pg, '.rep[data-rid=' + str(rid) + ']'))
+            check(tag + ' respuesta nueva dentro de caja', visible(pg, '.reply[data-rid=' + str(rid) + ']'))
             check(tag + ' respuesta nueva sigue en su hilo', pg.ev('st.notas.find(n=>n.id===' + json.dumps(rid) + ')?.parent==="h000"'))
             # Variar seleccion obliga a reconstruir; 5 muestras, layout incluido.
             times = pg.ev("(()=>{const out=[];for(let i=0;i<5;i++){st.selId=i%2?'h001':'h002';const t=performance.now();renderList();void list.scrollHeight;out.push(performance.now()-t)}return out})()")

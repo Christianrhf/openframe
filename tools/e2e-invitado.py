@@ -349,7 +349,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
                   "return e && e.offsetParent !== null;}))" % json.dumps(ocultos))
     check("15 controles de Cristian OCULTOS (offsetParent null)", falla == "[]", falla)
     visibles = ["#invBanner", "#bPlay", "#ta", "#bSave", "#bEnd", "#bGo", "[data-tool=pen]",
-                "#swBtn", "#cPend", "#bErase", "#scrub"]
+                "#swBtn", "#filtersBtn", "#filterBar .seg-btn[data-type=all]", "#bErase", "#scrub"]
     falta = pg.ev("JSON.stringify(%s.filter(s => {const e=document.querySelector(s); "
                   "return !e || e.offsetParent === null;}))" % json.dumps(visibles))
     check("controles de revision DISPONIBLES", falta == "[]", falta)
@@ -384,7 +384,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
           ("Invitado · " + NOMBRE) in (pg.ev("document.getElementById('list').textContent") or ""),
           pg.ev("document.getElementById('list').textContent"))
     check("la tarjeta lleva data-who=invitado",
-          pg.ev("!!document.querySelector('.note[data-who=\"invitado\"]')"))
+          pg.ev("!!document.querySelector('.item[data-who=\"invitado\"]')"))
 
     # ── nota con dibujo ──
     # Desde la fase 2 del porte el trazo es un BORRADOR local (`tmp_`) y texto +
@@ -494,7 +494,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("el jpeg existe en disco",
           nmini and os.path.isfile(os.path.join(ROOT, "thumbs", SLUG, nmini["thumb"])))
     pg.ev("setThumbs(true)")
-    cargada = esperar_js(pg, "(()=>{const i=[...document.querySelectorAll('.note img.thumb')]"
+    cargada = esperar_js(pg, "(()=>{const i=[...document.querySelectorAll('.item img.thumb')]"
                              ".find(x=>x.src.indexOf(%s)>=0); return i && i.complete && i.naturalWidth>0})()"
                          % json.dumps(nmini["thumb"] if nmini else "x"), 10)
     check("la miniatura se descarga por /thumbs de la puerta y se pinta", cargada)
@@ -570,7 +570,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     # El hilo ya esta montado; seguir es una accion explicita de lectura.
     pg.ev("x2SeguirNota(%s); renderList()" % json.dumps(n1["id"]))
     check("la respuesta de Cristian se pinta como «Cristian», no como invitado",
-          pg.ev("!!document.querySelector('.rep[data-who=\"cristian\"]')"),
+          pg.ev("!!document.querySelector('.reply[data-who=\"cristian\"] .item-top strong') && document.querySelector('.reply[data-who=\"cristian\"] .item-top strong').textContent==='Cristian'"),
           (pg.ev("document.getElementById('hiloCount').textContent"),
            pg.ev("document.getElementById('list').textContent")))
     pg.shot("i04-hilo-con-cristian.png")
@@ -685,7 +685,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     pg.click("#bSave")
     time.sleep(1.6)
     check("la nota nueva del invitado queda dentro de la caja",
-          pg.ev("(()=>{const n=[...list.querySelectorAll('.note')].find(n=>n.textContent.includes('ULTIMA-DEL-INVITADO'));"
+          pg.ev("(()=>{const n=[...list.querySelectorAll('.item')].find(n=>n.textContent.includes('ULTIMA-DEL-INVITADO'));"
                 "if(!n)return false;const a=n.getBoundingClientRect(),b=list.getBoundingClientRect();"
                 "return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
     check("el hilo del invitado permite scroll propio",
@@ -745,8 +745,8 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("Cristian ve la insignia «Invitado · Nombre» en las notas del invitado", texto == "si",
           (cp.ev("document.getElementById('list').textContent") or "")[:300])
     check("las notas del invitado NO se confunden con las de Cristian (data-who distinto)",
-          cp.ev("!!document.querySelector('.note[data-who=\"invitado\"]') && "
-                "!!document.querySelector('.note[data-who=\"cristian\"]')"))
+          cp.ev("!!document.querySelector('.item[data-who=\"invitado\"]') && "
+                "!!document.querySelector('.item[data-who=\"cristian\"]')"))
     cp.shot("i05-cristian-insignia.png")
 
     # ── popover Compartir contra los endpoints reales ──
@@ -857,7 +857,7 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
     check("la nota del invitado aparece sola en la app de Cristian (sondeo) en < 8 s",
           visto is not None and visto < 8, TIEMPOS["nota del invitado visible en la app de Cristian"])
     check("y llega con la insignia «Invitado · Nombre»",
-          cp.ev("(()=>{const n=[...document.querySelectorAll('.note')].find(x=>x.textContent.indexOf('MEDIDA-LATENCIA')>=0);"
+          cp.ev("(()=>{const n=[...document.querySelectorAll('.item')].find(x=>x.textContent.indexOf('MEDIDA-LATENCIA')>=0);"
                 "return !!n && n.dataset.who==='invitado' && n.textContent.indexOf('Invitado · %s')>=0})()" % NOMBRE))
     check("el sondeo conserva la lectura y seleccion de Cristian",
           cp.ev("({top:list.scrollTop,sel:st.selId})") == lectura_antes)
@@ -968,6 +968,12 @@ def correr(ADMIN, GATE):  # noqa: C901  (es un recorrido lineal, se lee de arrib
           pg.ev("JSON.stringify([...document.querySelectorAll("
                 "'[data-approve],[data-adjust],[data-redecide],.approve-btn,.adjust-btn')].length)") == "0",
           pg.ev("document.getElementById('list').innerHTML.length"))
+    check("el invitado no ve Resolver/Mover/Borrar/Comparar y solo edita entradas propias",
+          pg.ev("(()=>{const prohibidos=list.querySelectorAll('.resolve-btn,.move-btn,.del-btn,.approve-btn,.adjust-btn,.redecide-btn,.compare-btn');"
+                "const entradas=[...list.querySelectorAll('.item,.reply')];"
+                "return prohibidos.length===0&&entradas.every(e=>{const id=e.dataset.id||e.dataset.rid,n=st.notas.find(x=>x.id===id);"
+                "return !!e.querySelector('.edit-btn')===esMia(n)})})()"),
+          pg.ev("JSON.stringify([...list.querySelectorAll('.item,.reply')].map(e=>[e.dataset.id||e.dataset.rid,!!e.querySelector('.edit-btn')]))"))
     pg.ev("x2Aprobar(%s); x2PedirAjuste(%s); true" % (json.dumps(N_CAMBIO), json.dumps(N_CAMBIO)))
     time.sleep(1.0)
     ncam = nota_por_id(ADMIN, SLUG, N_CAMBIO)

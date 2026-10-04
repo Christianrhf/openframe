@@ -187,7 +187,7 @@ def run_state(pg, w, h, state, nombre):
     pg.viewport(w, h)
     abrir_proyecto(pg, nombre)
     if state == 'sel':
-        pg.ev("(document.querySelector('.note')||{click(){}}).click()")
+        pg.ev("(document.querySelector('.item')||{click(){}}).click()")
         pg.sleep(.5)
     elif state == 'keys':
         pg.ev("typeof p6KeysAbrir==='function' && p6KeysAbrir()")

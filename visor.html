@@ -1054,6 +1054,13 @@
     /* sigue siendo fijo (no crece con el texto), solo mas estrecho */
     .tp-row .tlinfo{flex:0 0 150px;width:150px}
   }
+  @media (max-width:1300px){
+    /* Sin rail, el invitado gana 30px de ancho: a 1280 el 16:9 resultante hacia
+       crecer la tarjeta 16px fuera de la ventana cuando transporte envuelve.
+       Reservar la segunda linea en la formula mantiene la pagina fija. */
+    body.invitado .screen,body.invitado .transport{
+      width:min(100%,calc((100cqh - var(--tl) - var(--dock) - 42px) * 1.7777778))}
+  }
   @media (max-width:1700px){
     /* lectura real accesoria: se oculta antes de forzar una segunda línea; la fila
        principal conserva literalmente sus 40 px y ningún control queda recortado */
@@ -2509,6 +2516,14 @@ function x2SeguirNota(id){
   // vista. El resultado visual (misma alineacion "nearest") es el que importa,
   // no la animacion.
   el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  /* Con content-visibility:auto la primera pasada puede usar el alto intrinseco
+     estimado del bloque. Materializar la tarjeta y repetir el mismo ajuste evita
+     que quede unos pixeles fuera cuando su alto real sustituye a la estimacion. */
+  void el.getBoundingClientRect().height;
+  el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  requestAnimationFrame(() => {
+    if(el.isConnected) el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  });
   return true;
 }
 
@@ -4772,12 +4787,7 @@ let drag = null;
       reales, no en "% del ancho") se funde en UN `.cluster-marker` con el
       numero de miembros: nunca quedan dos cajas pisandose. */
 function activarMarcador(n){
-  st.selId = raizDe(n).id;
-  if(esRespuesta(n)) st.plegados[st.selId] = false;
-  st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
-  if(n.kind === "cambio"){ editingId = null; setDirty(false); }
-  $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor();
-  x2SeguirNota(n.id);
+  return saltarANota(n.id);
 }
 // hora/autor/estado en una linea, para el aria-label y la vista previa (P4-d)
 function etiquetaMarcador(n){
