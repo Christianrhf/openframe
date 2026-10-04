@@ -26,7 +26,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cdp import Page  # noqa: E402
 
-API = "http://127.0.0.1:9441"
+API = os.environ.get("P4_API", "http://127.0.0.1:9441").rstrip("/")
 SLUG = "prueba-p4"
 
 checks = []
@@ -251,14 +251,30 @@ def main():
     # ── 0 excepciones de pagina en toda la sesion ──
     check("cero excepciones de pagina", not pg.errors, pg.errors)
 
-    # ── sin scroll en los tres anchos de referencia (regla global) ──
-    for w, h in ((1280, 800), (1440, 900), (1600, 1000)):
+    # ── sin scroll ni controles recortados en los cuatro tamaños de entrega ──
+    for w, h in ((1280, 800), (1440, 900), (1600, 1000), (1920, 1080)):
         pg.viewport(w, h, clear_storage=False)
         pg.ev("[...document.querySelectorAll('.pitem')].find(e=>e.textContent.includes('%s'))?.click()" % SLUG)
         time.sleep(.4)
         m = json.loads(pg.ev("JSON.stringify({page:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],"
                               "view:[innerWidth,innerHeight]})"))
         check("sin scroll de pagina %dx%d" % (w, h), m["page"] == m["view"], m)
+        recortes = json.loads(pg.ev("""JSON.stringify((()=>{
+          const grupos = [['.tp-row','.tp-row > *:not(.spacer)'],['#tools','#tools > *:not(.spacer)']];
+          const mal=[];
+          for(const [padreSel,hijosSel] of grupos){
+            const p=document.querySelector(padreSel), pr=p&&p.getBoundingClientRect();
+            if(!pr) continue;
+            for(const e of document.querySelectorAll(hijosSel)){
+              if(getComputedStyle(e).display==='none') continue;
+              const r=e.getBoundingClientRect();
+              if(r.left < pr.left-1 || r.right > pr.right+1 || r.top < pr.top-1 || r.bottom > pr.bottom+1)
+                mal.push({padre:padreSel,el:e.id||e.className,caja:[r.left,r.top,r.right,r.bottom],limite:[pr.left,pr.top,pr.right,pr.bottom]});
+            }
+          }
+          return mal;
+        })())"""))
+        check("sin controles recortados %dx%d" % (w, h), not recortes, recortes)
         pg.shot("p4-%dx%d.png" % (w, h))
 
     check("cero excepciones de pagina (tras cambios de viewport)", not pg.errors, pg.errors)

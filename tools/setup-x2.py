@@ -53,9 +53,14 @@ def main():
 
     notas = []
     for i in range(1, NOTAS + 1):
+        payload = {"video": vid, "frame": i * 7, "author": "cristian",
+                   "text": "Nota de Cristian numero %d" % i}
+        # La segunda nota cubre un tramo para que el arnés visual compare también
+        # la barra de duración de la maqueta, no solo marcadores puntuales.
+        if i == 2:
+            payload["end_frame"] = i * 7 + 8
         st, d = http("POST", api + "/api/proyectos/%s/notas" % slug,
-                     {"video": vid, "frame": i * 7, "author": "cristian",
-                      "text": "Nota de Cristian numero %d" % i})
+                     payload)
         notas.append((d.get("nota") or {}).get("id"))
     for i in range(1, CAMBIOS + 1):
         http("POST", api + "/api/proyectos/%s/notas" % slug,
