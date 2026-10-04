@@ -507,10 +507,21 @@ class Handler(BaseHTTPRequestHandler):
         shared = [n for n in data.get("notas", [])
                   if isinstance(n, dict) and n.get("video") == vid]
         if link.get("ve_otras"):
-            return shared
+            return self._sin_ronda(shared)
         own_ids = {n.get("id") for n in shared if n.get("enlace_id") == link.get("id")}
-        return [n for n in shared
-                if n.get("enlace_id") == link.get("id") or n.get("parent") in own_ids]
+        return self._sin_ronda([n for n in shared
+                                if n.get("enlace_id") == link.get("id") or n.get("parent") in own_ids])
+
+    @staticmethod
+    def _sin_ronda(notas):
+        """P5: el cierre de ronda es de Cristian. `enviada_el` (si una nota de
+        anfitrion llega por `ve_otras`) no sale por la puerta."""
+        return [{k: v for k, v in n.items() if k != "enviada_el"} for n in notas]
+
+    @staticmethod
+    def _sin_estado(videos):
+        """P5: el estado del corte (revision/con_agente/aprobado) no sale por la puerta."""
+        return [{k: v for k, v in v_.items() if k != "revision"} for v_ in videos]
 
     @staticmethod
     def _stroke_points(stroke):
@@ -655,7 +666,8 @@ class Handler(BaseHTTPRequestHandler):
             visible = self._visible(session)
             if visible is None:
                 return self._404(enlace_id)
-            pdata["videos"] = [v for v in pdata.get("videos", []) if v.get("id") == vid]
+            pdata["videos"] = self._sin_estado(
+                [v for v in pdata.get("videos", []) if v.get("id") == vid])
             pdata["notas"] = visible
             return self._json(pdata, enlace_id=enlace_id)
         if re.fullmatch(r"/api/notas/" + re.escape(slug), path):

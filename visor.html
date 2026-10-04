@@ -320,7 +320,39 @@
     border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg-mute)}
   .x2pager button{width:28px;height:28px;border:1px solid var(--line);border-radius:5px;display:grid;place-items:center}
   .x2pager button:disabled{opacity:.3;cursor:default}
-  .x2round{font:10px var(--mono);color:var(--fg-dim);white-space:nowrap}
+  /* ── P5 · cierre de ronda ──
+     El estado del corte se lee por TEXTO + FORMA (reloj / avion / roseta), nunca
+     por color: el visor es blanco y negro y el color vive solo en los pinceles. */
+  .x2round{font:10px var(--mono);color:var(--fg-dim);white-space:nowrap;display:inline-flex;
+    align-items:center;gap:4px;height:20px;padding:0 6px;border:1px solid var(--line);
+    border-radius:10px;background:var(--panel-2)}
+  .x2round svg{width:11px;height:11px;flex:0 0 11px}
+  .x2round.est-con_agente{border-color:var(--fg);color:var(--fg);font-weight:600}
+  .x2round.est-aprobado{border-color:var(--fg);border-width:2px;color:var(--fg);font-weight:600}
+  .p5pop{position:fixed;z-index:910;width:252px;background:var(--raised);border:1px solid var(--line);
+    border-radius:9px;box-shadow:0 8px 26px var(--shadow-soft);padding:9px 11px;display:none;flex-direction:column;gap:5px}
+  .p5pop.on{display:flex}
+  .p5pop[hidden]{display:none}
+  .p5pop h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--fg-mute);display:flex;align-items:center;gap:6px}
+  .p5pop h3 svg{width:12px;height:12px;flex:0 0 12px;color:var(--fg-mute)}
+  .p5row{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--fg-mute);min-height:18px}
+  .p5row b{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--fg)}
+  .p5acts{display:flex;gap:5px;margin-top:5px;padding-top:7px;border-top:1px solid var(--line-soft)}
+  .p5acts button{flex:1;min-height:28px;padding:0 7px;border:1px solid var(--line);border-radius:5px;
+    font-size:11px;display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+  .p5acts button svg{width:12px;height:12px}
+  .p5acts button:hover:not(:disabled){background:var(--hover)}
+  .p5acts button:disabled{opacity:.35;cursor:default}
+  .p5acts button.pri:not(:disabled){background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+  /* la tarjeta es estrecha: el estado cae a su propia linea en vez de partirse */
+  .pitem .pmeta{flex-wrap:wrap;row-gap:2px}
+  .pmeta .pest{display:inline-flex;align-items:center;gap:3px;color:var(--fg-mute);white-space:nowrap}
+  .pmeta .pest svg{width:10px;height:10px;flex:0 0 10px}
+  .sent-badge{display:inline-flex;align-items:center;gap:3px;font:9.5px var(--mono);
+    border:1px solid var(--line);border-radius:4px;padding:1px 4px;color:var(--fg-mute);white-space:nowrap}
+  .sent-badge svg{width:9px;height:9px}
+  body.invitado .x2round, body.invitado .p5pop{display:none !important}
   .note.change{border:1px solid var(--fg);border-left-width:3px;margin:6px 8px;padding:8px;border-radius:6px;background:var(--panel)}
   .note.change::before{display:none}
   .note.change .tcx{border-style:dashed}
@@ -914,6 +946,12 @@
     <g id="i-ver"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></g>
     <!-- i-share2: compartir con un enlace (Lucide share-2, geometria exacta de lucide-react) -->
     <g id="i-share2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></g>
+    <!-- i-send: enviar al Agente (Lucide send, geometria exacta de lucide-react) -->
+    <g id="i-send"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></g>
+    <!-- i-badgecheck: corte aprobado (Lucide badge-check) -->
+    <g id="i-badgecheck"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></g>
+    <!-- i-clock: en revision (Lucide clock) -->
+    <g id="i-clock"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>
   </defs>
 </svg>
 
@@ -1075,11 +1113,29 @@
     <div class="shlist" id="shList"></div>
   </div>
 
+  <!-- P5 · Cierre de ronda: resumen + las dos acciones. Vive en el body (nada lo
+       recorta) y se ancla bajo el estado del corte. El invitado no lo tiene. -->
+  <div class="p5pop" id="p5Pop" role="dialog" aria-label="Cierre de ronda" hidden>
+    <h3><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>Ronda</h3>
+    <div class="p5row">Notas nuevas <b id="p5Nuevas">0</b></div>
+    <div class="p5row">Con dibujo <b id="p5Dibujo">0</b></div>
+    <div class="p5row">Cambios sin revisar <b id="p5SinRev">0</b></div>
+    <div class="p5row">Cambios aprobados <b id="p5Aprob">0</b></div>
+    <div class="p5row">Cambios con ajuste <b id="p5Ajuste">0</b></div>
+    <div class="p5acts">
+      <button id="p5Send" title="Marcar las notas pendientes como enviadas y pasar el corte a «Con el Agente»"><svg viewBox="0 0 24 24"><use href="#i-send"/></svg>Enviar al Agente</button>
+      <button class="pri" id="p5Approve" title="Aprobar el corte (sin pendientes ni ajustes abiertos)"><svg viewBox="0 0 24 24"><use href="#i-badgecheck"/></svg>Aprobar corte</button>
+    </div>
+  </div>
+
   <div class="side">
     <div class="side-head">
       <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
       <h2>Notas</h2>
-      <span class="x2round" id="roundStatus">Con el Agente</span>
+      <button class="x2round" id="roundStatus" aria-haspopup="dialog" aria-expanded="false"
+              title="Estado del corte y cierre de ronda" aria-label="Estado del corte y cierre de ronda">
+        <svg viewBox="0 0 24 24"><use href="#i-clock" id="roundIcon"/></svg><span id="roundTxt">En revisión</span>
+      </button>
       <span class="cnt" id="cnt">0</span>
     </div>
     <div class="x2filters" aria-label="Filtros de conversación">
@@ -1520,7 +1576,9 @@ function snapNota(n){
           // fotograma de la raiz: dos notas donde habia un hilo
           parent:n.parent || null, kind:n.kind || "nota", created:n.created || null,
           from_note:n.from_note || null, from_video:n.from_video || null,
-          resuelve:n.resuelve || null, visto:!!n.visto, decision:n.decision || null};
+          resuelve:n.resuelve || null, visto:!!n.visto, decision:n.decision || null,
+          // P5: si no viaja aqui, deshacer un borrado devolveria la nota "sin enviar"
+          enviada_el:n.enviada_el || null};
 }
 function pushUndo(etiqueta, acc){
   // si hay rehacer pendiente, se descarta: se esta haciendo una accion nueva
@@ -1615,6 +1673,10 @@ async function aplicarAccionHist(a, rehaciendo, slug){
     const src = rehaciendo ? a.despues : a.antes, patch = {};
     for(const k of a.cambios) patch[k] = src[k];
     await api(P(slug)+"/notas/"+a.antes.id, {method:"PATCH", body:JSON.stringify(patch)});
+  }else if(a.tipo === "estado"){
+    // P5: el estado del CORTE (no de una nota) entra en la misma pila de deshacer
+    await api(P(slug)+"/videos/"+a.video, {method:"PATCH",
+      body:JSON.stringify({estado: rehaciendo ? a.despues : a.antes})});
   }
 }
 
@@ -1632,7 +1694,9 @@ function renderProyectos(){
       '<div class="pmeta"><span class="vd">' + p.videos + ' vid</span>' +
       '<span class="pn">' + p.notas + ' nota' + (p.notas===1?'':'s') + '</span>' +
       (p.pendientes ? '<span class="pz">' + p.pendientes + ' pend</span>' : '') +
-      (p.cambios ? '<span class="pz chg">' + p.cambios + ' cambios</span>' : '') + '</div>' +
+      (p.cambios ? '<span class="pz chg">' + p.cambios + ' cambios</span>' : '') +
+      // P5: estado del corte actual, por TEXTO + FORMA (nunca por color)
+      p5EstadoChip(p.revision) + '</div>' +
       '<button class="parch has-tip" title="Archivar este proyecto" data-tip="Archivar">' +
         '<svg viewBox="0 0 24 24"><use href="#i-arch"/></svg></button>';
     el.onclick = (ev) => { if(ev.target.closest(".parch")) return; openProject(p.slug); };
@@ -1655,7 +1719,8 @@ function renderProyectos(){
       e2.className = "pitem arch";
       e2.innerHTML = '<div class="pname">' + esc(p.nombre) + '</div>' +
         '<div class="pmeta"><span class="vd">' + p.videos + ' vid</span>' +
-        '<span class="pn">' + p.notas + ' nota' + (p.notas===1?'':'s') + '</span></div>' +
+        '<span class="pn">' + p.notas + ' nota' + (p.notas===1?'':'s') + '</span>' +
+        p5EstadoChip(p.revision) + '</div>' +
         '<button class="parch" title="Sacar de archivados" data-tip="Desarchivar">' +
           '<svg viewBox="0 0 24 24"><use href="#i-up"/></svg></button>';
       e2.onclick = (ev) => {
@@ -2024,10 +2089,9 @@ function renderList(){
   const all = todos.filter(n => n.kind !== "cambio");
   const pend = all.filter(n => !n.resolved).length;
   $("#cnt").textContent = all.length ? all.length + " · " + pend + " pend." + (cambios ? " · " + cambios + " cambios" : "") : "0";
-  const rs = $("#roundStatus");
-  // La aprobacion del corte pertenece a la fase 5. En esta tanda, decidir cambios
-  // individuales nunca saca automaticamente el video de «Con el Agente».
-  if(rs) rs.textContent = "Con el Agente";
+  // P5: el estado del corte y el resumen de la ronda salen de los datos, no de
+  // la UI. Decidir cambios individuales NUNCA cambia el estado por si solo.
+  p5Actualizar();
   if(!filtradas.length){
     L.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>' +
       (todos.length ? "Nada coincide con los filtros." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
@@ -2075,7 +2139,9 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="' + quien + '">' +
       '<span class="phdot" title="Aqui esta el cursor del video"></span>' +
       '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span>' +
-      rng + who + '<strong>' + esc(x2Numero(n)) + '</strong>' + (String(n.id).startsWith("tmp_") ? '<span class="draft-badge">borrador</span>' : '') + pastilla + deOtra + '</div>' +
+      rng + who + '<strong>' + esc(x2Numero(n)) + '</strong>' + (String(n.id).startsWith("tmp_") ? '<span class="draft-badge">borrador</span>' : '') + pastilla + deOtra +
+      // P5: insignia de "ya viajo al Agente" (solo para el anfitrion)
+      (!esInvitado && n.enviada_el ? '<span class="sent-badge" title="Enviada al Agente" aria-label="Enviada al Agente"><svg viewBox="0 0 24 24"><use href="#i-send"/></svg>enviada</span>' : '') + '</div>' +
       '<div class="txt">' + txt + '</div></div>' + th +
       '<div class="acts">' +
       '<button class="rp has-tip" data-rp="' + esc(n.id) + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
@@ -2182,6 +2248,146 @@ async function x2Reconsiderar(id){
     await pullDetail(); renderList(); updateMarks();
   }catch(e){ toast("No se pudo cambiar la decisión: "+e.message,4000); }
 }
+/* ═══ P5 · CIERRE DE RONDA Y ESTADO DEL CORTE ═══
+   El estado vive en la meta del VIDEO (`revision:{estado, desde}`), no en el
+   navegador: si no existe el campo, el corte esta «En revisión». Las dos acciones
+   («Enviar al Agente» y «Aprobar corte») son del anfitrión y entran en la pila
+   unica de deshacer. Decision ya tomada: el corte sigue «Con el Agente» hasta que
+   Cristian aprueba, aunque no queden pendientes. */
+const P5_EST = {
+  revision:   {txt:"En revisión",   icono:"#i-clock"},
+  con_agente: {txt:"Con el Agente", icono:"#i-send"},
+  aprobado:   {txt:"Corte aprobado", icono:"#i-badgecheck"}
+};
+// chip del estado para la tarjeta del proyecto: icono (forma) + texto, sin color
+function p5EstadoChip(rev){
+  const e = rev && P5_EST[rev.estado] ? rev.estado : "revision";
+  return '<span class="pest" title="Estado del corte: ' + P5_EST[e].txt + '">' +
+         '<svg viewBox="0 0 24 24"><use href="' + P5_EST[e].icono + '"/></svg>' +
+         esc(P5_EST[e].txt) + '</span>';
+}
+function p5Estado(v){
+  const m = v || vmeta();
+  const e = m && m.revision ? m.revision.estado : null;
+  return P5_EST[e] ? e : "revision";
+}
+/* Notas de la ronda = las raices del video actual que no son cambios.
+   «pendiente» usa la MISMA regla que el servidor: raiz sin resolver. */
+function p5Resumen(){
+  const del = st.notas.filter(n => !esRespuesta(n) && n.video === st.vid);
+  const notas = del.filter(n => n.kind !== "cambio");
+  const cambios = del.filter(n => n.kind === "cambio");
+  const pend = notas.filter(n => !n.resolved);
+  const nuevas = pend.filter(n => !n.enviada_el);
+  return {
+    pendientes: pend.length,
+    nuevas: nuevas.length,
+    dibujo: nuevas.filter(n => n.drawing && n.drawing.strokes && n.drawing.strokes.length).length,
+    sinRevisar: cambios.filter(n => !n.decision).length,
+    aprobados: cambios.filter(n => n.decision === "approved").length,
+    ajustes: cambios.filter(n => n.decision === "adjust").length
+  };
+}
+function p5Actualizar(){
+  const b = $("#roundStatus"); if(!b) return;
+  const est = p5Estado(), r = p5Resumen();
+  $("#roundIcon").setAttribute("href", P5_EST[est].icono);
+  $("#roundTxt").textContent = est === "revision" && r.pendientes
+    ? r.pendientes + (r.pendientes === 1 ? " pendiente" : " pendientes")
+    : P5_EST[est].txt;
+  b.classList.remove("est-revision", "est-con_agente", "est-aprobado");
+  b.classList.add("est-" + est);
+  b.setAttribute("aria-label", "Estado del corte: " + P5_EST[est].txt + " · cierre de ronda");
+  for(const [id, v] of [["#p5Nuevas", r.nuevas], ["#p5Dibujo", r.dibujo],
+                        ["#p5SinRev", r.sinRevisar], ["#p5Aprob", r.aprobados],
+                        ["#p5Ajuste", r.ajustes]]){
+    const e = $(id); if(e) e.textContent = v;
+  }
+  const s = $("#p5Send"), a = $("#p5Approve");
+  // sin notas nuevas no hay nada que enviar; un corte aprobado ya no se cierra
+  if(s) s.disabled = !st.vid || est === "aprobado" || r.nuevas === 0;
+  // «Aprobar corte»: solo si no quedan pendientes NI ajustes abiertos
+  if(a) a.disabled = !st.vid || est === "aprobado" || r.pendientes > 0 || r.ajustes > 0;
+}
+let p5PopAbierto = false;
+function p5PopCerrar(){
+  if(!p5PopAbierto) return;
+  p5PopAbierto = false;
+  $("#p5Pop").hidden = true; $("#p5Pop").classList.remove("on");
+  $("#roundStatus").setAttribute("aria-expanded", "false");
+}
+function p5PopAbrir(){
+  if(esInvitado) return;
+  const pop = $("#p5Pop"), r = $("#roundStatus").getBoundingClientRect();
+  p5PopAbierto = true;
+  pop.hidden = false; pop.classList.add("on");
+  pop.style.top = Math.round(r.bottom + 6) + "px";
+  pop.style.right = Math.round(window.innerWidth - r.right) + "px";
+  $("#roundStatus").setAttribute("aria-expanded", "true");
+  p5Actualizar();
+}
+async function p5SetEstado(estado, etiqueta, extras){
+  // extras = acciones de nota que forman parte de la MISMA accion deshacible
+  const antes = p5Estado(), vid = st.vid;
+  if(!vid) return;
+  const acciones = (extras || []).concat([{tipo:"estado", video:vid, antes:antes, despues:estado}]);
+  await api(P(st.slug)+"/videos/"+vid, {method:"PATCH", body:JSON.stringify({estado:estado})});
+  pushUndo(etiqueta, {tipo:"multi", acciones:acciones});
+}
+async function p5Enviar(){
+  if(esInvitado) return;
+  const r = p5Resumen();
+  if(!st.vid || p5Estado() === "aprobado" || r.nuevas === 0) return;
+  const destino = st.notas.filter(n => !esRespuesta(n) && n.video === st.vid &&
+                                       n.kind !== "cambio" && !n.resolved && !n.enviada_el);
+  const cuando = new Date().toISOString();
+  const rotulo = destino.length + (destino.length === 1 ? " nota enviada" : " notas enviadas") + " al Agente";
+  // las escrituras van con busyNote puesto (el poll no pisa la lista a mitad);
+  // el refresco va DESPUES de soltarlo, porque absorbDetail lo respeta.
+  let ok = false;
+  try{
+    await withBusyNote(async () => {
+      const extras = [];
+      for(const n of destino){
+        const antes = snapNota(n);
+        await api(P(st.slug)+"/notas/"+n.id, {method:"PATCH", body:JSON.stringify({enviada_el:cuando})});
+        extras.push({tipo:"campo", antes:antes,
+                     despues:Object.assign({}, antes, {enviada_el:cuando}), cambios:["enviada_el"]});
+      }
+      await p5SetEstado("con_agente", rotulo, extras);
+    });
+    ok = true;
+  }catch(e){ toast("No se pudo enviar: "+e.message, 4000); }
+  await pull(true); await pullDetail();
+  renderProyectos(); renderList(); renderVideos(); updateMarks(); actualizarBotonUndo();
+  if(ok){ p5PopCerrar(); toast(rotulo); }
+}
+async function p5Aprobar(){
+  if(esInvitado) return;
+  const r = p5Resumen();
+  if(!st.vid || p5Estado() === "aprobado") return;
+  if(r.pendientes > 0 || r.ajustes > 0){
+    toast("Quedan " + r.pendientes + " pendientes y " + r.ajustes + " ajustes abiertos", 3200);
+    return;
+  }
+  try{
+    await p5SetEstado("aprobado", "corte aprobado", []);
+    await pull(true); await pullDetail();
+    renderProyectos(); renderList(); renderVideos(); actualizarBotonUndo();
+    p5PopCerrar();
+    toast("Corte aprobado");
+  }catch(e){ toast("No se pudo aprobar: "+e.message, 4000); }
+}
+if(!esInvitado){
+  $("#roundStatus").onclick = ev => { ev.stopPropagation(); p5PopAbierto ? p5PopCerrar() : p5PopAbrir(); };
+  $("#p5Send").onclick = () => p5Enviar();
+  $("#p5Approve").onclick = () => p5Aprobar();
+  document.addEventListener("pointerdown", ev => {
+    if(p5PopAbierto && !$("#p5Pop").contains(ev.target) && !$("#roundStatus").contains(ev.target)) p5PopCerrar();
+  }, true);
+  document.addEventListener("keydown", ev => { if(ev.key === "Escape" && p5PopAbierto) p5PopCerrar(); });
+}
+
 async function delNote(id){
   if(esInvitado) return;
   await withBusyNote(async ()=>{

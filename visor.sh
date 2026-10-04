@@ -51,7 +51,10 @@ visor.sh — revision de video con notas por fotograma
   subir <slug> <archivo> [--sin-heredar]
                                    sube un video y trae los hilos ABIERTOS del corte anterior
   estado <slug>                    resumen del proyecto
-  notas <slug> [todas|pendientes]  lista las notas (default: pendientes)
+  estado <slug> <video-id>         estado del corte (revision|con_agente|aprobado)
+  estado <slug> <video-id> <nuevo> cambia el estado del corte
+  notas <slug> [todas|pendientes|enviadas]
+                                   lista las notas (default: pendientes)
   nota <slug> <video-id> <frame> "<texto>" [fin-frame]   deja una nota
   responder <slug> <nota-id> "<texto>"   responde EN el hilo (id de la raiz o de una respuesta)
   cambio <slug> <video-id> <frame> "<que cambiaste>" [--por <nota-id>]
@@ -218,7 +221,29 @@ for n in d.get("notas", []): print("  %s  %s  %s" % (n["id"], n["timecode"], (n.
     ;;
 
   estado|st|info)
-    SLUG="${1:-}"; [ -z "$SLUG" ] && { echo "uso: visor.sh estado <slug>" >&2; exit 1; }
+    SLUG="${1:-}"; VID="${2:-}"; NUEVO="${3:-}"
+    [ -z "$SLUG" ] && { echo "uso: visor.sh estado <slug> [<video-id> [revision|con_agente|aprobado]]" >&2; exit 1; }
+    # Con video: lee o cambia el estado del CORTE. El resumen del proyecto sigue
+    # siendo `estado <slug>` a secas (no se rompe ningun uso anterior).
+    if [ -n "$VID" ]; then
+      if [ -n "$NUEVO" ]; then
+        case "$NUEVO" in
+          revision|con_agente|aprobado) ;;
+          *) echo "ERROR: estado invalido: $NUEVO (usa revision | con_agente | aprobado)" >&2; exit 1 ;;
+        esac
+        curl -s -X PATCH "$API/api/proyectos/$SLUG/videos/$VID" \
+          -H 'Content-Type: application/json' -d "{\"estado\":\"$NUEVO\"}" \
+          | j 'r=d.get("revision",{})
+print("ESTADO %s -> %s (desde %s)" % (d.get("video","?"), r.get("estado","?"), r.get("desde","") or "-"))'
+        exit $?
+      fi
+      curl -sf "$API/api/proyectos/$SLUG" | j 'v=next((x for x in d.get("videos",[]) if x["id"]=="'"$VID"'"), None)
+if not v: sys.exit("ERROR: no existe el video '"$VID"' en '"$SLUG"'")
+r=v.get("revision") or {}
+print("%s  %s  estado: %s%s" % (v["id"], v.get("nombre","?"), r.get("estado","revision"),
+      ("  desde " + r["desde"]) if r.get("desde") else ""))'
+      exit $?
+    fi
     curl -sf "$API/api/proyectos/$SLUG" | j '
 p=d.get("proyecto",{}); vs=d.get("videos",[]); ns=d.get("notas",[])
 print("PROYECTO: %s (%s)" % (p.get("nombre","?"), p.get("slug","?")))
@@ -231,7 +256,9 @@ for v in vs:
         v.get("fps") or "?", v.get("ancho") or "?", v.get("alto") or "?",
         "" if v.get("reproducible") else "   [NO REPRODUCIBLE]"))
     n=[x for x in ns if x["video"]==v["id"]]
-    print("             notas: %d (%d pendientes)" % (len(n), len([x for x in n if not x["resolved"]])))
+    print("             notas: %d (%d pendientes)   corte: %s" % (
+        len(n), len([x for x in n if not x["resolved"]]),
+        (v.get("revision") or {}).get("estado","revision")))
 if not vs: print("  (ninguno)")
 print("TOTAL NOTAS: %d (%d pendientes)" % (len(ns), len([x for x in ns if not x["resolved"]])))
 '
@@ -249,7 +276,11 @@ for v in vs:
 
   notas|notes|ns)
     SLUG="${1:-}"; MODO="${2:-pendientes}"
-    [ -z "$SLUG" ] && { echo "uso: visor.sh notas <slug> [todas|pendientes]" >&2; exit 1; }
+    [ -z "$SLUG" ] && { echo "uso: visor.sh notas <slug> [todas|pendientes|enviadas]" >&2; exit 1; }
+    case "$MODO" in
+      todas|pendientes|enviadas) ;;
+      *) echo "ERROR: modo invalido: $MODO (usa todas | pendientes | enviadas)" >&2; exit 1 ;;
+    esac
     curl -sf "$API/api/notas/$SLUG" | python3 -c '
 import sys, json
 d = json.load(sys.stdin)
@@ -258,7 +289,11 @@ ns = [n for n in todas_ if not n.get("parent")]      # solo raices: las respuest
 reps = {}
 for r in todas_:
     if r.get("parent"): reps.setdefault(r["parent"], []).append(r)
-todo = "'"$MODO"'" != "pendientes"
+modo = "'"$MODO"'"
+todo = modo != "pendientes"
+solo_enviadas = modo == "enviadas"
+if solo_enviadas:
+    ns = [n for n in ns if n.get("enviada_el")]
 vs = {}
 import urllib.request
 # usa $API, no la URL fija: con VISOR_API apuntando a otro puerto esto consultaba
@@ -269,7 +304,7 @@ try:
 except Exception:
     pass
 if not ns:
-    print("(sin notas%s)" % ("" if todo else " pendientes"))
+    print("(sin notas%s)" % (" enviadas" if solo_enviadas else "" if todo else " pendientes"))
     sys.exit(0)
 print("NOTAS (%d de %d)" % (len(ns) if todo else len([n for n in ns if not n["resolved"]]), len(ns)))
 import re
@@ -285,13 +320,16 @@ for n in ns:
         cur = n["video"]
         vn = vs.get(cur, {}).get("nombre", cur)
         fps = vs.get(cur, {}).get("fps") or n.get("fps") or "?"
-        print("\n== %s  (video %s, %s fps)" % (vn, cur, fps))
+        # P5: el estado del corte va en la cabecera del video. Sin el campo = revision.
+        corte = (vs.get(cur, {}).get("revision") or {}).get("estado", "revision")
+        print("\n== %s  (video %s, %s fps, corte: %s)" % (vn, cur, fps, corte))
     rng = "  -> %s" % n["end_timecode"] if n.get("end_timecode") else ""
     st_ = " [CERRADA]" if n["resolved"] else (" [RESPONDIDA]" if n.get("estado") == "respondida" else "")
     dr = " [dibujo]" if n.get("drawing") else ""
+    env = (" [enviada %s]" % n["enviada_el"][:16]) if n.get("enviada_el") else ""
     inv = n.get("author") == "invitado"
     who = (" [INVITADO: %s]" % limpia(n.get("autor_nombre") or "sin nombre")) if inv else ""
-    print("  %s  f%-6d %-7s%s%s%s%s" % (n["id"], n["frame"], n["timecode"], rng, st_, dr, who))
+    print("  %s  f%-6d %-7s%s%s%s%s%s" % (n["id"], n["frame"], n["timecode"], rng, st_, dr, env, who))
     for line in (n.get("text") or "").split("\n"):
         if line.strip():
             print("      " + (("| " + limpia(line)) if inv else line))

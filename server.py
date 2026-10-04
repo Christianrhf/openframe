@@ -255,6 +255,41 @@ def publicar_watchdog():
             pass
 
 
+# ── P5: estado de revision de un video ─────────────────────────
+# Vive en la meta del video como `revision:{estado, desde}`. Es OPCIONAL: un
+# meta.json antiguo (sin el campo) vale «revision», asi que no hay migracion.
+REV_ESTADOS = ("revision", "con_agente", "aprobado")
+REV_DEFECTO = "revision"
+
+
+def rev_estado(meta):
+    """{estado, desde} normalizado de la meta de un video. Nunca lanza."""
+    r = (meta or {}).get("revision")
+    if not isinstance(r, dict):
+        return {"estado": REV_DEFECTO, "desde": ""}
+    estado = r.get("estado")
+    if estado not in REV_ESTADOS:
+        estado = REV_DEFECTO
+    desde = r.get("desde")
+    return {"estado": estado, "desde": desde if isinstance(desde, str) else ""}
+
+
+def set_rev_estado(slug, vid, estado):
+    """Escribe el estado de revision del video. Devuelve {estado, desde}."""
+    if estado not in REV_ESTADOS:
+        raise ValueError("estado invalido: usa %s" % " | ".join(REV_ESTADOS))
+    mp = os.path.join(vdir(slug, vid), "meta.json")
+    with LOCK:
+        cur = read_json(mp, None)
+        if not cur:
+            raise ValueError("video no existe")
+        nuevo = {"estado": estado, "desde": now_iso()}
+        cur["revision"] = nuevo
+        write_json(mp, cur)
+        bump()
+    return nuevo
+
+
 def load_videos(slug):
     root = os.path.join(pdir(slug), "videos")
     out = []
@@ -264,6 +299,8 @@ def load_videos(slug):
         m = read_json(os.path.join(root, vid, "meta.json"), None)
         if m:
             m["id"] = vid
+            # derivado al leer: la UI y la CLI reciben siempre el campo completo
+            m["revision"] = rev_estado(m)
             out.append(m)
     out.sort(key=lambda v: v.get("created", ""))
     return out
@@ -574,6 +611,12 @@ def api_proyectos():
                                   if n.get("kind") == "cambio" and n.get("visto")),
             "archivado": bool(m.get("archivado")),
             "archivado_el": m.get("archivado_el", ""),
+            # P5: estado del CORTE ACTUAL (el video mas reciente) para la tarjeta
+            # del proyecto. Sin videos no hay corte que revisar: «revision».
+            "revision": (vids[-1]["revision"] if vids
+                         else {"estado": REV_DEFECTO, "desde": ""}),
+            # notas ya enviadas al Agente en la ronda abierta
+            "enviadas": sum(1 for n in notes if n.get("enviada_el")),
         }
         (arch if item["archivado"] else out).append(item)
     # lo mas reciente primero (igual que los videos dentro de un proyecto)
@@ -724,7 +767,7 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
              kind="nota", parent=None, created=None,
              from_note=None, from_video=None, resuelve=None, visto=False,
              decision=None,
-             autor_nombre=None, enlace_id=None):
+             autor_nombre=None, enlace_id=None, enviada_el=None):
     # R1b: un fotograma gigante (p. ej. 10**400) desbordaba `frame / fps` con OverflowError -> 500.
     for _nm, _v in (("fotograma", frame), ("fotograma de salida", end_frame)):
         if _nm == "fotograma de salida" and _v in (None, "", 0):
@@ -809,6 +852,10 @@ def add_note(slug, vid, frame, text, end_frame=None, author="claude",
             n["visto"] = True
         if decision in ("approved", "adjust"):
             n["decision"] = decision
+        # P5: se acepta por la API para que "deshacer un borrado" devuelva la nota
+        # con su marca de enviada intacta.
+        if isinstance(enviada_el, str) and enviada_el and len(enviada_el) <= 40 and parse_iso(enviada_el):
+            n["enviada_el"] = enviada_el
         if end_frame not in (None, "", 0):
             n["end_timecode"] = tc_from(int(end_frame), eff_fps)
             n["end_time"] = round(int(end_frame) / eff_fps, 3)
@@ -1260,7 +1307,8 @@ class Handler(BaseHTTPRequestHandler):
                                  d.get("kind", "nota"), d.get("parent"),
                                  d.get("created"), d.get("from_note"),
                                  d.get("from_video"), d.get("resuelve"),
-                                 bool(d.get("visto")), d.get("decision"), nombre, enlace_id)
+                                 bool(d.get("visto")), d.get("decision"), nombre, enlace_id,
+                                 None if valid_gate else d.get("enviada_el"))
                 except ValueError as e:
                     return self._err(400, str(e))
                 return self._json({"nota": n}, 201)
@@ -1309,9 +1357,25 @@ class Handler(BaseHTTPRequestHandler):
         # HTTP/1.1 el navegador se quedaba esperando hasta el timeout y la UI parecia
         # colgada en lugar de decir "no se pudo guardar".
         try:
+            p = urlsplit(self.path).path
+            m = re.match(r"^/api/proyectos/([A-Za-z0-9][A-Za-z0-9.-]{0,63})/videos/(v_[0-9a-f]{8})$", p)
+            if m:
+                return self._patch_video(m.group(1), m.group(2))
             return self._patch_nota()
         except Exception as e:
             return self._err500(e)
+
+    def _patch_video(self, slug, vid):
+        """P5: cambiar el estado de revision del corte. Unico campo que acepta."""
+        d = self._jbody()
+        if "estado" not in d:
+            return self._err(400, "falta estado (%s)" % " | ".join(REV_ESTADOS))
+        try:
+            nuevo = set_rev_estado(slug, vid, d["estado"])
+        except ValueError as e:
+            code = 404 if str(e) == "video no existe" else 400
+            return self._err(code, str(e))
+        return self._json({"ok": True, "video": vid, "revision": nuevo})
 
     def _patch_nota(self):
         p = self.path.split("?")[0]
@@ -1337,6 +1401,16 @@ class Handler(BaseHTTPRequestHandler):
                     for k in ("text", "resolved", "visto", "resuelve"):
                         if k in d:
                             n[k] = d[k]
+                    # P5: `enviada_el` = cuando la nota viajo al Agente. Opcional;
+                    # null/"" lo quita (asi Ctrl+Z revierte «Enviar al Agente»).
+                    if "enviada_el" in d:
+                        ev = d["enviada_el"]
+                        if ev in (None, ""):
+                            n.pop("enviada_el", None)
+                        elif isinstance(ev, str) and len(ev) <= 40 and parse_iso(ev):
+                            n["enviada_el"] = ev
+                        else:
+                            return self._err(400, "enviada_el invalido")
                     if "decision" in d:
                         if d["decision"] in ("approved", "adjust"):
                             n["decision"] = d["decision"]
