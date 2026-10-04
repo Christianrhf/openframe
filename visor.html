@@ -171,6 +171,7 @@
   .vitem.on{background:var(--raised);border-color:var(--on-border)}
   .vitem .vn{font-size:12px;font-weight:500;margin-bottom:4px;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:5px}
+  .vitem .vnt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .vitem .vc{font-size:11px;color:var(--fg-mute);font-family:var(--mono);display:flex;gap:7px;flex-wrap:wrap}
   .badge{font-size:11px;padding:1px 5px;border-radius:3px;background:var(--raised);
     color:var(--fg-mute);border:1px solid var(--line);font-family:var(--mono);flex:0 0 auto}
@@ -1961,7 +1962,8 @@ function renderVideos(){
     el.className = "vitem" + (x.id===st.vid ? " on" : "");
     const pct = ns.length ? Math.round(100*pend/ns.length) : 0;
     el.innerHTML = '<div class="vn"><svg viewBox="0 0 24 24" style="width:11px;height:11px;opacity:.6;flex:0 0 11px"><use href="#i-film"/></svg>' +
-      esc(x.nombre) + (x.reproducible===false ? ' <span class="badge no">no</span>' : '') + '</div>' +
+      '<span class="vnt">' + esc(x.nombre) + '</span>' +
+      (x.reproducible===false ? ' <span class="badge no">no</span>' : '') + '</div>' +
       '<div class="vc"><span>' + (x.codec||"?") + '</span>' +
       (x.duracion ? '<span>' + x.duracion.toFixed(1) + 's</span>' : '') +
       (x.fps ? '<span>' + x.fps + 'fps</span>' : '') + '</div>' +
@@ -3547,7 +3549,7 @@ const P6_ATAJOS = [
   {g:"Notas",        t:["Ctrl+Entrar"], d:"Enviar la nota o la respuesta",  inv:true, btn:"#bSave"},
   {g:"Dibujo",       t:["B","F","R"], d:"Lápiz, flecha, rectángulo",        inv:true},
   {g:"Dibujo",       t:["C"],         d:"Cambiar el color del pincel",      inv:true, btn:"#swBtn"},
-  {g:"Dibujo",       t:["⌫"],         d:"Borrar el dibujo del fotograma",   inv:true, btn:"#bErase"},
+  {g:"Dibujo",       t:["Retroceso"], d:"Borrar el dibujo del fotograma",   inv:true, btn:"#bErase"},
   {g:"Dibujo",       t:["Ctrl+Z"],    d:"Deshacer",                         inv:true, btn:"#bUndo"},
   {g:"Dibujo",       t:["Ctrl+⇧+Z"],  d:"Rehacer",                          inv:true, btn:"#bRedo"},
   {g:"General",      t:["Esc"],       d:"Cerrar lo que esté abierto",       inv:true},
@@ -3628,7 +3630,9 @@ function p6KeysCerrar(){
   if(!pop || pop.hidden) return;
   pop.hidden = true; pop.classList.remove("on");
   if(b) b.setAttribute("aria-expanded", "false");
-  const volver = (p6KeysFoco && p6KeysFoco.isConnected) ? p6KeysFoco : b;
+  // el foco vuelve a donde estaba; si era el propio <body> (no enfocable), al boton
+  const previo = p6KeysFoco;
+  const volver = (previo && previo.isConnected && previo !== document.body) ? previo : b;
   p6KeysFoco = null;
   if(volver && volver.focus) volver.focus();
 }

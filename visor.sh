@@ -40,48 +40,79 @@ if isinstance(d, dict) and d.get('error'):
 $1"
 }
 
+# Ayuda: TODOS los comandos, cada uno con un ejemplo que se puede copiar y pegar.
 usage() {
 cat <<'EOF'
 visor.sh — revision de video con notas por fotograma
+Uso: visor.sh <comando> [argumentos]      (visor.sh ayuda = esta pantalla)
 
-  proyectos                        lista proyectos activos
-  proyectos --todos               incluye los archivados
-  archivar <slug> [on|off]        archiva o devuelve un proyecto (no borra nada)
+PROYECTOS
+  proyectos                        lista los proyectos activos
+      visor.sh proyectos
+  proyectos --todos                incluye tambien los archivados
+      visor.sh proyectos --todos
   nuevo <nombre> [cliente] [nota]  crea un proyecto
+      visor.sh nuevo "Animales sueltos" "Estudio X" "primer corte"
+  archivar <slug> [on|off]         archiva o devuelve un proyecto (no borra nada)
+      visor.sh archivar animales-sueltos on
+  estado <slug>                    resumen del proyecto (notas, cambios, corte de cada video)
+      visor.sh estado animales-sueltos
+
+VIDEOS Y ESTADO DEL CORTE
+  vids <slug>                      lista los videos con id, fps y duracion
+      visor.sh vids animales-sueltos
   subir <slug> <archivo> [--sin-heredar]
-                                   sube un video y trae los hilos ABIERTOS del corte anterior
-  estado <slug>                    resumen del proyecto
-  estado <slug> <video-id>         estado del corte (revision|con_agente|aprobado)
+                                   sube un corte nuevo y hereda los hilos ABIERTOS del anterior
+      visor.sh subir animales-sueltos trailer-corte2.mov
+  estado <slug> <video-id>         lee el estado del corte (revision|con_agente|aprobado)
+      visor.sh estado animales-sueltos v_1a2b3c4d
   estado <slug> <video-id> <nuevo> cambia el estado del corte
+      visor.sh estado animales-sueltos v_1a2b3c4d con_agente
+
+NOTAS
   notas <slug> [todas|pendientes|enviadas]
-                                   lista las notas (default: pendientes)
-  nota <slug> <video-id> <frame> "<texto>" [fin-frame]   deja una nota
+                                   lista las notas (por defecto: pendientes)
+      visor.sh notas animales-sueltos enviadas
+  nota <slug> <video-id> <frame> "<texto>" [fin-frame]   deja una nota (fin-frame = tramo)
+      visor.sh nota animales-sueltos v_1a2b3c4d 341 "el logo sale 2s temprano" 400
   responder <slug> <nota-id> "<texto>"   responde EN el hilo (id de la raiz o de una respuesta)
+      visor.sh responder animales-sueltos n_1a2b3c4d "corregido en el corte 2"
+  resolver <slug> <nota-id>        marca una nota como resuelta (cierra el hilo)
+      visor.sh resolver animales-sueltos n_1a2b3c4d
+  desmarcar <slug> <nota-id>       vuelve a abrir una nota cerrada
+      visor.sh desmarcar animales-sueltos n_1a2b3c4d
+  resolver-todas <slug>            resuelve todas las pendientes del proyecto
+      visor.sh resolver-todas animales-sueltos
+  borrar-nota <slug> <nota-id>     elimina una nota (y su hilo)
+      visor.sh borrar-nota animales-sueltos n_1a2b3c4d
+
+CAMBIOS DEL AGENTE
   cambio <slug> <video-id> <frame> "<que cambiaste>" [--por <nota-id>]
                                    marca un cambio. --por = la nota que lo motivo
-  cambios-lista <slug>                    lista los cambios marcados, por timecode
-  ajustes <slug>                          lista los cambios devueltos para ajuste
-  borrar-cambio <slug> <cambio-id>       quita un marcador de cambio
-  resolver <slug> <nota-id>        marca una nota como resuelta
-  resolver-todas <slug>            resuelve todas las pendientes
-  desmarcar <slug> <nota-id>       vuelve a abrir una nota
-  borrar-nota <slug> <nota-id>     elimina una nota
-  vids <slug>                      lista los videos con id, fps y duracion
+      visor.sh cambio animales-sueltos v_1a2b3c4d 341 "logo movido 3 fotogramas" --por n_1a2b3c4d
+  cambios-lista <slug>             lista los cambios marcados, por timecode
+      visor.sh cambios-lista animales-sueltos
+  ajustes <slug>                   lista los cambios devueltos para ajuste (con lo que se pide)
+      visor.sh ajustes animales-sueltos
+  borrar-cambio <slug> <cambio-id> quita un marcador de cambio
+      visor.sh borrar-cambio animales-sueltos n_1a2b3c4d
+
+INVITADOS (enlaces privados, uno por video)
   invitar <slug> <vid> [--dias N] [--etiqueta T] [--ve-otras]
                                    crea un enlace privado para ese video
-  invitados [slug]                lista enlaces, uso y notas
-  revocar <slug> <vid> <id>       revoca un enlace de inmediato
+      visor.sh invitar animales-sueltos v_1a2b3c4d --dias 7 --etiqueta "Cliente" --ve-otras
+  invitados [slug]                 lista enlaces, estado, usos y notas recibidas
+      visor.sh invitados animales-sueltos
+  revocar <slug> <vid> <id>        revoca un enlace de inmediato
+      visor.sh revocar animales-sueltos v_1a2b3c4d ebff277c
 
-Ejemplos:
-  visor.sh subir animales-sueltos trailer.mov
-  visor.sh notas animales-sueltos
-  visor.sh nota animales-sueltos v_1a2b3c4d 341 "el logo sale 2s temprano" 400
+Atajos del visor: abre la chuleta con la tecla ? (o el boton del teclado en la barra).
 EOF
 }
 
 cmd="${1:-}"; shift 2>/dev/null || true
 case "$cmd" in
-  ""|-h|--help|help) usage; exit 0 ;;
+  ""|-h|--help|help|ayuda) usage; exit 0 ;;
 esac
 
 ensure_up || exit 1
