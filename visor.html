@@ -1011,19 +1011,16 @@
     <g id="i-ver"><path d="M4 7h10"/><path d="m11 4 3 3-3 3"/><path d="M20 17H10"/><path d="m13 14-3 3 3 3"/></g>
     <!-- i-share2: compartir con un enlace (Lucide share-2, geometria exacta de lucide-react) -->
     <g id="i-share2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></g>
-<<<<<<< HEAD
     <!-- i-send: enviar al Agente (Lucide send, geometria exacta de lucide-react) -->
     <g id="i-send"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></g>
     <!-- i-badgecheck: corte aprobado (Lucide badge-check) -->
     <g id="i-badgecheck"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></g>
     <!-- i-clock: en revision (Lucide clock) -->
     <g id="i-clock"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>
-=======
     <!-- i-cols: comparar dos cortes lado a lado (Lucide columns-2, geometria exacta de lucide-react) -->
     <g id="i-cols"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></g>
     <!-- i-curtain: tirador de la cortina (Lucide chevrons-left-right, geometria exacta de lucide-react) -->
     <g id="i-curtain"><path d="m9 7-5 5 5 5"/><path d="m15 7 5 5-5 5"/></g>
->>>>>>> bP7
   </defs>
 </svg>
 
@@ -3300,25 +3297,16 @@ $("#bPrev").onclick = () => stepF(-1);
 $("#bNext").onclick = () => stepF(1);
 $("#bBack").onclick = () => stepS(-1);
 $("#bFwd").onclick = () => stepS(1);
-<<<<<<< HEAD
-$("#bMax").onclick = () => { (v.requestFullscreen||v.webkitRequestFullscreen||function(){}).call(v); };
-$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
-=======
 $("#bMax").onclick = () => {
   // comparando, la pantalla completa es la escena entera (los dos cortes), no solo #v
   const el = cmpEstado().on ? $("#screen") : v;
   (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);
 };
-$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; renderList(); };
-$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; renderList(); };
->>>>>>> bP7
+$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
 $("#x2Prev").onclick = () => { if(st.x2Page>0){ st.x2Page--; renderList(); } };
 $("#x2Next").onclick = () => { st.x2Page++; renderList(); };
 new ResizeObserver(() => renderList()).observe($("#list"));
