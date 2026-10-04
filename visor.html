@@ -76,15 +76,16 @@
        De abajo arriba: regleta (solo con zoom) · pista de progreso · marcadores.
        Las medidas se declaran aqui y en ningun otro sitio, para que el apilado de
        marcadores no pueda volver a empujar la caja (eso era el descuadre del zoom). */
-    --scrub-h:32px;      /* alto de la banda: constante en cualquier zoom */
+    /* ── DOS CARRILES de la maqueta (.lane, min-height 32px cada uno): la banda ya
+       no es una pista fina con marcadores apilados, son dos cajas con tinte propio,
+       una por tipo (notas / cambios). --lane-px es el alto de cada carril y
+       --mark-base centra el carril 0 dentro de esa caja. */
+    --lane-px:36px;
+    --mark-base:18px;
+    --scrub-h:72px;      /* alto de la banda: los dos carriles juntos */
     --track-y:4px;       /* la pista, medida desde el suelo de la banda */
     --track-h:5px;
-    --mark-base:9px;     /* la fila 0 de marcadores arranca justo sobre la pista */
-    --mark-h:9px;        /* alto de un marcador */
-    /* separacion ENTRE LOS DOS CARRILES (notas / cambios, Fase 4/P4). Tiene que
-       caber el .cluster-marker mas alto (16px) con hueco de sobra en el peor
-       caso (un grupo pegado a la linea del otro carril): 16 + 4px de margen. */
-    --lane-px:20px;
+    --mark-h:9px;        /* alto de un marcador (legado: lo pisan .mark/.mark.cambio) */
     --rule-h:6px;        /* la regleta del video entero, pegada bajo la pista */
     /* radios y tipografia: los de la maqueta (tarjeta 8, control 6, pieza menuda 4) */
     --radius:8px;--radius-ctl:6px;--radius-xs:4px;
@@ -320,37 +321,76 @@
     background:var(--paper);border:1px solid var(--line);
     border-radius:0 0 var(--radius) var(--radius);
     padding:8px 12px 7px;display:flex;flex-direction:column;gap:0}
-  .transport > .tlinesa{padding-bottom:9px}
+  .transport > .tlinesa{padding:10px 0 12px}
   .transport > .tp-row{border-top:1px solid var(--line-soft);padding-top:7px}
-  .transport > .tools{border-top:1px solid var(--line-soft);padding-top:7px;margin-top:6px}
-  .scrub{position:relative;height:var(--scrub-h);cursor:pointer;display:flex;align-items:center;
+  /* .tools = el dock «Anotar» de la maqueta: su propia franja de --dock (56px),
+     a ancho de tarjeta completo (compensa el padding de .transport con margenes
+     negativos, igual que la maqueta separa timeline-panel y dock en dos cajas). */
+  .transport > .tools{height:var(--dock);flex:0 0 var(--dock);margin:6px -12px -7px 0;
+    padding:0 16px;border-top:1px solid var(--line-soft)}
+
+  /* ── Línea de tiempo = .tl-gutter (148px, la maqueta) + .rail ── */
+  .tl{display:flex;gap:12px;align-items:flex-start}
+  .tl-gutter{flex:0 0 148px;min-width:0;display:flex;flex-direction:column}
+  .tl-corner{height:20px;display:flex;align-items:flex-end;font-size:11px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);white-space:nowrap}
+  .lane-label{height:var(--lane-px);display:flex;align-items:center;gap:6px;font-size:11px;
+    font-weight:600;white-space:nowrap}
+  .lane-label .nav{margin-left:auto;display:flex;gap:0}
+  .lane-label .nav button{display:grid;place-items:center;width:28px;height:28px;
+    border-radius:4px;color:var(--fg-dim)}
+  .lane-label .nav button:hover:not(:disabled){background:var(--hover)}
+  .lane-label .nav button:disabled{opacity:.3}
+  .lane-label .nav svg{width:14px;height:14px}
+  .shape{display:inline-block;flex:0 0 auto}
+  .shape.note{width:10px;height:10px;border-radius:50%;background:var(--ink)}
+  .shape.cambio{width:8px;height:8px;margin:1px;border:1.5px solid var(--ink);
+    border-radius:2px;transform:rotate(45deg)}
+  .lane-total{margin-left:2px;font-weight:500;color:var(--fg-mute);font-size:11px;letter-spacing:-.02em}
+
+  .tl-rail{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0}
+  .ruler{height:20px;display:flex;align-items:flex-end;justify-content:space-between}
+  .ruler span{font:11px/11px var(--mono);color:var(--fg-mute);white-space:nowrap}
+
+  .scrub{position:relative;height:var(--scrub-h);cursor:pointer;
     touch-action:none;flex:0 0 var(--scrub-h)}
-  /* top/transform explicitos: antes la pista no tenia posicion vertical y dependia de
-     como el navegador coloca un hijo absoluto dentro de un flex (static position).
-     Con el alto de la barra fijo da igual, pero el contrato queda escrito. */
-  /* la pista y los marcadores se anclan al SUELO de la banda, no a su linea media.
-     Asi la fila de marcadores crece hacia arriba y la regleta cuelga por debajo:
-     las tres capas quedan pegadas y leen como una sola pieza (Frame.io hace lo
-     mismo con sus dos filas). Anclarlo al centro obligaba a repartir el alto a
-     ambos lados y la regleta no tenia donde ir. */
-  .scrub-track{position:absolute;left:0;right:0;bottom:var(--track-y);
-    height:var(--track-h);background:var(--track);border-radius:3px}
-  .scrub-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent-dim);border-radius:3px}
-  .scrub-head{position:absolute;bottom:calc(var(--track-y) + var(--track-h) / 2 - 6px);
-    width:12px;height:12px;margin-left:-6px;border-radius:50%;
-    background:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);pointer-events:none}
-  /* la FILA del marcador la pone el JS en --fila: DOS CARRILES fijos por tipo
-     (0 = notas, 1 = cambios de Agente), no colision — Fase 4/P4. Toda la
-     geometria vive aqui: el JS ya no escribe top/bottom/height/transform en
-     linea, que era la via por la que el zoom movia cajas. */
-  .mark{position:absolute;bottom:calc(var(--mark-base) + var(--fila,0) * var(--lane-px));
-    width:var(--mark-h);height:var(--mark-h);margin-left:calc(var(--mark-h) * -0.5);
-    border-radius:50%;border:0;padding:0;margin-top:0;appearance:none;font:inherit;color:inherit;
-    background:var(--own,var(--fg-mute));pointer-events:auto;cursor:grab;z-index:2}
-  .mark:hover{filter:brightness(1.25)}
+  /* dos carriles fijos por tipo (0 = notas, 1 = cambios de Agente — Fase 4/P4):
+     cada uno es una caja con tinte propio (.lane-bg), como en la maqueta. Los
+     marcadores siguen siendo hijos de #scrub (no de su carril): todo su contrato
+     de arrastre/clic sigue intacto, solo cambia cuanto alto reparte --lane-px. */
+  .rail-ticks{position:absolute;inset:0;z-index:0;pointer-events:none;display:flex}
+  .rail-ticks span{flex:1;border-right:1px solid var(--line2)}
+  .rail-ticks span:last-child{border-right:none}
+  .lane-bg{position:absolute;left:0;right:0;height:var(--lane-px);background:var(--tint);
+    border-radius:4px;pointer-events:none;z-index:0}
+  .lane-bg::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line2)}
+  /* notas = carril de ARRIBA, cambios = carril de ABAJO (orden de la maqueta:
+     laneNotes antes que laneChanges en el DOM) */
+  .lane-bg.note{bottom:var(--lane-px)}
+  .lane-bg.cambio{bottom:0}
+  .played{position:absolute;left:0;top:0;bottom:0;width:0;
+    background:rgba(23,23,23,.07);border-radius:4px 0 0 4px;pointer-events:none;z-index:0}
+  .playhead{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;
+    background:var(--ink);z-index:4;pointer-events:none}
+  .playhead::before{content:"";position:absolute;left:-4px;top:0;width:10px;height:8px;
+    background:var(--ink);clip-path:polygon(0 0,100% 0,100% 45%,50% 100%,0 45%)}
+
+  /* marcador: circulo numerado (notas) — mismo lenguaje que .mk de la maqueta.
+     La FILA la pone el JS en --fila (0 notas, 1 cambios): DOS CARRILES fijos por
+     tipo, no colision (Fase 4/P4). notas=carril de arriba, cambios=abajo (igual
+     que el orden del DOM en la maqueta), por eso la formula RESTA fila en vez de
+     sumarlo. Toda la geometria vive aqui: el JS no escribe top/bottom en linea,
+     que era la via por la que el zoom movia cajas. */
+  .mark{position:absolute;bottom:calc(var(--mark-base) + var(--lane-px) - var(--fila,0) * var(--lane-px));
+    width:22px;height:22px;margin-left:-11px;
+    border-radius:50%;border:0;padding:0;margin-top:0;appearance:none;
+    font:600 11px/1 var(--mono);color:#fff;display:grid;place-items:center;
+    background:var(--ink);box-shadow:0 0 0 2px var(--tint);
+    pointer-events:auto;cursor:grab;z-index:2}
+  .mark:hover{filter:brightness(1.3)}
   .mark:active{cursor:grabbing}
-  .mark:focus-visible,.cluster-marker:focus-visible{outline:2px solid var(--sel-bar);outline-offset:2px}
-  .mark.sel{box-shadow:0 0 0 2px var(--sel-bar);z-index:4}
+  .mark:focus-visible,.cluster-marker:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .mark.sel{box-shadow:0 0 0 2px #fff,0 0 0 4.5px var(--ink);transform:scale(1.2);z-index:4}
   .mark.done{opacity:.4}
   /* ── .tp-row = .tl-bar de la maqueta: grupo de transporte, reloj, velocidad,
      «medir» (real, en el lenguaje del .chip de velocidad) y el grupo de dibujo
@@ -383,18 +423,44 @@
   .chip.chk-chip:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
   .tc .fr{color:var(--accent)}
   .tc .s{color:var(--fg-mute);font-size:11px;margin-left:6px;font-family:var(--sans)}
-  .tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-  .tool{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--fg-dim);border:1px solid transparent}
-  .tool:hover{background:var(--raised);color:var(--fg)}
-  .tool.on{background:var(--raised);color:var(--fg);border-color:var(--on-border)}
-  .tool svg{width:15px;height:15px}
-  .swatches{display:flex;gap:3px;padding:2px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
-  .sw{width:15px;height:15px;border-radius:50%;border:2px solid transparent;cursor:pointer}
-  .sw.on{border-color:var(--fg);transform:scale(1.12)}
-  .wsize{display:flex;align-items:center;gap:5px;padding:2px 7px;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
-  .wsize button{width:8px;height:8px;border-radius:50%;background:var(--fg-dim);cursor:pointer;position:relative}
-  .wsize button::before{content:"";position:absolute;inset:-12px}   /* agarre >= 28px, el punto no crece */
-  .wsize button.on{background:var(--accent);transform:scale(1.25)}
+  /* .tools = el dock «Anotar» de la maqueta: grupos con grip, herramientas, color,
+     grosor e historial, todos .ctl de 34px (R1). El tamaño del boton ya no es de
+     esta clase: .tool solo marca "cual es la herramienta activa" para el JS. */
+  .tools{display:flex;align-items:center;gap:12px;min-width:0;white-space:nowrap}
+  .dock-title{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;font-size:11px;
+    font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute)}
+  .dock-title svg{width:14px;height:14px}
+  .group{display:flex;align-items:center;gap:2px;flex:0 0 auto;height:var(--grp);padding:0 3px;
+    border:1px solid var(--line);border-radius:8px;background:var(--tint)}
+  .group.dragging{opacity:.5}
+  .grip{display:grid;place-items:center;flex:0 0 14px;width:14px;height:var(--ctl);color:var(--faint);cursor:grab}
+  .grip:active{cursor:grabbing}
+  .grip svg{width:13px;height:13px}
+  /* el grupo que recibe al que se arrastra encima: mismo truco que la maqueta */
+  .group.drop-before{box-shadow:inset 2px 0 0 var(--ink)}
+  /* herramienta activa: mismo .ctl.on de siempre (negro lleno), .tool ya no pinta nada */
+  .ink-btn{display:inline-flex;align-items:center;gap:8px;height:var(--ctl);padding:0 10px 0 8px;
+    border-radius:6px;font-size:12px;white-space:nowrap;color:var(--fg)}
+  .ink-btn:hover{background:var(--hover)}
+  .ink-btn svg{width:16px;height:16px;flex:0 0 16px}
+  .ink-btn .sw{width:14px;height:14px;border-radius:4px;background:currentColor;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);flex:0 0 auto;border:0}
+  .ink-name{font-weight:500}
+  .weights{display:flex;gap:2px}
+  .weight{display:grid;place-items:center;flex:0 0 34px;width:34px;height:var(--ctl);border-radius:6px}
+  .weight i{display:block;width:16px;background:var(--fg-dim);border-radius:99px}
+  .weight:hover{background:var(--hover)}
+  .weight.on{background:var(--ink)}
+  .weight.on i{background:#fff}
+  .ink-pop{position:fixed;z-index:60;display:grid;grid-template-columns:repeat(2,1fr);gap:2px;
+    background:#fff;border:1px solid var(--line2);border-radius:8px;padding:6px;
+    box-shadow:0 8px 28px rgba(0,0,0,.16)}
+  .ink-pop[hidden]{display:none}
+  .ink-swatch{display:flex;align-items:center;gap:6px;min-height:28px;padding:5px 8px;
+    border-radius:5px;font-size:11px;white-space:nowrap}
+  .ink-swatch:hover{background:var(--hover)}
+  .ink-swatch.on{background:var(--wash);font-weight:650}
+  .ink-swatch i{width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);flex:0 0 auto}
 
   /* ── Panel de notas ── */
   /* .side = el <aside class="sidebar"> de la maqueta: tarjeta blanca con borde y radio 8.
@@ -443,13 +509,6 @@
     color:var(--tcf);background:var(--tcb);padding:1px 5px;border-radius:5px;
     letter-spacing:.2px;border:1px solid var(--line);
   }
-  /* el marcador de la barra de tiempo toma el color del autor */
-  .mark::after{
-    content:"";position:absolute;inset:-2.5px -1px;border-radius:2px;
-    border:1px solid var(--own,#111);opacity:.5;
-  }
-  .mark.done{opacity:.38}
-
   .note.ph .txt{color:var(--fg)}
   .note.ph .phdot{
     display:block;position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
@@ -670,11 +729,8 @@
      Los botones [−] [+] ya NO viven dentro de la banda: se fueron a .tlctrls con el
      resto de controles. Eso elimina de raiz el desfase de eje que obligaba a poner
      `margin:0 28px` en la regleta para que su 50 % cayera sobre el 50 % de la pista. */
-  .scrub-fill{background:var(--accent-dim)}
-  /* zona de agarre invisible mas ancha que el marcador: 9 + 9.5*2 = 28px,
-     el objetivo tactil minimo que pide la tarea (d), sin tocar el dibujo visual */
-  .mark::before{content:"";position:absolute;left:-9.5px;right:-9.5px;top:-9.5px;bottom:-9.5px}
-  .mark::after{border-radius:3px}
+  /* zona de agarre invisible >= 28px (el marcador ya mide 22/20px, de sobra). */
+  .mark::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;bottom:-3px}
   .tlinfo{font-family:var(--mono);font-size:11px;color:var(--fg-mute);letter-spacing:.2px}
   /* height:22px = misma altura que los botones de zoom. Los cuatro .xs viven en
      .tlctrls y son el mismo grupo: tienen que medir lo mismo. */
@@ -694,26 +750,26 @@
 
   /* ── Marcadores de CAMBIO (kind:"cambio") ──
      Agente los pone donde toco algo. Dos carriles por TIPO (P4): notas = circulo
-     (forma base de .mark), cambios = rombo — mismo tamano, gira 45deg. La zona
-     de agarre (::before) y el anillo (::after) heredan el giro del padre, asi
-     que el objetivo tactil sigue siendo generoso sin tocar el dibujo. */
-  .mark.cambio{background:var(--cambio) !important;border-color:var(--cambio) !important;
-    border-radius:2px;transform:rotate(45deg)}
-  .mark.cambio::after{border-color:var(--cambio) !important;opacity:.85}
-  .mark.cambio:hover{filter:brightness(1.3)}
+     NUMERADO lleno (.mk de la maqueta); cambios = rombo numerado, contorno (blanco,
+     borde negro) y SOLO se rellena de negro al seleccionarse — igual que la maqueta
+     distingue nota/cambio por FORMA, nunca por tono. */
+  .mark.cambio{width:20px;height:20px;margin-left:-10px;border-radius:2px;
+    background:#fff;color:var(--ink);border:2px solid var(--ink);
+    box-shadow:none;transform:rotate(45deg)}
+  .mark.cambio b{display:block;font:inherit;transform:rotate(-45deg)}
+  .mark.cambio:hover{background:var(--hover)}
+  .mark.cambio.sel{background:var(--ink);color:#fff}
+  .mark.cambio.sel{box-shadow:0 0 0 2px #fff,0 0 0 4.5px var(--ink);transform:rotate(45deg) scale(1.2)}
 
   /* ── MARCADOR DE HILO ──
      Una nota con respuestas es la MISMA marca con una muesca encima: un hilo no es
-     otra cosa, es una nota que ya tiene conversacion. Sin color: la senal es la forma
-     (el ancho sube de 3 a 5px y aparece la muesca), que es lo que se lee a 9px. */
-  .mark.hilo{width:5px;margin-left:-2.5px}
-  .mark.hilo::before{top:-11px}             /* el agarre crece con la muesca */
-  .mark.hilo .muesca{position:absolute;left:-1px;right:-1px;top:-4px;height:3px;
-    border-radius:1px;background:var(--own,var(--fg-mute))}
-  /* heredada de la version anterior: contorno abierto en vez de barra solida.
+     otra cosa, es una nota que ya tiene conversacion — funcion real que la maqueta
+     no tiene, resuelta en su mismo lenguaje (forma, no tono). */
+  .mark.hilo::after{content:"";position:absolute;left:50%;top:-5px;width:7px;height:3px;
+    margin-left:-3.5px;border-radius:1px;background:currentColor}
+  /* heredada de la version anterior: anillo punteado encima.
      "Esto viene de v1" se ve antes de leer nada. */
-  .mark.her{background:var(--panel)}
-  .mark.her::after{border-width:1.5px;opacity:1}
+  .mark.her{outline:1.5px dashed var(--ink);outline-offset:2px}
 
   /* ── SPRITE DE ICONOS ──
      Los <path> son geometria Lucide exacta, pero Lucide depende de heredar
@@ -824,46 +880,21 @@
   .navhandle button:hover{background:var(--hover);color:var(--fg)}
 
 
-  /* ── UNA SOLA BARRA ──
-     Una banda. Dentro: marcadores arriba, pista en medio, regleta abajo (solo con
-     zoom). Un borde (ninguno), un fondo (ninguno), un eje X. Los controles — incluidos
-     [−] y [+], que antes partian la banda por los lados — viven todos a la derecha.
-
-     Medidas reales de la banda, de abajo arriba (ver :root):
-       regleta   0..6px   bajo la banda, solo con zoom
-       pista     4..9px   desde el suelo de la banda
-       fila 0    9..18px (hasta 25px si hay grupo)  carril de NOTAS (circulo)
-       fila 1   29..38px (hasta 45px si hay grupo)  carril de CAMBIOS (rombo)
-       Fase 4/P4: dos carriles fijos por tipo, no por colision; lo que se solapa
-       DENTRO de un carril se agrupa (.cluster-marker, 16px — de ahi el hueco
-       de 20px entre carriles, no 11: un grupo no se puede comer al otro carril).
-       alto de LA BANDA (pista+regleta+fila 0 sin agrupar) 32px — FIJO, el mismo
-       de siempre; el .cluster-marker puede sobresalir un poco por arriba (igual
-       que ya hacia la zona de agarre invisible de .mark, position:absolute no
-       mueve layout ni mete scroll). */
-  /* ── Agrupar marcadores que se solapan (P4) ──
-     Mismo lenguaje de forma que .mark: circulo para el carril de notas, rombo
-     para el de cambios — solo cambia el tamano (mas grande, cabe el numero) y
-     que es hueco (panel/borde) en vez de solido: así se lee de un vistazo que
-     es UN grupo y no una nota suelta. B/N, ningun color nuevo. */
-  .cluster-marker{position:absolute;bottom:calc(var(--mark-base) + var(--fila,0) * var(--lane-px));
-    width:16px;height:16px;margin-left:-8px;border-radius:50%;appearance:none;padding:0;
-    display:grid;place-items:center;border:1.5px solid var(--fg);background:var(--panel);
-    color:var(--fg);font:700 9px/1 var(--sans);cursor:pointer;pointer-events:auto;z-index:3}
-  .cluster-marker::before{content:"";position:absolute;inset:-9px}   /* agarre >= 28px (medido) */
-  .cluster-marker:hover{filter:brightness(1.15)}
-  .cluster-marker.cambio{border-radius:2px;transform:rotate(45deg)}
-  .cluster-marker.cambio > span{display:block;transform:rotate(-45deg)}   /* el numero no gira */
-  .cluster-marker.has-sel{box-shadow:0 0 0 2px var(--sel-bar)}
+  /* grupo de marcadores que se solapan (P4): insignia hueca (blanca/borde negro),
+     mismo lenguaje que .mark.cambio sin seleccionar — nunca rota, ni en el carril
+     de cambios (la maqueta tampoco rota su insignia de grupo, solo cambia el radio). */
+  .cluster-marker{position:absolute;bottom:calc(var(--mark-base) + var(--lane-px) - var(--fila,0) * var(--lane-px));
+    min-width:24px;width:24px;height:24px;margin-left:-12px;border-radius:50%;appearance:none;padding:0;
+    display:grid;place-items:center;border:2px solid var(--ink);background:#fff;
+    color:var(--ink);font:700 11px/1 var(--mono);cursor:pointer;pointer-events:auto;z-index:3}
+  .cluster-marker::before{content:"";position:absolute;inset:-3px}   /* agarre >= 28px */
+  .cluster-marker:hover{background:var(--ink);color:#fff}
+  .cluster-marker.cambio{border-radius:4px}
+  .cluster-marker.has-sel{box-shadow:0 0 0 2px var(--ink)}
   /* tarjeta de vista previa (hover/foco): reutiliza la capa de etiquetas
      [data-tip] que ya existe para TODA la UI (showTip()); solo permite varias
      lineas cuando el objetivo es un marcador o un grupo (ver "rich" en JS) */
   #tipLayer.rich{white-space:normal;max-width:280px;text-align:left}
-  .tlinesa{display:flex;align-items:flex-end;gap:10px;padding:0 10px;flex:0 0 auto}
-  .tlstack{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:0}
-  .tlctrls{display:flex;align-items:center;gap:4px;flex:0 0 auto;padding-bottom:2px}
-  /* los [−] [+] son del mismo grupo que los demas: mismo cuadro de 22px */
-  .tlctrls .btn.xs.icon{font-size:14px;line-height:1;display:grid;place-items:center}
   /* lecturas numericas de la fila de transporte.
      ANCHO FIJO a proposito: el texto cambia de largo con el zoom ("todo el video" ->
      "00:00:12:04 – 00:00:14:16 · 8× · 60 f"). Si la caja creciera con el texto, cada
@@ -873,16 +904,7 @@
     flex:0 0 252px;width:252px;overflow:hidden;text-overflow:ellipsis}
 
 
-  /* ── Color: UN circulito que se despliega ──
-     Antes eran 7 circulitos en fila, que ocupaban 129px de la barra de dibujo y de ahi
-     la sensacion de "menu que no se entiende". Ahora: un circulito con el color actual,
-     y al hacer clic se despliegan los demas. */
   .colorWrap{position:relative;flex:0 0 auto}
-  .swatchBtn{width:28px;height:28px;border-radius:50%;padding:3px;cursor:pointer;
-    border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
-  .swatchBtn:hover{border-color:var(--fg)}
-  .swatchDot{width:16px;height:16px;border-radius:50%;background:var(--pincel,#ff4d4d);
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
   #edLbl.respondiendo{color:var(--fg);font-weight:650;background:var(--panel-2);
     padding:1px 7px;border-radius:5px;box-shadow:inset 0 0 0 1px var(--fg)}
 
@@ -895,14 +917,14 @@
   .pitem:hover .parch, .pitem:focus-within .parch{display:grid}
   .pitem.arch{opacity:.62}
   .pitem.arch .parch{display:grid}
-  .psecc{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
-    color:var(--muted);padding:14px 6px 8px;margin-top:6px;border-top:1px solid var(--line)}
+  .psecc{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--fg-dim);padding:14px 10px 6px;margin-top:6px;border-top:1px solid var(--line-soft)}
+  .tlctrls{display:flex;align-items:center;gap:8px;padding:6px 0 0;
+    border-top:1px solid var(--line-soft);margin-top:6px}
   /* La banda ocupa TODO el ancho. Antes .tlctrls estaba dentro de .tlinesa y le
      robaba 301px a la pista. */
   .tlinesa{width:100%}
   .tlstack{flex:1 1 auto;min-width:0}
-  .tlctrls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-    padding:6px 12px 0;border-top:1px solid var(--line-soft);margin-top:6px}
   .tlctrls .rlbl{margin-right:auto}
   .swPop{position:fixed;display:flex;gap:4px;padding:5px;border-radius:9px;
     background:var(--raised);border:1px solid var(--line);
@@ -955,8 +977,7 @@
     background:repeating-linear-gradient(180deg,var(--own) 0 3px,transparent 3px 6px)}
   .rep[data-who="invitado"] .rwho::before{border-radius:1px;background:var(--own)}
   .note .who.i{background:var(--panel);color:var(--fg);border:1px dashed var(--fg-dim);font-weight:600}
-  .mark.inv{background:repeating-linear-gradient(180deg,var(--own) 0 2px,transparent 2px 4px)}
-  .mark.inv::after{border-style:dashed}
+  .mark.inv{background:repeating-linear-gradient(180deg,var(--ink) 0 2px,var(--muted) 2px 4px)}
   .tlrail .rnote.inv{background:repeating-linear-gradient(180deg,var(--own) 0 1.5px,transparent 1.5px 3px)}
   /* banner fijo del invitado: vive en la barra superior (46px, siempre visible) */
   .invbanner{display:none;align-items:center;gap:5px;font-size:12px;color:var(--fg-dim);
@@ -1123,6 +1144,18 @@
     <g id="i-arrow"><path d="M5 19 19 5"/><path d="M12 5h7v7"/></g>
     <g id="i-rect"><rect width="18" height="18" x="3" y="3" rx="2"/></g>
     <g id="i-ellipse"><circle cx="12" cy="12" r="10"/></g>
+    <!-- iconos de la maqueta (Lucide v0.577 exacto, extraido de lucide-react/dist/esm/icons/) -->
+    <g id="i-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></g>
+    <g id="i-arrowur"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></g>
+    <g id="i-recth"><rect width="20" height="12" x="2" y="6" rx="2"/></g>
+    <g id="i-trash2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></g>
+    <g id="i-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></g>
+    <g id="i-chevl"><path d="m15 18-6-6 6-6"/></g>
+    <g id="i-chevr"><path d="m9 18 6-6-6-6"/></g>
+    <g id="i-grip"><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></g>
+    <g id="i-zoomin"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></g>
+    <g id="i-zoomout"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="8" x2="14" y1="11" y2="11"/></g>
+    <g id="i-foldh"><path d="M2 12h6"/><path d="M22 12h-6"/><path d="M12 2v2"/><path d="M12 8v2"/><path d="M12 14v2"/><path d="M12 20v2"/><path d="m19 9-3 3 3 3"/><path d="m5 15 3-3-3-3"/></g>
     <g id="i-eraser"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></g>
     <g id="i-undo"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></g>
     <g id="i-redo"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></g>
@@ -1319,13 +1352,34 @@
            entero, asi que no hay nada que duplicar). Los botones de zoom se fueron a
            la derecha con los demas controles: la banda ya no se parte por los lados. -->
       <div class="tlinesa">
-        <div class="tlstack">
-          <div class="scrub" id="scrub">
-            <div class="scrub-track"><div class="scrub-fill" id="fill"></div></div>
-            <div class="scrub-head" id="head"></div>
+        <div class="tl">
+          <div class="tl-gutter">
+            <div class="tl-corner">Línea de tiempo</div>
+            <div class="lane-label"><i class="shape note" aria-hidden="true"></i>Notas<span class="lane-total" id="laneNotasN"></span>
+              <span class="nav">
+                <button class="has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="["><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
+                <button class="has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
+              </span>
+            </div>
+            <div class="lane-label"><i class="shape cambio" aria-hidden="true"></i>Cambios<span class="lane-total" id="laneCambiosN"></span>
+              <span class="nav">
+                <button class="has-tip" id="tlChgPrev" data-tip="Cambio anterior" data-key="⇧P" title="Shift+P"><svg viewBox="0 0 24 24"><use href="#i-chevl"/></svg></button>
+                <button class="has-tip" id="tlChg" data-tip="Cambio siguiente" data-key="⇧N" title="Shift+N"><svg viewBox="0 0 24 24"><use href="#i-chevr"/></svg></button>
+              </span>
+            </div>
           </div>
-          <div class="tlrail" id="tlrail" title="Regleta del video completo (aparece al acercar). Los ticks no se mueven con el zoom. Clic = ir a ese punto.">
-            <span class="tlwin" id="tlWin"></span>
+          <div class="tl-rail" id="tlRail">
+            <div class="ruler" id="ruler" aria-hidden="true"></div>
+            <div class="scrub" id="scrub">
+              <div class="rail-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <div class="lane-bg note" aria-hidden="true"></div>
+              <div class="lane-bg cambio" aria-hidden="true"></div>
+              <div class="played" id="fill"></div>
+              <div class="playhead" id="head"></div>
+            </div>
+            <div class="tlrail" id="tlrail" title="Regleta del video completo (aparece al acercar). Los ticks no se mueven con el zoom. Clic = ir a ese punto.">
+              <span class="tlwin" id="tlWin"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -1351,38 +1405,48 @@
         <!-- la ventana visible es una LECTURA, no un control: vive junto al timecode.
              Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
         <span class="tlinfo" id="tlInfo">todo el video</span>
-        <span class="spacer"></span>
-        <div class="group" role="group" aria-label="Dibujo">
-          <button class="ctl has-tip" id="bErase" data-tip="Borrar el dibujo de este fotograma" title="⌫"><svg viewBox="0 0 24 24"><use href="#i-eraser"/></svg></button>
-          <button class="ctl has-tip" id="bUndo" data-tip="Deshacer el dibujo" title="⌘Z"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
-          <button class="ctl has-tip" id="bRedo" data-tip="Rehacer el dibujo" title="⇧⌘Z"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
-          <button class="ctl has-tip" id="bMax" data-tip="Pantalla completa" title=""><svg viewBox="0 0 24 24"><use href="#i-max"/></svg></button>
-        </div>
-      </div>
+              </div>
       <!-- Controles de la banda de tiempo. Antes vivian A LA DERECHA de la banda y le
            robaban 301px: la pista se quedaba en 423px de los 778 disponibles. Ahora
            ocupan su propia fila abajo y la banda usa el ancho entero de lado a lado. -->
       <div class="tlctrls">
           <span class="rlbl" id="rlLbl" title="notas y cambios de este video"></span>
-          <button class="btn xs has-tip" id="tlChg" data-tip="Saltar al siguiente cambio de Agente" data-key="⇧N" title="Shift+N">solo cambios</button>
-          <button class="btn xs icon has-tip" id="tlPrev" data-tip="Nota anterior" data-key="[" title="["><svg viewBox="0 0 24 24"><use href="#i-mkprev"/></svg></button>
-          <button class="btn xs icon has-tip" id="tlNear" data-tip="Nota siguiente" data-key="]" title="]"><svg viewBox="0 0 24 24"><use href="#i-mknext"/></svg></button>
-          <button class="btn xs has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0">ver todo</button>
-          <button class="btn xs icon has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo">&minus;</button>
-          <button class="btn xs icon has-tip" id="tlZout" data-tip="Acercar" data-key="+" aria-label="Acercar la línea de tiempo">&plus;</button>
+          <span class="spacer"></span>
+          <div class="group" role="group" aria-label="Zoom de la línea de tiempo">
+            <button class="ctl has-tip" id="tlZin" data-tip="Alejar" data-key="−" aria-label="Alejar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomout"/></svg></button>
+            <button class="ctl has-tip" id="tlZfit" data-tip="Ver el video entero" data-key="0" aria-label="Ver el video entero"><svg viewBox="0 0 24 24"><use href="#i-foldh"/></svg></button>
+            <button class="ctl has-tip" id="tlZout" data-tip="Acercar" data-key="+" aria-label="Acercar la línea de tiempo"><svg viewBox="0 0 24 24"><use href="#i-zoomin"/></svg></button>
+          </div>
         </div>
-            <div class="tools">
-        <button class="tool has-tip" data-tip="Dibujar a mano alzada" data-tool="pen" data-key="B"><svg viewBox="0 0 24 24"><use href="#i-brush"/></svg></button>
-        <button class="tool has-tip" data-tip="Dibujar una flecha" data-tool="arrow" data-key="F"><svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
-        <button class="tool has-tip" data-tip="Dibujar un rectángulo" data-tool="rect" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-rect"/></svg></button>
-        <button class="tool has-tip" data-tip="Dibujar un círculo" data-tool="ellipse"><svg viewBox="0 0 24 24"><use href="#i-ellipse"/></svg></button>
-        <div class="sep"></div>
-        <div class="colorWrap">
-          <button class="swatchBtn has-tip" id="swBtn" data-tip="Cambiar el color  C" aria-label="Cambiar el color del pincel">
-            <span class="swatchDot" id="swDot"></span>
-          </button>
+            <div class="tools" id="tools" role="toolbar" aria-label="Anotar sobre el fotograma">
+        <span class="dock-title"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg>Anotar</span>
+        <div class="group" data-drag="tools" role="group" aria-label="Herramientas de dibujo">
+          <span class="grip" title="Arrastra para reordenar"><svg viewBox="0 0 24 24"><use href="#i-grip"/></svg></span>
+          <button class="ctl tool has-tip" data-tip="Dibujar a mano alzada" data-tool="pen" data-key="B"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg></button>
+          <button class="ctl tool has-tip" data-tip="Dibujar una flecha" data-tool="arrow" data-key="F"><svg viewBox="0 0 24 24"><use href="#i-arrowur"/></svg></button>
+          <button class="ctl tool has-tip" data-tip="Dibujar un rectángulo" data-tool="rect" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-recth"/></svg></button>
+          <button class="ctl tool has-tip" data-tip="Dibujar un círculo" data-tool="ellipse"><svg viewBox="0 0 24 24"><use href="#i-ellipse"/></svg></button>
         </div>
-        <div class="wsize" id="ws"></div>
+        <div class="group" data-drag="color" role="group" aria-label="Color del trazo">
+          <span class="grip" title="Arrastra para reordenar"><svg viewBox="0 0 24 24"><use href="#i-grip"/></svg></span>
+          <div class="colorWrap">
+            <button class="ink-btn has-tip" id="swBtn" data-tip="Cambiar el color  C" aria-label="Cambiar el color del pincel" aria-haspopup="listbox" aria-expanded="false">
+              <svg viewBox="0 0 24 24"><use href="#i-palette"/></svg><i class="sw" id="swDot"></i><span class="ink-name" id="swName">Negro</span>
+            </button>
+          </div>
+        </div>
+        <div class="group" data-drag="weight" role="group" aria-label="Grosor del trazo">
+          <span class="grip" title="Arrastra para reordenar"><svg viewBox="0 0 24 24"><use href="#i-grip"/></svg></span>
+          <span class="weights" id="ws"></span>
+        </div>
+        <div class="group" data-drag="history" role="group" aria-label="Deshacer y rehacer">
+          <span class="grip" title="Arrastra para reordenar"><svg viewBox="0 0 24 24"><use href="#i-grip"/></svg></span>
+          <button class="ctl has-tip" id="bUndo" data-tip="Deshacer el dibujo" title="⌘Z"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
+          <button class="ctl has-tip" id="bRedo" data-tip="Rehacer el dibujo" title="⇧⌘Z"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
+          <button class="ctl has-tip" id="bErase" data-tip="Borrar el dibujo de este fotograma" title="⌫"><svg viewBox="0 0 24 24"><use href="#i-trash2"/></svg></button>
+        </div>
+        <span class="spacer"></span>
+        <button class="ctl has-tip" id="bMax" data-tip="Pantalla completa" title=""><svg viewBox="0 0 24 24"><use href="#i-max"/></svg></button>
       </div>
     </div>
   </div>
@@ -1432,7 +1496,7 @@
   </div>
   <!-- Capa del selector de color: vive en el body, no dentro de la barra, para que
        ningun ancestro con overflow la recorte ni la tape al plegar el panel. -->
-  <div class="swPop" id="swPop" hidden></div>
+  <div class="ink-pop" id="swPop" role="listbox" aria-label="Elige el color del trazo" hidden></div>
 
   <!-- Compartir: popover de Cristian. Vive en el body (nada lo recorta). -->
   <div class="shPop" id="shPop" role="dialog" aria-label="Compartir este video con un enlace" hidden>
@@ -1511,14 +1575,17 @@ async function copyText(s){ try{ await navigator.clipboard.writeText(s); return 
   document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(_){} ta.remove(); return ok; } }
 const base = s => s.replace(/\.[^.\/]+$/,"");
 
-const PALETTE = ["#ff4d4d","#ff9f0a","#ffd60a","#5ac08a","#40c8e0","#5b8cff","#bf5af2"];
+/* paleta del trazo de la maqueta: aqui el color SI es la funcion. Se elige por
+   nombre, no se cicla (ref/maqueta/src/app.js, inkColors). */
+const INK_COLORS = [["#111111","Negro"],["#ffffff","Blanco"],["#e5322d","Rojo"],
+  ["#f08a00","Naranja"],["#f2c400","Amarillo"],["#1f9d55","Verde"],["#2563eb","Azul"]];
 const SIZES = [3,5,8];
 let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendingPoll:false,
            // vista del timeline: zoom (1 = video entero) y off (inicio en segundos).
            // Vive aqui desde el arranque: antes se creaba 1300 lineas mas abajo y
            // cualquier lectura anterior (vmeta, tlSeg) encontraba st.tl undefined.
            tl:{zoom:1, off:0},
-           tool:null, color:PALETTE[0], size:SIZES[1], pend:null, hist:[], hpos:-1,
+           tool:null, color:INK_COLORS[0][0], size:SIZES[1], pend:null, hist:[], hpos:-1,
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
            x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
            adjustTo:null,
@@ -4185,6 +4252,13 @@ $("#tlChg").onclick = () => {
   if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
   irACambio(1);
 };
+// flecha ‹ del carril «Cambios» (la maqueta trae prevChange/nextChange, uno por
+// lado): irACambio(-1) ya existe para el atajo Mayus+P, solo le faltaba boton.
+$("#tlChgPrev").onclick = () => {
+  const cs = soloCambios();
+  if(!cs.length){ toast("Este video no tiene cambios marcados"); return; }
+  irACambio(-1);
+};
 
 
 /* ── Plegar / desplegar los paneles de proyectos y tomas ──
@@ -4361,8 +4435,9 @@ const TL_GRAB_PX = 13;         // umbral (px) para decidir el zoom de "ir a nota
 const TL_FOLLOW_EDGE = 0.12;   // margen en el que el cursor arrastra la ventana
 const TL_ANCHO_FALLBACK = 480; // ancho de la barra si aun no esta en pantalla
 const TL_CLUSTER_GAP = 4;      // hueco (px) entre cajas por debajo del cual se agrupan (P4)
-const MK_W = 9;                 // == --mark-h: diametro/lado de un marcador suelto
-const CLUSTER_W = 16;           // == ancho de .cluster-marker en CSS: la insignia de grupo
+const MK_W_NOTA = 22;            // == ancho de .mark (circulo) en CSS
+const MK_W_CAMBIO = 20;          // == ancho de .mark.cambio (rombo) en CSS
+const CLUSTER_W = 24;            // == ancho de .cluster-marker en CSS: la insignia de grupo
 
 /* ── 1. El modelo (puro: lee st.tl, no lo escribe) ── */
 
@@ -4470,7 +4545,23 @@ function tlPaint(){
     lbl.title = txt;        // la caja es de ancho fijo: el texto completo, al pasar
   }
   tlPintarVentana(s);
+  pintarRegla(s);
   updateMarks();
+}
+/* regla de tiempo con marcas (.ruler de la maqueta): 7 lecturas iguales de la
+   ventana visible (s.ini..s.fin), no del video entero — con zoom, son las
+   horas que se estan viendo, no las del corte completo. */
+function pintarRegla(s){
+  const ruler = $("#ruler");
+  if(!ruler) return;
+  const PASOS = 6;
+  ruler.textContent = "";
+  for(let i = 0; i <= PASOS; i++){
+    const f = Math.round((s.ini + (i / PASOS) * s.span) * fps);
+    const sp = document.createElement("span");
+    sp.textContent = tc(null, f);
+    ruler.appendChild(sp);
+  }
 }
 /* el rectangulo del carril que dice QUE trozo del video es la barra de abajo */
 function tlPintarVentana(s){
@@ -4615,8 +4706,12 @@ function filaDe(n){ return n.kind === "cambio" ? 1 : 0; }   // 0 = notas, 1 = ca
 // "justo separados" sobre el papel acababan solapando ya pintados — por eso
 // `esCambios` ensancha el umbral exactamente lo que crece la caja al rotar.
 function planClusters(items, esCambios){
+  // el rombo suelto ROTA 45deg: su caja real en pantalla es ~1.41x mas ancha que
+  // su lado (la diagonal). La insignia de GRUPO no rota (igual que en la maqueta,
+  // solo cambia el radio): por eso k solo multiplica el ancho del marcador suelto.
+  const mkW = esCambios ? MK_W_CAMBIO : MK_W_NOTA;
   const k = esCambios ? Math.SQRT2 : 1;
-  let nodos = items.map(it => ({miembros:[it], px:it.px, ancho:MK_W * k}));
+  let nodos = items.map(it => ({miembros:[it], px:it.px, ancho:mkW * k}));
   for(let pasada = 0; pasada < 30; pasada++){
     nodos.sort((a, b) => a.px - b.px);
     const fusion = [];
@@ -4633,7 +4728,7 @@ function planClusters(items, esCambios){
     }
     const siguiente = fusion.map(g => ({
       miembros: g.miembros, px: (g.lo + g.hi) / 2,
-      ancho: (g.miembros.length > 1 ? CLUSTER_W : MK_W) * k
+      ancho: g.miembros.length > 1 ? CLUSTER_W : mkW * k
     }));
     if(siguiente.length === nodos.length) { nodos = siguiente; break; }
     nodos = siguiente;
@@ -4704,12 +4799,15 @@ function updateMarks(){
     const e = document.createElement("button");
     e.type = "button";
     const q = quienEs(n);
+    // la maqueta numera el marcador (circulo = numero, rombo = "A"+numero) en vez
+    // de distinguir por color de autor: la FORMA ya dice que tipo es y el numero
+    // es el mismo que usa la conversacion (x2Numero), asi que enlazan a simple vista.
+    const num = x2Numero(n).replace("Nota ", "");
     e.className = "mark" + (n.resolved ? " done" : "") + (n.kind === "cambio" ? " cambio" : "") +
       (q === "invitado" ? " inv" : "") + (n.id === st.selId ? " sel" : "");
     e.style.left = (frac * 100) + "%";
     e.style.setProperty("--fila", String(fila));
-    // el marcador hereda el color del autor: mismo mecanismo que la tarjeta
-    e.style.setProperty("--own", q === "claude" ? "var(--claude)" : q === "invitado" ? "var(--invitado)" : "var(--yo)");
+    e.innerHTML = n.kind === "cambio" ? "<b>" + esc(num) + "</b>" : esc(num);
     e.dataset.nid = n.id;   // para arrastrarlo sobre la barra
     e.dataset.t = t;
     e.dataset.tip = esc(etiquetaMarcador(n) + (n.text ? " — " + n.text.slice(0, 90) : ""));
@@ -4728,6 +4826,15 @@ function updateMarks(){
       host.appendChild(construirClusterMarker(fila, g, anchoPx));
     }
   }
+  pintarCarrilesGutter(porCarril);
+}
+/* «Notas N» / «Cambios N» del gutter (lane-label de la maqueta): cuenta TODO el
+   video (no solo lo visible en la ventana con zoom, al contrario que porCarril). */
+function pintarCarrilesGutter(){
+  if(!vmeta()) return;
+  const n0 = $("#laneNotasN"), n1 = $("#laneCambiosN");
+  if(n0) n0.textContent = st.notas.filter(n => n.video === st.vid && n.kind !== "cambio").length || "";
+  if(n1) n1.textContent = st.notas.filter(n => n.video === st.vid && n.kind === "cambio").length || "";
 }
 function updateEditor(){
   const enEdicion = editingId ? st.notas.find(x => x.id === editingId) : null;
@@ -5562,17 +5669,21 @@ document.addEventListener("keydown", ev => {
 });
 
 /* ═══ arranque ═══ */
-/* Color: un circulito con el color actual; al clic se despliega el resto.
+/* Color: ink-btn con el nombre del color actual (maqueta); al clic se despliega
+   la lista con nombre («Negro», «Rojo»…), no un ciclo de circulitos sueltos.
    Fuera del popover = se cierra. Escape = se cierra. */
 (function(){
-  const btn = $("#swBtn"), pop = $("#swPop"), dot = $("#swDot");
+  const btn = $("#swBtn"), pop = $("#swPop"), dot = $("#swDot"), name = $("#swName");
   if(!btn || !pop) return;
+  const nombreDe = c => (INK_COLORS.find(x => x[0] === c) || INK_COLORS[0])[1];
   const pintar = () => {
-    dot.style.background = st.color;
-    btn.setAttribute("aria-label", "Color del pincel: " + st.color);
-    pop.innerHTML = PALETTE.map(c =>
-      '<span class="sw'+(c===st.color?" on":"")+'" data-c="'+c+'" title="'+c+'" style="background:'+c+'"></span>').join("");
-    for(const el of $$("#swPop .sw")) el.onclick = (ev) => {
+    dot.style.color = st.color;
+    if(name) name.textContent = nombreDe(st.color);
+    btn.setAttribute("aria-label", "Color del trazo: " + nombreDe(st.color) + ". Pulsar para elegir");
+    pop.innerHTML = INK_COLORS.map(([c,n]) =>
+      '<button type="button" class="ink-swatch'+(c===st.color?" on":"")+'" role="option" data-c="'+c+'" aria-label="'+n+'">'+
+      '<i style="background:'+c+'"></i><span>'+n+'</span></button>').join("");
+    for(const el of $$("#swPop .ink-swatch")) el.onclick = (ev) => {
       ev.stopPropagation();
       st.color = el.dataset.c; pintar(); cerrar();
     };
@@ -5632,7 +5743,11 @@ document.addEventListener("keydown", ev => {
   window.__colocarPopover = colocar;
   window.__cerrarPopover = cerrar;
 })();
-$("#ws").innerHTML = SIZES.map(s => '<button data-s="'+s+'" class="'+(s===st.size?"on":"")+'" style="width:'+(3+s)+'px;height:'+(3+s)+'px"></button>').join("");
+/* barras de la maqueta (.weights/.weight): grosor fino/medio/grueso, SIZES=[3,5,8]
+   -> alto de la barra 2/3/5px (ref/maqueta/src/body.html, data-width). */
+const WEIGHT_BAR = {3:2, 5:3, 8:5};
+$("#ws").innerHTML = SIZES.map(s => '<button data-s="'+s+'" data-width="'+s+'" class="weight'+(s===st.size?" on":"")+
+  '"><i style="height:'+WEIGHT_BAR[s]+'px"></i></button>').join("");
 for(const el of $$("#ws button")){
   el.setAttribute("aria-label", "Grosor del pincel: " + el.dataset.s + " px");
   el.onclick = () => { st.size = +el.dataset.s;
@@ -5640,6 +5755,48 @@ for(const el of $$("#ws button")){
 }
 for(const el of $$("[data-tool]")) el.onclick = () => { st.tool = el.dataset.tool;
   $$("[data-tool]").forEach(x => x.classList.toggle("on", x===el)); p6EstadoAria(); };
+/* ── Reordenar los grupos de la barra «Anotar» (arrastrar y soltar nativo) ───
+   Literal de la maqueta (ref/maqueta/src/app.js): cada [data-drag] es un grupo
+   completo (herramientas, color, grosor, historial), se reordena por delante
+   del spacer y la posicion se recuerda entre sesiones. */
+(function(){
+  const KEY = "openframe:tools", dock = $("#tools");
+  if(!dock) return;
+  let drag = null;
+  const grupos = () => [...dock.querySelectorAll(":scope > [data-drag]")];
+  const orden = () => grupos().map(g => g.dataset.drag);
+  function aplicar(ids){
+    const por = {}; grupos().forEach(g => por[g.dataset.drag] = g);
+    const ancla = dock.querySelector(".spacer");
+    ids.forEach(id => { if(por[id]) dock.insertBefore(por[id], ancla); });
+  }
+  grupos().forEach(g => g.setAttribute("draggable", "true"));
+  dock.addEventListener("dragstart", e => {
+    const g = e.target.closest && e.target.closest("[data-drag]");
+    if(!g) return;
+    drag = g; g.classList.add("dragging"); e.dataTransfer.effectAllowed = "move";
+    try{ e.dataTransfer.setData("text/plain", g.dataset.drag); }catch(_){}
+  });
+  dock.addEventListener("dragover", e => {
+    if(!drag) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = "move";
+    const g = e.target.closest && e.target.closest("[data-drag]");
+    if(!g || g === drag) return;
+    const r = g.getBoundingClientRect();
+    const despues = e.clientX > r.left + r.width / 2;
+    g.parentNode.insertBefore(drag, despues ? g.nextSibling : g);
+  });
+  dock.addEventListener("drop", e => e.preventDefault());
+  dock.addEventListener("dragend", () => {
+    if(drag) drag.classList.remove("dragging");
+    drag = null;
+    try{ localStorage.setItem(KEY, JSON.stringify(orden())); }catch(_){}
+  });
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY) || "null");
+    if(Array.isArray(s) && s.length) aplicar(s);
+  }catch(_){}
+})();
 /* Nombres accesibles y estados ARIA: una pasada al arrancar, y los controles que se
    pintan en cada render los cubre renderList(). */
 p6Nombrar(); p6EstadoAria(); p6KeysEnBotones();
