@@ -376,6 +376,11 @@ def parte_ui(slug, vid, notas):
     for w, h in ((1280, 800), (1440, 900), (1600, 1000)):
         pg.viewport(w, h, clear_storage=False)
         abrir(pg)
+        # Réplica literal (R1): la barra de proyectos arranca PLEGADA (clientWidth 0), así que
+        # medir su scroll plegada no dice nada. Se despliega para comprobar lo que el check
+        # busca de verdad: que nada desborde a lo ancho.
+        pg.ev("plegarNav(false)")
+        time.sleep(.4)
         m = json.loads(pg.ev(
             "JSON.stringify({page:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],"
             "view:[innerWidth,innerHeight],"
