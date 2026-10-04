@@ -135,8 +135,8 @@
     },
     {
      "n": "tipografia-mono",
-     "m": ".video-tag",
-     "r": ".tc",
+     "m": ".time b",
+     "r": ".time b",
      "props": [
       "fontFamily"
      ]
@@ -385,7 +385,7 @@
     {
      "n": "conversacion-ancho",
      "m": ".sidebar",
-     "r": ".side",
+     "r": ".sidebar",
      "props": [
       "w"
      ]
@@ -393,7 +393,7 @@
     {
      "n": "conversacion-alto",
      "m": ".sidebar",
-     "r": ".side",
+     "r": ".sidebar",
      "props": [
       "h"
      ]
@@ -401,7 +401,7 @@
     {
      "n": "conversacion-caja",
      "m": ".sidebar",
-     "r": ".side",
+     "r": ".sidebar",
      "props": [
       "backgroundColor",
       "borderTopWidth",
@@ -415,7 +415,7 @@
     {
      "n": "conversacion-arriba",
      "m": ".sidebar",
-     "r": ".side",
+     "r": ".sidebar",
      "cm": ".main-grid",
      "cr": ".main-grid",
      "props": [
@@ -976,6 +976,542 @@
      "props": [
       "display",
       "alignItems",
+      "columnGap"
+     ]
+    }
+   ]
+  },
+  {
+   "region": "conversacion",
+   "captura": {
+    "m": ".sidebar",
+    "r": ".sidebar"
+   },
+   "pares": [
+    {
+     "n": "panel",
+     "m": ".sidebar",
+     "r": ".sidebar",
+     "props": [
+      "w",
+      "h",
+      "display",
+      "flexDirection",
+      "overflow",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "panel-cabecera",
+     "m": ".side-head",
+     "r": ".side-head",
+     "props": [
+      "paddingTop",
+      "paddingLeft",
+      "paddingRight",
+      "paddingBottom"
+     ]
+    },
+    {
+     "n": "panel-titulo",
+     "m": ".side-title",
+     "r": ".side-title",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "display",
+      "justifyContent",
+      "alignItems"
+     ]
+    },
+    {
+     "n": "estado-vivo",
+     "m": ".live",
+     "r": ".live",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "columnGap",
+      "display",
+      "alignItems"
+     ]
+    },
+    {
+     "n": "estado-punto",
+     "m": ".live .dot",
+     "r": ".live .dot",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "borderTopLeftRadius"
+     ]
+    },
+    {
+     "n": "pestanas",
+     "m": ".tabs",
+     "r": ".tabs",
+     "props": [
+      "columnGap",
+      "marginTop",
+      "borderBottomWidth",
+      "borderBottomColor",
+      "display"
+     ]
+    },
+    {
+     "n": "pestana",
+     "m": ".tab",
+     "r": ".tab",
+     "props": [
+      "fontSize",
+      "color",
+      "paddingBottom",
+      "borderBottomWidth",
+      "paddingTop"
+     ]
+    },
+    {
+     "n": "pestana-activa",
+     "m": ".tab[aria-selected=true]",
+     "r": ".tab[aria-selected=true]",
+     "props": [
+      "color",
+      "borderBottomColor",
+      "borderBottomWidth"
+     ]
+    },
+    {
+     "n": "pestana-contador",
+     "m": ".tab .count",
+     "r": ".tab .count",
+     "props": [
+      "fontSize",
+      "marginLeft",
+      "color"
+     ]
+    },
+    {
+     "n": "barra-filtros",
+     "m": ".filterbar",
+     "r": ".filterbar",
+     "props": [
+      "display",
+      "flexDirection",
+      "rowGap",
+      "paddingTop",
+      "paddingBottom"
+     ]
+    },
+    {
+     "n": "busqueda",
+     "m": ".searchbox",
+     "r": ".searchbox",
+     "props": [
+      "h",
+      "display",
+      "alignItems",
+      "columnGap",
+      "paddingLeft",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "busqueda-input",
+     "m": ".searchbox input",
+     "r": ".searchbox input",
+     "props": [
+      "fontSize",
+      "color",
+      "borderTopWidth"
+     ]
+    },
+    {
+     "n": "boton-filtros",
+     "m": ".filters-btn",
+     "r": ".filters-btn",
+     "props": [
+      "h",
+      "fontSize",
+      "paddingLeft",
+      "paddingRight",
+      "columnGap",
+      "borderTopLeftRadius",
+      "borderTopColor"
+     ]
+    },
+    {
+     "n": "segmentado",
+     "m": ".seg",
+     "r": ".seg",
+     "props": [
+      "h",
+      "display",
+      "columnGap",
+      "paddingTop",
+      "paddingLeft",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "segmentado-boton",
+     "m": ".seg-btn",
+     "r": ".seg-btn",
+     "props": [
+      "h",
+      "fontSize",
+      "paddingLeft",
+      "paddingRight",
+      "color",
+      "borderTopLeftRadius",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "segmentado-activo",
+     "m": ".seg-btn.on",
+     "r": ".seg-btn.on",
+     "props": [
+      "backgroundColor",
+      "color"
+     ]
+    },
+    {
+     "n": "segmentado-contador",
+     "m": ".seg-btn .count",
+     "r": ".seg-btn .count",
+     "props": [
+      "fontSize",
+      "opacity"
+     ]
+    },
+    {
+     "n": "resultados",
+     "m": ".result-count",
+     "r": ".result-count",
+     "props": [
+      "fontSize",
+      "color",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "lista",
+     "m": ".feed",
+     "r": ".feed",
+     "props": [
+      "position",
+      "overflow",
+      "flexGrow",
+      "minHeight"
+     ]
+    },
+    {
+     "n": "tarjeta-nota",
+     "m": ".item.note",
+     "r": ".item.note",
+     "props": [
+      "paddingTop",
+      "paddingLeft",
+      "paddingRight",
+      "paddingBottom",
+      "marginBottom",
+      "cursor",
+      "position",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "tarjeta-cambio",
+     "m": ".item.change",
+     "r": ".item.change",
+     "props": [
+      "paddingTop",
+      "paddingLeft",
+      "backgroundColor",
+      "borderTopLeftRadius",
+      "borderTopColor"
+     ]
+    },
+    {
+     "n": "tarjeta-cabecera",
+     "m": ".item-top",
+     "r": ".item-top",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "marcador-nota",
+     "m": ".item .mk.note",
+     "r": ".item .mk.note",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "color",
+      "borderTopLeftRadius",
+      "fontSize",
+      "fontWeight"
+     ]
+    },
+    {
+     "n": "marcador-cambio",
+     "m": ".item.change .mk.change",
+     "r": ".item.change .mk.change",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "transform"
+     ]
+    },
+    {
+     "n": "autor",
+     "m": ".item-who strong",
+     "r": ".item-who strong",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "color"
+     ]
+    },
+    {
+     "n": "autor-rotulo",
+     "m": ".item-who small",
+     "r": ".item-who small",
+     "props": [
+      "fontSize",
+      "letterSpacing",
+      "textTransform",
+      "color"
+     ]
+    },
+    {
+     "n": "hace",
+     "m": ".item .ago",
+     "r": ".item .ago",
+     "props": [
+      "fontSize",
+      "color",
+      "marginLeft",
+      "whiteSpace"
+     ]
+    },
+    {
+     "n": "meta",
+     "m": ".item-meta",
+     "r": ".item-meta",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap",
+      "marginTop",
+      "marginBottom"
+     ]
+    },
+    {
+     "n": "chip-tiempo",
+     "m": ".time-link",
+     "r": ".time-link",
+     "props": [
+      "h",
+      "fontSize",
+      "fontFamily",
+      "paddingLeft",
+      "paddingRight",
+      "backgroundColor",
+      "borderTopLeftRadius",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "texto",
+     "m": ".item > p",
+     "r": ".item > p",
+     "props": [
+      "fontSize",
+      "lineHeight",
+      "color",
+      "marginBottom",
+      "marginTop"
+     ]
+    },
+    {
+     "n": "acciones",
+     "m": ".item > .item-actions",
+     "r": ".item > .item-actions",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap",
+      "flexWrap"
+     ]
+    },
+    {
+     "n": "accion",
+     "m": ".item > .item-actions .text-btn",
+     "r": ".item > .item-actions .text-btn",
+     "props": [
+      "minHeight",
+      "fontSize",
+      "color",
+      "columnGap",
+      "display"
+     ]
+    },
+    {
+     "n": "respuesta",
+     "m": ".reply",
+     "r": ".reply",
+     "props": [
+      "marginLeft",
+      "marginTop",
+      "paddingLeft",
+      "borderLeftWidth",
+      "borderLeftColor"
+     ]
+    },
+    {
+     "n": "respuesta-texto",
+     "m": ".reply p",
+     "r": ".reply p",
+     "props": [
+      "fontSize",
+      "marginTop",
+      "marginBottom"
+     ]
+    },
+    {
+     "n": "respuesta-autor",
+     "m": ".reply .item-top strong",
+     "r": ".reply .item-top strong",
+     "props": [
+      "fontSize"
+     ]
+    },
+    {
+     "n": "avatar-agente",
+     "m": ".agent-av",
+     "r": ".agent-av",
+     "props": [
+      "w",
+      "h",
+      "backgroundColor",
+      "color",
+      "borderTopLeftRadius"
+     ]
+    },
+    {
+     "n": "redactor",
+     "m": ".composer",
+     "r": ".composer",
+     "props": [
+      "marginLeft",
+      "marginTop",
+      "marginBottom",
+      "paddingTop",
+      "paddingLeft",
+      "borderTopWidth",
+      "borderTopColor",
+      "borderTopLeftRadius",
+      "backgroundColor"
+     ]
+    },
+    {
+     "n": "redactor-cabecera",
+     "m": ".composer-top",
+     "r": ".composer-top",
+     "props": [
+      "display",
+      "alignItems",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "redactor-rotulo",
+     "m": ".composer .eyebrow",
+     "r": ".composer .eyebrow",
+     "props": [
+      "fontSize",
+      "fontWeight",
+      "letterSpacing",
+      "textTransform"
+     ]
+    },
+    {
+     "n": "redactor-tramo",
+     "m": ".a-iobtn",
+     "r": ".a-iobtn",
+     "props": [
+      "h",
+      "fontSize",
+      "fontWeight",
+      "borderTopWidth",
+      "borderTopLeftRadius",
+      "paddingLeft"
+     ]
+    },
+    {
+     "n": "redactor-texto",
+     "m": ".composer textarea",
+     "r": ".composer textarea",
+     "props": [
+      "h",
+      "fontSize",
+      "borderTopWidth",
+      "resize"
+     ]
+    },
+    {
+     "n": "redactor-pie",
+     "m": ".composer-bottom",
+     "r": ".composer-bottom",
+     "props": [
+      "display",
+      "alignItems",
+      "justifyContent"
+     ]
+    },
+    {
+     "n": "redactor-hora",
+     "m": ".composer-bottom .at",
+     "r": ".composer-bottom .at",
+     "props": [
+      "fontFamily",
+      "fontSize",
+      "color",
+      "columnGap"
+     ]
+    },
+    {
+     "n": "redactor-enviar",
+     "m": ".send",
+     "r": ".send",
+     "props": [
+      "h",
+      "backgroundColor",
+      "color",
+      "fontSize",
+      "borderTopLeftRadius",
+      "paddingLeft",
       "columnGap"
      ]
     }

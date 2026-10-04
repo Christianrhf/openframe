@@ -462,224 +462,195 @@
   .ink-swatch.on{background:var(--wash);font-weight:650}
   .ink-swatch i{width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);flex:0 0 auto}
 
-  /* ── Panel de notas ── */
-  /* .side = el <aside class="sidebar"> de la maqueta: tarjeta blanca con borde y radio 8.
-     El ancho ya no es suyo: lo fija la columna de .main-grid (clamp(380px,29vw,460px)). */
-  .side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;
-    background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
-  .side-head{flex:0 0 auto;padding:8px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap;row-gap:4px}
-  /* con el texto a 11px (P6) el contador ya no cabe en la misma linea a 1280px:
-     antes se partia POR DENTRO («3 / cambios»). Ahora salta entero a la segunda. */
-  .side-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1 1 auto;min-width:max-content}
-  .cnt{font-family:var(--mono);font-size:11px;color:var(--fg-mute);white-space:nowrap}
-  .filter{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:6px 11px;border-bottom:1px solid var(--line-soft);font-size:11px}
-  .vfilter{padding:3px 6px;min-height:28px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);
-    font-size:11px;color:var(--fg-dim);max-width:118px}
-  .chk{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 0;min-height:28px}
-  .chk input{appearance:none;width:13px;height:13px;border:1px solid var(--chk-border);border-radius:3.5px;cursor:pointer;position:relative;flex:0 0 13px}
-  .chk input:checked{background:var(--accent);border-color:var(--accent)}
-  .chk input:checked::after{content:"";position:absolute;left:4px;top:1px;width:3.5px;height:7px;
-    border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:rotate(42deg)}
-  .chk:hover{color:var(--fg-dim)}
-  .list{flex:1;overflow-y:auto;min-height:0}
-  .empty{padding:34px 20px;text-align:center;color:var(--fg-mute);font-size:12px;line-height:1.8}
-  .empty svg{width:24px;height:24px;opacity:.4;margin-bottom:9px}
+  /* ── Panel de notas · réplica literal de la maqueta (aside.sidebar) · R5 ── */
+.ico{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:14px;height:14px}
+.ico.xs{width:12px;height:12px}
+.ico.solid{fill:currentColor}
+.mk{flex:0 0 auto;display:inline-grid;place-items:center;font:600 11px/1 var(--mono);padding:0}
+.mk.note{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff}
+.mk.change{width:20px;height:20px;margin:3px;background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:4px;transform:rotate(45deg)}
+.mk.change b{font:inherit;font-size:9px;transform:rotate(-45deg)}
+.mk.mini.note{width:16px;height:16px;font-size:9px}
+.mk.mini.change{width:17px;height:17px;margin:2px;border-width:1.5px}
+.mk.mini.change b{font-size:9px}
+.sidebar{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:8px}
+.side-head{flex:0 0 auto;padding:12px 16px 0}
+.side-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650}
+.live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:400;color:var(--muted)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--ink);display:inline-block}
+.tabs{display:flex;gap:23px;margin-top:10px;border-bottom:1px solid var(--line)}
+.tab{padding:0 0 10px;font-size:12px;color:var(--muted);border-bottom:2px solid transparent}
+.tab[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+.count{margin-left:5px;font-size:11px;color:var(--muted)}
+.feed{position:relative;flex:1;min-height:0;overflow:clip}
+.feed-content{position:absolute;inset:0 16px;column-count:1;column-gap:32px;column-fill:auto;overflow:visible}
+.item{position:relative;break-inside:avoid-column;margin:0 0 6px;padding:9px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.item:hover{border-color:var(--faint)}
+.item.change{background:var(--tint)}
+.item.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.item:focus-visible{outline:none}
+.item:focus-visible:not(.sel){border-color:var(--ink)}
+.item-top{display:flex;align-items:center;gap:10px}
+.item-who{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.item-who strong{font-size:12px;font-weight:650}
+.item-who small{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.ago{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.now{display:none;margin-left:auto;align-items:center;gap:5px;height:22px;padding:0 9px 0 7px;border-radius:99px;background:var(--ink);color:#fff;font-size:11px;font-weight:650;letter-spacing:.02em}
+.item.sel .now{display:inline-flex}
+.item.sel .ago{display:none}
+.item-meta{display:flex;align-items:center;gap:10px;margin:5px 0 5px}
+.time-link{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 7px;border-radius:4px;background:var(--fill);font:11px var(--mono);font-variant-numeric:tabular-nums}
+.item.change .time-link{background:var(--fill)}
+.time-link:hover{background:var(--line2)}
+.item.sel .time-link{background:var(--ink);color:#fff}
+.status{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--ink)}
+.status .s-ok{display:none;align-items:center;gap:5px;color:var(--muted);font-weight:500}
+.status .s-un{display:inline-flex;align-items:center;gap:5px}
+.item[data-reviewed=true] .status .s-un{display:none}
+.item[data-reviewed=true] .status .s-ok{display:inline-flex}
+.item p{margin:0 0 6px;font-size:12px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.item p strong{color:var(--ink)}
+.item-actions{display:flex;align-items:center;gap:14px}
+.text-btn{display:inline-flex;align-items:center;gap:5px;min-height:28px;font-size:11px;color:var(--muted)}
+.text-btn:hover{color:var(--ink)}
+.link-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 6px;margin:0 0 8px;border:1px solid var(--line2);border-radius:99px;background:#fff;font-size:11px;color:var(--muted)}
+.link-chip:hover{border-color:var(--ink);color:var(--ink)}
+.reply{margin:10px 0 0 10px;padding-left:14px;border-left:2px solid var(--line2)}
+.reply .item-top{gap:8px}
+.reply p{margin:6px 0 8px;font-size:11px}
+.agent-av{display:grid;place-items:center;width:20px;height:20px;border-radius:4px;background:var(--ink);color:#fff;flex:0 0 auto}
+.reply .item-top strong{font-size:11px}
+.composer{flex:0 0 auto;margin:8px 12px 10px;padding:10px;background:#fff;border:1px solid var(--line2);border-radius:6px}
+.composer.replying{border-color:var(--ink)}
+.composer-top{display:flex;align-items:center;gap:8px;min-height:18px}
+.eyebrow{font-size:11px;font-weight:650;letter-spacing:1.3px;text-transform:uppercase}
+.composer-top .cancel{margin-left:auto;display:none;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.composer.replying .cancel{display:inline-flex}
+.composer textarea{display:block;width:100%;height:40px;resize:none;border:0;background:transparent;font-size:12px;outline-offset:2px}
+.composer-bottom{display:flex;align-items:center;justify-content:space-between}
+.composer-bottom .at{display:inline-flex;align-items:center;gap:5px;font:11px var(--mono);color:var(--muted)}
+.send{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:4px;background:var(--ink);color:#fff;font-size:11px}
+.send:hover{background:#000}
+.empty{margin:0;padding:12px 0;color:var(--muted);font-size:12px}
+.a-io{display:inline-flex;align-items:center;gap:3px;margin-left:auto}
+.composer.replying .a-io{display:none}
+.a-iobtn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1px solid var(--line2);border-radius:4px;background:#fff;font-size:11px;font-weight:650;white-space:nowrap}
+.a-iobtn:hover{background:var(--hover)}
+.a-iobtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.a-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.a-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 0 0 8px;border:1px solid var(--ink);border-radius:4px;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.a-chip .x{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:4px;color:var(--muted)}
+.a-chip .x:hover{background:var(--hover);color:var(--ink)}
+.a-flag{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 7px;border:1px solid var(--line2);border-radius:4px;font-size:11px;font-weight:650}
+.item.sel .a-flag{border-color:var(--ink)}
+.a-dur{font:11px var(--mono);color:var(--muted)}
+.item-actions{flex-wrap:wrap;row-gap:6px}
+.filterbar{display:flex;flex-direction:column;gap:5px;padding:6px 0}
+.fb-row{display:flex;align-items:center;gap:8px}
+.searchbox{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--tint);color:var(--muted)}
+.searchbox .ico{flex:0 0 auto}
+.searchbox input{flex:1 1 auto;min-width:0;height:100%;border:0;background:transparent;font-size:11px;color:var(--ink)}
+.searchbox input::placeholder{color:var(--muted)}
+.searchbox .x{display:none;position:relative;flex:0 0 24px;width:24px;height:24px;border-radius:99px;align-items:center;justify-content:center;color:var(--muted)}
+.searchbox .x:not([hidden]){display:flex}
+.searchbox .x:hover{background:var(--hover)}
+.filters-btn{position:relative;flex:0 0 auto;height:28px;padding:0 10px;font-size:11px;gap:6px}
+.filters-btn.active{border-color:var(--ink)}
+.filters-btn .dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.seg{display:flex;align-items:center;gap:2px;flex:0 0 auto;height:32px;border:1px solid var(--line);border-radius:6px;padding:2px;background:var(--tint)}
+.seg-btn{display:flex;align-items:center;gap:4px;height:28px;padding:0 8px;border-radius:4px;font-size:11px;color:var(--muted);white-space:nowrap}
+.seg-btn .count{font-size:11px;color:inherit;opacity:.7}
+.seg-btn.on{background:var(--ink);color:#fff}
+.seg-btn:hover:not(.on){background:var(--hover)}
+.result-count{margin-left:auto;flex:0 0 auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.pop-section{display:flex;flex-direction:column;gap:6px}
+.pop-label{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.person-list{display:flex;flex-direction:column;gap:2px;max-height:140px;overflow:auto}
+.person-opt{text-align:left;min-height:28px;padding:5px 8px;border-radius:4px;font-size:11px}
+.person-opt:hover{background:var(--hover)}
+.person-opt.on{background:var(--hover);font-weight:600}
+.chk-row{display:flex;align-items:center;gap:8px;min-height:28px;font-size:11px;padding:2px 0}
+#clearFiltersLink{align-self:flex-start}
+.empty .text-btn{margin-left:6px}
+.item.change .item-actions{gap:10px;flex-wrap:nowrap}
+.item.change .item-actions .text-btn{min-height:28px;white-space:nowrap}
+.item.change[data-reviewed=true] .approve-btn,.item.change[data-reviewed=true] .adjust-btn,.item.change:not([data-reviewed=true]) .redecide-btn{display:none}
+.status .s-adj{display:none;align-items:center;gap:5px;color:var(--ink)}
+.item[data-decision=adjust] .status .s-ok{display:none}
+.item[data-decision=adjust] .status .s-adj{display:inline-flex}
+.item.change[data-decision=adjust]>.item-top>.mk.change{border-style:dashed}
+.composer.adjusting{border-style:dashed}
+.searchbox .x:before{content:"";position:absolute;inset:-2px;border-radius:99px}
+.item:focus-visible:not(.sel){box-shadow:0 0 0 1px var(--ink)}
+.item.sel:focus-visible{box-shadow:0 0 0 2px var(--ink)}
+.filters-pop{position:fixed;z-index:60;background:#fff;border:1px solid var(--line2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.16);display:flex;flex-direction:column;width:220px;padding:10px;gap:8px}
+@media(max-width:1400px){.item.change .reply-btn span{display:none}}
 
-  .note{padding:8px 11px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;gap:8px;position:relative}
-  .note:hover{background:var(--panel-2)}
-  .note.on{background:var(--raised)}
-  .note.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
-  /* la nota que esta bajo el cursor del reproductor */
-  .note.ph{background:var(--accent-soft)}
+/* ── Lo que el real tiene y la maqueta no (mismo idioma) ── */
+/* DIFERENCIA 1: hilo continuo con scroll propio, no páginas (decisión del usuario) */
+.feed-content{overflow-x:hidden;overflow-y:auto;column-count:auto;overscroll-behavior:contain;overflow-anchor:none}
+.hilo-b{display:block}
+.list.hilo-lazy .hilo-b{content-visibility:auto;contain-intrinsic-size:auto 160px}
+.item p{white-space:pre-wrap}
+.item p.p-empty{color:var(--muted);font-style:italic}
+.item .thumb{display:block;width:54px;height:31px;margin:0 0 6px;border-radius:4px;object-fit:cover;border:1px solid var(--line);background:#000}
+.item .thread-btn{margin-left:auto}
+.live.x2round{background:none;border:0;padding:0;min-height:28px;cursor:pointer;font:inherit;font-size:11px;font-weight:400;color:var(--muted)}
+.live.x2round:hover,.live.x2round.est-con_agente,.live.x2round.est-aprobado{color:var(--ink)}
+.live.x2round.est-aprobado .dot{box-shadow:0 0 0 2px #fff,0 0 0 3px var(--ink)}
+.live.x2round .ico{display:none}
+.composer .composer-top .cancel{display:inline-flex}   /* lo gobierna el JS (display inline), no .replying */
+.composer .dirty{display:none;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.composer .dirty.on{display:inline-flex}
+.composer .dirty:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.composer .composer-bottom{gap:8px}
+.composer .composer-bottom .send{margin-left:auto}
+.composer .send:disabled{opacity:.4;cursor:default}
+.composer .composer-hidden{display:none}
+.filters-pop select{height:28px;min-width:0;border:1px solid var(--line2);border-radius:4px;background:#fff;font-size:11px;padding:0 6px}
+.filters-pop[hidden],.searchbox .x[hidden],.filters-btn .dot[hidden]{display:none}
+.sidebar .empty{padding:12px 0}
 
-  .note[data-who="cristian"]{--own:var(--yo);    --own-ring:var(--yo-ring)}
-  .note[data-who="claude"] {--own:var(--claude); --own-ring:var(--claude-ring)}
-  /* anillo de identidad a la izquierda, como el avatar-ring de Frame.io */
-  .note[data-who]::before{
-    content:"";position:absolute;left:0;top:7px;bottom:7px;width:3px;
-    border-radius:0 3px 3px 0;background:var(--own);opacity:.9;
-  }
-  .note.res::before{opacity:.32}
-  .note.on::before{opacity:1;box-shadow:0 0 0 1px var(--own)}
-  /* el timecode pasa de texto suelto a CHIP calido (unico color calido de la UI) */
-  /* el chip del timecode ya no usa color (todo es gris). Se destaca por
-     fondo, borde y peso de fuente — igual que hace Frame.io, pero sin tono. */
-  .note .tcx{
-    font-family:var(--mono);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;
-    color:var(--tcf);background:var(--tcb);padding:1px 5px;border-radius:5px;
-    letter-spacing:.2px;border:1px solid var(--line);
-  }
-  .note.ph .txt{color:var(--fg)}
-  .note.ph .phdot{
-    display:block;position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
-  }
-  .note .phdot{display:none}
-  .note.ph.on{background:var(--raised)}
-  .note.ph.on .phdot{width:3px;background:var(--accent)}
-  .note.on .phdot{display:block;background:var(--accent)}
-  .note.res .txt{color:var(--fg-mute);text-decoration:line-through;text-decoration-color:var(--strike)}
-  .note .body{flex:1;min-width:0}
 
-  /* X2 · decisiones y conversacion continua con scroll propio. */
-  .list{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;overflow-anchor:none}
-  .note.on{outline:2px solid var(--fg);outline-offset:-2px}
-  .note.on::before{display:none}
-  .list.hilo-lazy .hilo-b{content-visibility:auto;contain-intrinsic-size:auto 100px}
-  .x2filters{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;padding:6px 9px;
-    border-bottom:1px solid var(--line-soft);background:var(--panel)}
-  .x2search,.x2select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);
-    padding:0 8px;font-size:11px;min-width:0}
-  .x2select{max-width:94px}
-  .x2checks{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:20px}
-  .hilo-count{flex:0 0 34px;display:flex;align-items:center;justify-content:space-between;padding:3px 9px;
-    border-top:1px solid var(--line);font:11px var(--mono);color:var(--fg-mute)}
-  /* ── P5 · cierre de ronda ──
-     El estado del corte se lee por TEXTO + FORMA (reloj / avion / roseta), nunca
-     por color: el visor es blanco y negro y el color vive solo en los pinceles. */
-  .x2round{font:11px var(--mono);color:var(--fg-dim);white-space:nowrap;display:inline-flex;min-height:28px;
-    align-items:center;gap:4px;height:20px;padding:0 6px;border:1px solid var(--line);
-    border-radius:10px;background:var(--panel-2)}
-  .x2round svg{width:11px;height:11px;flex:0 0 11px}
-  .x2round.est-con_agente{border-color:var(--fg);color:var(--fg);font-weight:600}
-  .x2round.est-aprobado{border-color:var(--fg);border-width:2px;color:var(--fg);font-weight:600}
   .p5pop{position:fixed;z-index:910;width:252px;background:var(--raised);border:1px solid var(--line);
     border-radius:9px;box-shadow:0 8px 26px var(--shadow-soft);padding:9px 11px;display:none;flex-direction:column;gap:5px}
+
   .p5pop.on{display:flex}
+
   .p5pop[hidden]{display:none}
+
   .p5pop h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
     color:var(--fg-mute);display:flex;align-items:center;gap:6px}
+
   .p5pop h3 svg{width:12px;height:12px;flex:0 0 12px;color:var(--fg-mute)}
+
   .p5row{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--fg-mute);min-height:18px}
+
   .p5row b{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--fg)}
+
   .p5acts{display:flex;gap:5px;margin-top:5px;padding-top:7px;border-top:1px solid var(--line-soft)}
+
   .p5acts button{flex:1;min-height:28px;padding:0 7px;border:1px solid var(--line);border-radius:5px;
     font-size:11px;display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+
   .p5acts button svg{width:12px;height:12px}
+
   .p5acts button:hover:not(:disabled){background:var(--hover)}
+
   .p5acts button:disabled{opacity:.35;cursor:default}
+
   .p5acts button.pri:not(:disabled){background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+
   /* la tarjeta es estrecha: el estado cae a su propia linea en vez de partirse */
   .pitem .pmeta{flex-wrap:wrap;row-gap:2px}
+
   .pmeta .pest{white-space:nowrap}
-  .sent-badge{display:inline-flex;align-items:center;gap:3px;font:9.5px var(--mono);
-    border:1px solid var(--line);border-radius:4px;padding:1px 4px;color:var(--fg-mute);white-space:nowrap}
-  .sent-badge svg{width:9px;height:9px}
+
   body.invitado .x2round, body.invitado .p5pop{display:none !important}
-  .note.change{border:1px solid var(--fg);border-left-width:3px;margin:6px 8px;padding:8px;border-radius:6px;background:var(--panel)}
-  .note.change::before{display:none}
-  .note.change .tcx{border-style:dashed}
-  .decision{font:10px var(--mono);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap}
-  .decision.adjust{border-style:dashed}
-  .decide{display:flex;gap:5px;margin-top:7px}
-  .decide button{min-height:28px;padding:0 7px;border:1px solid var(--line);border-radius:5px;font-size:11px;display:inline-flex;align-items:center;gap:4px}
-  .decide button:hover{border-color:var(--fg);background:var(--hover)}
-  .decide svg{width:13px;height:13px}
-  .draft-badge{font:10px var(--mono);border:1px dashed var(--fg-dim);border-radius:4px;padding:1px 5px}
-  .editor.adjusting{border-top-style:dashed}
-  .note .meta{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
-  /* (la regla vieja de .tcx que pisaba el chip la borramos) */
-  .note .frx,.note .rng{font-family:var(--mono);font-size:11px;color:var(--fg-mute)}
-  .note .who{font-size:11px;padding:1px 5px;border-radius:3px;font-family:var(--mono)}
-  .note .who.c{background:var(--info-soft);color:var(--info);border:1px solid var(--line-c)}
-  .note .who.y{background:var(--ok-soft);color:var(--ok);border:1px solid var(--line-y)}
-  .note .txt{font-size:12.5px;white-space:pre-wrap;word-break:break-word;line-height:1.55}
-  .note .thumb{width:54px;height:31px;border-radius:4px;object-fit:cover;flex:0 0 54px;border:1px solid var(--line);background:#000}
-  .note .acts{display:flex;gap:1px;opacity:0;flex:0 0 auto}
-  .note:hover .acts,.note.on .acts{opacity:1}
-  .note .acts button{width:28px;height:28px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
-  .note .acts button:hover{background:var(--hover);color:var(--hover-ink)}
-  .note .acts button svg{width:12px;height:12px}
-  .note .acts button.ok:hover{color:var(--ok)}
-  .note .acts button.ed:hover{color:var(--accent)}
-  .note .acts button.mv:hover{color:var(--accent)}
-  .note .acts button.del:hover{color:var(--danger)}
-  .note .acts button[disabled]{opacity:.35;cursor:default}
 
-  /* ═══ HILOS ═══
-     Un hilo es un bloque: la nota raiz y debajo sus respuestas, colgando de una
-     linea vertical fina que sale del anillo de identidad de la raiz (es como lo
-     hace Frame.io: "linea vertical fina colgando del avatar del padre").
-     El separador entre HILOS es el hairline de siempre; entre la raiz y sus
-     respuestas no hay separador, porque son la misma conversacion. */
-  .hilo-b{border-bottom:1px solid var(--line-soft);position:relative}
-  .hilo-b .note{border-bottom:0}
-  /* la raiz de un hilo con respuestas no se separa de ellas */
-  .hilo-b .note.raiz{padding-bottom:5px}
-  /* las respuestas: sangradas, mas pequenas, sin chip de timecode (comparten el
-     momento de la raiz: repetirlo seria ruido que miente sobre que son) */
-  .rep{display:flex;gap:7px;padding:4px 11px 4px 26px;position:relative;cursor:pointer}
-  .rep:hover{background:var(--panel-2)}
-  .rep[data-who="cristian"]{--own:var(--yo); --own-ring:var(--yo-ring)}
-  .rep[data-who="claude"]  {--own:var(--claude); --own-ring:var(--claude-ring)}
-  /* el hilo vertical: nace bajo el anillo de la raiz y baja por todas las respuestas */
-  .rep::before{content:"";position:absolute;left:13px;top:0;bottom:0;width:1px;
-    background:var(--line)}
-  .rep:last-child::before{bottom:calc(100% - 11px)}   /* la ultima lo corta a su altura */
-  /* el codo que entra a la respuesta */
-  .rep::after{content:"";position:absolute;left:13px;top:10px;width:8px;height:1px;
-    background:var(--line)}
-  .rep .rbody{flex:1;min-width:0}
-  .rep .rmeta{display:flex;align-items:center;gap:5px;margin-bottom:2px}
-  .rep .rwho{font-size:11px;font-family:var(--mono);color:var(--fg-mute);
-    display:flex;align-items:center;gap:4px}
-  /* el punto de identidad de quien responde: mismo mecanismo de anillo, en pequeno */
-  .rep .rwho::before{content:"";width:6px;height:6px;border-radius:50%;
-    background:var(--own,var(--fg-mute));flex:0 0 6px}
-  .rep .rtxt{font-size:12px;white-space:pre-wrap;word-break:break-word;line-height:1.5;color:var(--fg-dim)}
-  .rep .racts{display:flex;gap:1px;opacity:0;flex:0 0 auto}
-  .rep:hover .racts{opacity:1}
-  .rep .racts button{width:19px;height:19px;border-radius:4px;display:grid;place-items:center;color:var(--fg-mute)}
-  .rep .racts button:hover{background:var(--hover);color:var(--hover-ink)}
-  .rep .racts button svg{width:11px;height:11px}
-
-  /* ── ESTADO DEL HILO: una pastilla, tres formas, cero color ──
-     pendiente  = sin pastilla (el caso normal no gasta tinta)
-     respondida = pastilla con la cuenta de respuestas, borde solido
-     cerrada    = pastilla con check, borde punteado y texto tachado (ya lo hacia .res) */
-  .hst{font-size:11px;font-family:var(--mono);padding:1px 5px;border-radius:9px;
-    border:1px solid var(--line);color:var(--fg-mute);background:var(--panel-2);
-    cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
-  .hst:hover{border-color:var(--on-border);color:var(--fg)}
-  .hst.abierto{border-color:var(--fg-mute);color:var(--fg-dim);font-weight:600}
-  .hst.cerrado{border-style:dashed}
-  .hst .cv{display:inline-block;width:5px;height:5px;border-right:1.5px solid currentColor;
-    border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-bottom:2px}
-  .hst.plegado .cv{transform:rotate(-45deg);margin:0 0 0 1px}
-  /* chip "viene de la version anterior" */
-  .vfrom{font-size:11px;font-family:var(--mono);padding:1px 5px;border-radius:5px;
-    border:1px dashed var(--line);color:var(--fg-mute);white-space:nowrap}
-  /* la caja de respuesta abierta: el editor de abajo cambia de modo, y aqui se marca
-     a QUE hilo esta apuntando para que no se responda a ciegas */
-  .note.respondiendo, .rep.respondiendo{background:var(--accent-soft)}
-  .note.respondiendo::after{content:"";position:absolute;left:0;right:0;bottom:0;
-    height:2px;background:var(--accent)}
-
-  .editor{flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel-2);padding:9px 11px}
-  .ed-head{display:flex;align-items:center;gap:7px;margin-bottom:6px;min-height:19px}
-  .ed-head .at{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-soft);
-    padding:2px 6px;border-radius:4px;font-variant-numeric:tabular-nums}
-  .ed-head .lbl{font-size:11px;color:var(--fg-mute);flex:1}
-  .ed-head button{font-size:11px;min-height:28px;color:var(--fg-dim);padding:2px 5px;border-radius:4px;display:flex;align-items:center;gap:3px}
-  .ed-head button:hover{background:var(--hover);color:var(--hover-ink)}
-  .ed-head button svg{width:11px;height:11px}
-  /* aviso de nota sin guardar */
-  .dirty{
-    font-size:11px;color:var(--accent);display:none;align-items:center;gap:4px;
-    padding:2px 6px;border-radius:4px;background:var(--accent-soft);white-space:nowrap;
-  }
-  .dirty.on{display:flex}
-  .dirty::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);flex:0 0 5px}
-  #ta{width:100%;min-height:64px;max-height:180px;resize:vertical;font-size:12.5px;line-height:1.55;
-    background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:8px 9px}
-  #ta:focus{border-color:var(--on-border)}
-  #ta::placeholder{color:var(--fg-mute)}
-  .ed-foot{display:flex;align-items:center;gap:7px;margin-top:6px}
-  /* Los atajos ya no se imprimen aqui: ocupan dos lineas y empujaban el boton de
-     borrar. Ahora viven en el tooltip del boton Guardar y en el panel de ayuda. */
-  .hint{flex:1;min-width:0}
   kbd{font-family:var(--mono);font-size:11px;background:var(--track);border:1px solid var(--line);
     border-bottom-width:2px;border-radius:3.5px;padding:1px 4px;color:var(--fg-dim)}
-
 
   /* ── Mover nota: vista previa + barra ── */
   .mvprev{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;
@@ -972,11 +943,6 @@
      Tres autores, tres FORMAS (cero color): Cristian barra negra solida, Agente gris,
      invitado barra A RAYAS y chip con borde discontinuo. Se lee a 9px sin leer el texto. */
   :root{--invitado:#3a3a3a;--invitado-ring:#8a8a8a}
-  .note[data-who="invitado"],.rep[data-who="invitado"]{--own:var(--invitado);--own-ring:var(--invitado-ring)}
-  .note[data-who="invitado"]::before{
-    background:repeating-linear-gradient(180deg,var(--own) 0 3px,transparent 3px 6px)}
-  .rep[data-who="invitado"] .rwho::before{border-radius:1px;background:var(--own)}
-  .note .who.i{background:var(--panel);color:var(--fg);border:1px dashed var(--fg-dim);font-weight:600}
   .mark.inv{background:repeating-linear-gradient(180deg,var(--ink) 0 2px,var(--muted) 2px 4px)}
   .tlrail .rnote.inv{background:repeating-linear-gradient(180deg,var(--own) 0 1.5px,transparent 1.5px 3px)}
   /* banner fijo del invitado: vive en la barra superior (46px, siempre visible) */
@@ -992,13 +958,12 @@
   body.invitado #hdrMore, body.invitado #hdrPop, body.invitado #hdrCorte, body.invitado #cortePop,
   body.invitado #bDel, body.invitado #bMove, body.invitado #tlChg, body.invitado #vfilter,
   body.invitado #bShare, body.invitado #bHer, body.invitado #bUp,
-  body.invitado .note .acts .ok, body.invitado .note .acts .mv, body.invitado .note .acts .del,
-  body.invitado .rep .racts .del{display:none !important}
+  body.invitado .resolve-btn, body.invitado .move-btn, body.invitado .del-btn{display:none !important}
   body.invitado .workspace{padding-left:24px !important}
   body.invitado .tp-row .tlinfo{flex:0 0 200px;width:200px}
   /* enlace caducado: se ve, no se escribe */
   body.inv-caducado #ta, body.inv-caducado .tools, body.inv-caducado #bEnd,
-  body.inv-caducado .note .acts, body.inv-caducado .rep .racts, body.inv-caducado #bErase,
+  body.inv-caducado .item-actions, body.inv-caducado .composer .send, body.inv-caducado #bErase,
   body.inv-caducado #bUndo, body.inv-caducado #bRedo{opacity:.3;pointer-events:none}
   body.inv-caducado .invbanner b{text-decoration:underline;text-decoration-style:dashed}
   body.inv-caducado .framewrap canvas{cursor:default;pointer-events:none}
@@ -1074,14 +1039,13 @@
   @media (max-width:1180px){
     .rail{flex:0 0 176px;width:176px}
     .vcol{flex:0 0 200px;width:200px}
-    .side{flex:0 0 300px;width:300px}
+    .sidebar{flex:0 0 300px;width:300px}
     /* sigue siendo fijo (no crece con el texto), solo mas estrecho */
     .tp-row .tlinfo{flex:0 0 150px;width:150px}
   }
   @media (max-width:1700px){
     .tp-row{flex-wrap:wrap;row-gap:6px}
     .tp-row .tlinfo{flex:1 1 150px;width:auto}
-    .x2checks{flex-wrap:wrap;gap:5px 10px}
   }
   @media (max-width:920px){
     .main{flex-wrap:wrap}
@@ -1089,7 +1053,7 @@
     .plist{display:flex;gap:5px;overflow-x:auto;padding:7px}
     .pitem{flex:0 0 156px;margin-bottom:0}
     .vcol{flex:0 0 186px;width:186px}
-    .side{flex:1 1 100%;width:auto;max-height:44vh;border-left:none;border-top:1px solid var(--line)}
+    .sidebar{flex:1 1 100%;width:auto;max-height:44vh;border-left:none;border-top:1px solid var(--line)}
     /* en pantalla estrecha la fila de transporte no cabe en una linea: que baje
        en vez de desbordar y dejar botones fuera del encuadre */
     .tp-row{flex-wrap:wrap;row-gap:6px}
@@ -1140,6 +1104,21 @@
          que son triangulos RELLENOS (paso de fotograma). -->
     <g id="i-mkprev"><polyline points="14 18 8 12 14 6"/><path d="M19 5v14"/></g>
     <g id="i-mknext"><polyline points="10 18 16 12 10 6"/><path d="M5 5v14"/></g>
+    <g id="i-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g>
+    <g id="i-sliders-horizontal"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></g>
+    <g id="i-pen-line"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></g>
+    <g id="i-corner-down-right"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></g>
+    <g id="i-circle-check"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></g>
+    <g id="i-wrench"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></g>
+    <g id="i-replace"><path d="M14 4a1 1 0 0 1 1-1"/><path d="M15 10a1 1 0 0 1-1-1"/><path d="M21 4a1 1 0 0 0-1-1"/><path d="M21 9a1 1 0 0 1-1 1"/><path d="m3 7 3 3 3-3"/><path d="M6 10V5a2 2 0 0 1 2-2h2"/><rect x="3" y="14" width="7" height="7" rx="1"/></g>
+    <g id="i-columns-2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></g>
+    <g id="i-repeat-1"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/></g>
+    <g id="i-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g>
+    <g id="i-sparkles"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></g>
+    <g id="i-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></g>
+    <g id="i-arrow-right-to-line"><path d="M17 12H3"/><path d="m11 18 6-6-6-6"/><path d="M21 5v14"/></g>
+    <g id="i-arrow-left-to-line"><path d="M3 19V5"/><path d="m13 6-6 6 6 6"/><path d="M7 12h14"/></g>
+    <g id="i-move-horizontal"><path d="m18 8 4 4-4 4"/><path d="M2 12h20"/><path d="m6 8-4 4 4 4"/></g>
     <g id="i-pen"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></g>
     <g id="i-arrow"><path d="M5 19 19 5"/><path d="M12 5h7v7"/></g>
     <g id="i-rect"><rect width="18" height="18" x="3" y="3" rx="2"/></g>
@@ -1451,47 +1430,67 @@
     </div>
   </div>
 
-  <div class="side">
+  <aside class="sidebar" aria-label="Notas de revisión">
     <div class="side-head">
-      <svg viewBox="0 0 24 24" style="width:13px;height:13px;color:var(--fg-mute)"><use href="#i-msg"/></svg>
-      <h2>Notas</h2>
-      <button class="x2round" id="roundStatus" aria-haspopup="dialog" aria-expanded="false"
-              title="Estado del corte y cierre de ronda" aria-label="Estado del corte y cierre de ronda">
-        <svg viewBox="0 0 24 24"><use href="#i-clock" id="roundIcon"/></svg><span id="roundTxt">En revisión</span>
-      </button>
-      <span class="cnt" id="cnt">0</span>
-    </div>
-    <div class="x2filters" aria-label="Filtros de conversación">
-      <input class="x2search" id="x2Search" type="search" placeholder="Buscar…" aria-label="Buscar en la conversación">
-      <select class="x2select" id="x2Type" aria-label="Filtrar por tipo"><option value="all">Todo</option><option value="nota">Notas</option><option value="cambio">Cambios</option></select>
-      <select class="x2select" id="x2Person" aria-label="Filtrar por persona"><option value="all">Todos</option><option value="cristian">Cristian</option><option value="claude">Agente</option><option value="invitado">Invitado</option></select>
-      <div class="x2checks">
-        <select class="vfilter" id="vfilter" title="Filtrar por video" aria-label="Filtrar por video"></select>
-        <label class="chk"><input type="checkbox" id="cPend"><span>Pendientes</span></label>
-        <label class="chk"><input type="checkbox" id="x2Drawing"><span>Con dibujo</span></label>
-        <label class="chk"><input type="checkbox" id="cThumb"><span>Miniaturas</span></label>
+      <div class="side-title">Conversación <button class="live x2round" id="roundStatus" type="button" aria-haspopup="dialog" aria-expanded="false" title="Estado del corte y cierre de ronda" aria-label="Estado del corte y cierre de ronda"><span class="dot"></span><span id="roundTxt">En revisión</span><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock" id="roundIcon"/></svg></button></div>
+      <div class="tabs" role="tablist" aria-label="Filtrar notas">
+        <button class="tab" type="button" role="tab" aria-selected="true" id="openTab" aria-controls="list">Abiertas <span class="count" id="openCount">0</span></button>
+        <button class="tab" type="button" role="tab" aria-selected="false" id="resolvedTab" aria-controls="list">Resueltas <span class="count" id="resolvedCount">0</span></button>
+      </div>
+      <div class="filterbar" id="filterBar">
+        <div class="fb-row">
+          <div class="searchbox">
+            <svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+            <input type="text" id="x2Search" placeholder="Buscar…" aria-label="Buscar en la conversación">
+            <button class="x" type="button" id="searchClear" title="Limpiar búsqueda" aria-label="Limpiar búsqueda" hidden><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg></button>
+          </div>
+          <button class="btn filters-btn" type="button" id="filtersBtn" aria-haspopup="dialog" aria-expanded="false" title="Más filtros" aria-label="Más filtros"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg>Filtros<span class="dot" id="filtersDot" hidden></span></button>
+        </div>
+        <div class="fb-row">
+          <div class="seg" role="group" aria-label="Tipo de entrada">
+            <button class="seg-btn on" type="button" data-type="all" aria-pressed="true">Todo <span class="count" id="countAll">0</span></button>
+            <button class="seg-btn" type="button" data-type="nota" aria-pressed="false">Notas <span class="count" id="countNotes">0</span></button>
+            <button class="seg-btn" type="button" data-type="cambio" aria-pressed="false">Cambios <span class="count" id="countChanges">0</span></button>
+          </div>
+          <span class="result-count" id="hiloCount" role="status" aria-live="polite">0 de 0</span>
+        </div>
+      </div>
+      <div class="filters-pop" id="filtersPop" role="dialog" aria-label="Más filtros" hidden>
+        <div class="pop-section"><span class="pop-label">Persona</span><div class="person-list" id="personOptions">
+          <button class="person-opt on" type="button" data-person="all">Todos</button>
+          <button class="person-opt" type="button" data-person="cristian">Cristian</button>
+          <button class="person-opt" type="button" data-person="claude">Agente</button>
+          <button class="person-opt" type="button" data-person="invitado">Invitado</button>
+        </div></div>
+        <div class="pop-section"><span class="pop-label">Video</span><select class="vfilter" id="vfilter" title="Filtrar por video" aria-label="Filtrar por video"></select></div>
+        <label class="chk-row"><input type="checkbox" id="x2Drawing"> Con dibujo</label>
+        <label class="chk-row"><input type="checkbox" id="chkReviewed"> Mostrar cambios revisados</label>
+        <label class="chk-row"><input type="checkbox" id="cThumb"> Miniaturas</label>
+        <button class="text-btn" type="button" id="clearFiltersLink">Limpiar filtros</button>
+      </div>
+      <div hidden>
+        <select id="x2Type" aria-label="Filtrar por tipo"><option value="all">Todo</option><option value="nota">Notas</option><option value="cambio">Cambios</option></select>
+        <select id="x2Person" aria-label="Filtrar por persona"><option value="all">Todos</option><option value="cristian">Cristian</option><option value="claude">Agente</option><option value="invitado">Invitado</option></select>
+        <input type="checkbox" id="cPend"><span id="cnt">0</span>
       </div>
     </div>
-    <div class="list" id="list"></div>
-    <div class="hilo-count"><span id="hiloCount" role="status">0 de 0</span></div>
-    <div class="editor">
-      <div class="ed-head">
-        <span class="at" id="edAt">00:00:00:00</span>
-        <span class="lbl" id="edLbl">—</span>
+
+    <div class="feed" id="feed" role="tabpanel" aria-labelledby="openTab"><div class="feed-content list" id="list"></div></div>
+
+    <form class="composer editor" id="noteForm" onsubmit="return false">
+      <div class="composer-top"><label for="ta" class="eyebrow" id="edLbl">Nueva nota</label>
+        <span class="a-io" role="group" aria-label="Tramo de la nota">
+          <button type="button" class="a-iobtn has-tip" id="bEnd" data-tip="Marcar aquí el final del intervalo" aria-label="Fijar la salida del tramo en este fotograma"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-left-to-line"/></svg>Salida</button>
+        </span>
         <span class="dirty" id="edDirty" role="status" aria-live="polite">sin guardar</span>
-        <button class="has-tip" id="bCancel" style="display:none" data-tip="Dejar la nota como estaba">cancelar</button>
-        <button class="has-tip" id="bEnd" data-tip="Marcar aquí el final del intervalo"><svg viewBox="0 0 24 24"><use href="#i-out"/></svg>fin</button>
-        <button class="has-tip" id="bMove" data-tip="Mover la nota a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg>mover</button>
-        <button class="has-tip" id="bGo" data-tip="Llevar el cursor a esta nota"><svg viewBox="0 0 24 24"><use href="#i-target"/></svg>ir</button>
+        <button type="button" class="cancel" id="bCancel" style="display:none"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg>Cancelar</button></div>
+      <textarea id="ta" aria-label="Texto de la nota" placeholder="Escribe una nota para el equipo…"></textarea>
+      <div class="composer-bottom"><span class="at"><svg class="ico xs" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clock"/></svg><span id="edAt">00:00:00:00</span></span><button class="send has-tip" type="submit" id="bSave" data-tip="Guardar la nota" data-key="Enter"><span id="bSaveTxt">Añadir</span> <svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-up"/></svg></button></div>
+      <div class="composer-hidden" hidden>
+        <button type="button" id="bMove">mover</button><button type="button" id="bGo">ir</button><button type="button" id="bDel">borrar</button>
       </div>
-      <textarea id="ta" placeholder="Escribe la nota y pulsa Enter para enviarla. Shift+Enter = nueva linea."></textarea>
-      <div class="ed-foot">
-        <span class="hint"></span>
-        <button class="btn has-tip" id="bDel" data-tip="Eliminar la nota seleccionada"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>Borrar</button>
-        <button class="btn pri has-tip" id="bSave" data-tip="Guardar la nota" data-key="Enter"><svg viewBox="0 0 24 24"><use href="#i-save"/></svg>Guardar</button>
-      </div>
-    </div>
-  </div>
+    </form>
+  </aside>
   </div>
   </div>
   <!-- Capa del selector de color: vive en el body, no dentro de la barra, para que
@@ -1587,7 +1586,7 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            tl:{zoom:1, off:0},
            tool:null, color:INK_COLORS[0][0], size:SIZES[1], pend:null, hist:[], hpos:-1,
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
-           x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
+           x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false, x2Tab:"abiertas", x2ShowReviewed:false,
            adjustTo:null,
            x2Llegadas:[],     // notas que trajo el ultimo sondeo (solo para avisar)
            selId:null,        // id de la nota activa (editar/mover/borrar)
@@ -2479,6 +2478,8 @@ function x2Filtradas(){
   const q = x2Normaliza(st.x2Search);
   return visibleNotes().filter(n => {
     const kind = n.kind === "cambio" ? "cambio" : "nota";
+    const ab = x2Abierta(n);
+    if(st.x2Tab === "resueltas" ? ab : !(ab || (n.kind === "cambio" && st.x2ShowReviewed))) return false;
     if(st.x2Type !== "all" && st.x2Type !== kind) return false;
     if(st.x2Person !== "all" && quienEs(n) !== st.x2Person) return false;
     if(st.x2Drawing && !(n.drawing && n.drawing.strokes && n.drawing.strokes.length)) return false;
@@ -2512,20 +2513,132 @@ function x2DetectarLlegadas(){
   _idsNotasVistas = new Set(ids);
   return nuevas;
 }
-function x2DecisionCard(n){
-  const linked = n.resuelve ? st.notas.find(x => x.id === n.resuelve) : null;
-  const estado = n.decision === "approved" ? '<span class="decision">aprobado</span>' :
-    n.decision === "adjust" ? '<span class="decision adjust">ajuste pedido</span>' : '';
+/* ── R5 · Conversación literal: UNA tarjeta .item por entrada, sus respuestas dentro (.reply) ── */
+const X2_IC = (n, sz) => '<svg class="ico' + (sz ? " " + sz : "") + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
+function x2Ago(iso){
+  const t = Date.parse(String(iso || "").replace(" ", "T"));
+  if(!isFinite(t)) return "";
+  const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if(m < 1) return "Ahora";
+  if(m < 60) return "Hace " + m + " min";
+  const h = Math.round(m / 60);
+  if(h < 24) return "Hace " + h + " h";
+  return "Hace " + Math.round(h / 24) + " d";
+}
+function x2Abierta(n){ return n.kind === "cambio" ? !n.decision : !n.resolved; }
+function x2Mk(n, mini){
+  const num = String(x2Numero(n));
+  return n.kind === "cambio"
+    ? '<span class="mk' + (mini ? " mini" : "") + ' change"><b>' + esc(num) + '</b></span>'
+    : '<span class="mk' + (mini ? " mini" : "") + ' note">' + esc(num.replace(/^Nota\s*/, "")) + '</span>';
+}
+function x2Tarjeta(n){
+  const cambio = n.kind === "cambio";
+  const id = esc(n.id), num = x2Numero(n);
+  const on = n.id === st.selId;
+  const quien = quienEs(n);
   const reps = respuestasDe(n.id);
-  const cuerpoReps = reps.length ? reps.map(htmlRespuesta).join("") : "";
-  const acciones = esInvitado ? "" : n.decision ?
-    '<div class="decide"><button data-redecide="' + esc(n.id) + '" title="Cambiar esta decisión" aria-label="Cambiar decisión sobre ' + esc(x2Numero(n)) + '">Cambiar decisión</button></div>' :
-    '<div class="decide"><button class="approve-btn" data-approve="' + esc(n.id) + '" title="Aprobar el cambio y cerrar la nota vinculada" aria-label="Aprobar ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg>Aprobar</button>' +
-    '<button class="adjust-btn" data-adjust="' + esc(n.id) + '" title="Pedir otro ajuste y reabrir la nota vinculada" aria-label="Pedir ajuste sobre ' + esc(x2Numero(n)) + '"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg>Pedir ajuste</button></div>';
-  return '<div class="hilo-b" data-hilo="' + esc(n.id) + '"><div class="note raiz change' + (n.id === st.selId ? " on" : "") + '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="claude">' +
-    '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span><span class="who c">Agente</span><strong>' + esc(x2Numero(n)) + '</strong>' + estado + '</div>' +
-    '<div class="txt">' + esc(n.text || "Cambio sin descripción") + '</div>' +
-    (linked ? '<div class="rng">Responde a ' + esc(x2Numero(linked)) + '</div>' : '') + acciones + '</div></div>' + cuerpoReps + '</div>';
+  const plegado = !!st.plegados[n.id];
+  const linked = cambio && n.resuelve ? st.notas.find(x => x.id === n.resuelve) : null;
+  const dib = !!(n.drawing && n.drawing.strokes && n.drawing.strokes.length);
+  const bajo = !cambio && n.video === st.vid && n.frame === st.playhead;
+  const fin = n.end_frame != null ? (n.end_timecode || tc(null, n.end_frame)) : "";
+  const dur = n.end_frame != null ? ((n.end_frame - n.frame) / fps).toFixed(1).replace(".", ",") + " s" : "";
+  let meta = '<button class="time-link" type="button" tabindex="-1" title="Ir a este fotograma">' + X2_IC("clock", "xs") + esc(n.timecode) + (fin ? " → " + esc(fin) : "") + '</button>';
+  if(dib) meta += '<span class="a-flag" title="Esta nota lleva un dibujo sobre su fotograma">' + X2_IC("pen-line", "xs") + 'Dibujo</span>';
+  if(dur) meta += '<span class="a-dur">' + dur + '</span>';
+  if(String(n.id).startsWith("tmp_")) meta += '<span class="a-dur draft-badge">borrador</span>';
+  if(n.from_video) meta += '<span class="a-dur vfrom" title="Este hilo viene de la versión anterior">heredado</span>';
+  if(!esInvitado && n.enviada_el) meta += '<span class="a-dur sent-badge" title="Enviada al Agente">enviada</span>';
+  if(cambio) meta += '<span class="status"><span class="s-un"><i class="dot"></i>Sin revisar</span><span class="s-ok">' + X2_IC("check", "xs") + 'Aprobado</span><span class="s-adj">' + X2_IC("wrench", "xs") + 'Ajuste pedido</span></span>';
+  const txt = n.text ? '<p>' + esc(n.text) + '</p>'
+    : '<p class="p-empty">' + (dib ? "[dibujo]" : cambio ? "Cambio sin descripción" : "[vacía]") + '</p>';
+  const th = st.thumbs && n.thumb ? '<img class="thumb" src="/thumbs/' + st.slug + '/' + n.thumb + '" alt="">' : '';
+  const chip = linked ? '<button class="link-chip" type="button" data-goto="' + esc(linked.id) + '" title="Ver la nota que lo motivó">' + X2_IC("link", "xs") + 'Resuelve la nota ' + x2Mk(linked, true) + '</button>' : '';
+  const btn = (cls, attr, ico, label, tip) => '<button class="text-btn ' + cls + '" type="button" ' + attr + ' title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + X2_IC(ico, "sm") + '<span>' + label + '</span></button>';
+  let acts = btn("reply-btn", 'data-rp="' + id + '"', "corner-down-right", "Responder", "Responder en el hilo de " + num);
+  if(!cambio){
+    if(n.end_frame != null) acts += btn("a-play-range", 'data-playrange="' + id + '"', "repeat-1", "Reproducir tramo", "Reproducir solo el tramo de esta nota");
+    if(!esInvitado) acts += btn("resolve-btn", 'data-res="' + id + '"', "circle-check", n.resolved ? "Reabrir" : "Resolver", n.resolved ? "Reabrir el hilo" : "Cerrar el hilo");
+    if(!esInvitado || esMia(n)) acts += btn("edit-btn", 'data-ed="' + id + '"', "pen-line", "Editar", esInvitado ? "Editar tu nota" : "Editar el texto");
+    if(!esInvitado){
+      acts += btn("move-btn", 'data-mv="' + id + '"', "move-horizontal", "Mover", "Mover a otro momento");
+      acts += btn("del-btn", 'data-del="' + id + '"', "trash-2", "Borrar", "Eliminar" + (reps.length ? " el hilo entero" : ""));
+    }
+  }else if(!esInvitado){
+    acts += btn("approve-btn", 'data-approve="' + id + '"', "check", "Aprobar", "Aprobar el cambio y resolver la nota vinculada");
+    acts += btn("adjust-btn", 'data-adjust="' + id + '"', "wrench", "Pedir ajuste", "Pedir otro ajuste al Agente (reabre la nota vinculada)");
+    acts += btn("redecide-btn", 'data-redecide="' + id + '"', "replace", "Cambiar decisión", "Cambiar la decisión: vuelve a sin revisar");
+    acts += btn("compare-btn", 'data-cmp="' + id + '"', "columns-2", "Comparar", "Comparar v01 · v02 en este fotograma");
+  }
+  if(reps.length) acts += '<button class="text-btn thread-btn" type="button" data-fold="' + id + '" aria-expanded="' + (!plegado) + '">' + (plegado ? "Mostrar " : "Ocultar ") + reps.length + (reps.length === 1 ? " respuesta" : " respuestas") + '</button>';
+  const cuerpoReps = (reps.length && !plegado) ? reps.map(htmlRespuesta).join("") : "";
+  return '<div class="hilo-b" data-hilo="' + id + '"><article class="item ' + (cambio ? "change " : "") + 'note raiz' + (on ? " sel on" : "") + (bajo ? " ph" : "") +
+    (n.resolved ? " res" : "") + (st.replyTo === n.id ? " respondiendo" : "") +
+    '" data-item="' + id + '" data-id="' + id + '" data-kind="' + (cambio ? "change" : "note") + '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-frame="' + n.frame + '"' +
+    (n.end_frame != null ? ' data-out="' + n.end_frame + '"' : '') + ' data-who="' + quien + '" data-resolved="' + (!!n.resolved) + '"' +
+    (cambio ? ' data-reviewed="' + (!!n.decision) + '"' + (n.decision ? ' data-decision="' + esc(n.decision) + '"' : '') + (linked ? ' data-resolves="' + esc(linked.id) + '"' : '') : '') +
+    ' data-label="' + esc((cambio ? "Cambio " : "") + num + " · " + nombreAutor(n)) + '" tabindex="0">' +
+    '<div class="item-top">' + x2Mk(n) + '<div class="item-who"><strong>' + esc(cambio ? "Agente" : nombreAutor(n)) + '</strong><small>' + (cambio ? "Cambio del agente" : "Nota") + '</small></div>' +
+    '<span class="ago">' + x2Ago(n.created) + '</span><span class="now">' + X2_IC("eye", "xs") + 'En pantalla</span></div>' +
+    '<div class="item-meta">' + meta + '</div>' + txt + th + chip +
+    '<div class="item-actions">' + acts + '</div>' + cuerpoReps + '</article></div>';
+}
+function x2DecisionCard(n){ return x2Tarjeta(n); }
+function htmlRespuesta(r){
+  const quien = quienEs(r);
+  const av = quien === "claude" ? '<span class="agent-av">' + X2_IC("sparkles", "xs") + '</span>' : '';
+  const mia = !esInvitado || esMia(r);
+  const bt = (cls, attr, ico, label, tip) => '<button class="text-btn ' + cls + '" type="button" ' + attr + ' title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + X2_IC(ico, "sm") + '<span>' + label + '</span></button>';
+  const acts = (mia ? bt("edit-btn", 'data-ed="' + esc(r.id) + '"', "pen-line", "Editar", esInvitado ? "Editar tu respuesta" : "Editar esta respuesta") : '') +
+    (!esInvitado ? bt("del-btn", 'data-del="' + esc(r.id) + '"', "trash-2", "Borrar", "Eliminar esta respuesta") : '');
+  return '<div class="reply" data-rid="' + esc(r.id) + '" data-who="' + quien + '"><div class="item-top">' + av + '<strong>' + esc(nombreAutor(r)) + '</strong><span class="ago">' + x2Ago(r.created) + '</span></div>' +
+    '<p>' + esc(r.text || "") + '</p>' + (acts ? '<div class="item-actions">' + acts + '</div>' : '') + '</div>';
+}
+function x2Contadores(todos){
+  const ab = todos.filter(x2Abierta), re = todos.filter(n => !x2Abierta(n));
+  const set = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  set("openCount", ab.length); set("resolvedCount", re.length);
+  const base = st.x2Tab === "resueltas" ? re : ab;
+  set("countAll", base.length);
+  set("countNotes", base.filter(n => n.kind !== "cambio").length);
+  set("countChanges", base.filter(n => n.kind === "cambio").length);
+}
+function x2IrA(id){
+  const n = st.notas.find(x => x.id === id); if(!n) return;
+  st.selId = id;
+  if(n.video !== st.vid) openVideo(n.video);
+  st.pend = {frame:n.frame, time:n.frame/fps};
+  seek(n.frame/fps);
+  editingId = null; $("#ta").value = ""; setDirty(false);
+  drawCanvas(); renderList(); updateEditor(); x2SeguirNota(id);
+}
+function x2Comparar(id){ x2IrA(id); if(typeof cmpEntrar === "function") cmpEntrar(); }
+let _x2Tramo = 0;
+function x2ReproducirTramo(id){
+  const n = st.notas.find(x => x.id === id); if(!n || n.end_frame == null) return;
+  x2IrA(id);
+  const fin = n.end_frame / fps;
+  clearInterval(_x2Tramo);
+  if(typeof play === "function") play();
+  _x2Tramo = setInterval(() => {
+    if(v.paused || v.currentTime >= fin){ clearInterval(_x2Tramo); if(!v.paused && typeof pause === "function") pause(); }
+  }, 40);
+}
+function x2Tab(t){
+  st.x2Tab = t;
+  $("#openTab").setAttribute("aria-selected", String(t === "abiertas"));
+  $("#resolvedTab").setAttribute("aria-selected", String(t === "resueltas"));
+  $("#feed").setAttribute("aria-labelledby", t === "abiertas" ? "openTab" : "resolvedTab");
+  renderList();
+}
+function x2PintarFiltros(){
+  const act = st.x2Person !== "all" || st.x2Drawing || st.x2ShowReviewed || !!st.filterVid && st.filterVid !== st.vid;
+  const d = $("#filtersDot"); if(d) d.hidden = !act;
+  const b = $("#filtersBtn"); if(b) b.classList.toggle("active", !!act);
+  const c = $("#searchClear"); if(c) c.hidden = !st.x2Search;
+  $$("#personOptions .person-opt").forEach(o => o.classList.toggle("on", o.dataset.person === st.x2Person));
+  $$("#filterBar .seg-btn").forEach(o => { const on = o.dataset.type === st.x2Type; o.classList.toggle("on", on); o.setAttribute("aria-pressed", String(on)); });
 }
 function renderList(){
   const inicio = performance.now();
@@ -2542,76 +2655,22 @@ function renderList(){
   const cambios = todos.filter(n => n.kind === "cambio").length;
   const all = todos.filter(n => n.kind !== "cambio");
   const pend = all.filter(n => !n.resolved).length;
+  x2Contadores(todos);
+  x2PintarFiltros();
   $("#cnt").textContent = all.length ? all.length + " · " + pend + " pend." + (cambios ? " · " + cambios + " cambios" : "") : "0";
   // P5: el estado del corte y el resumen de la ronda salen de los datos, no de
   // la UI. Decidir cambios individuales NUNCA cambia el estado por si solo.
   p5Actualizar();
   if(!filtradas.length){
     L._hiloHTML = null;
-    L.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><use href="#i-msg"/></svg>' +
-      (todos.length ? "Nada coincide con los filtros." : "Sin notas todavía.<br>Pausa el video y escribe abajo.") + '</div>';
+    L.innerHTML = '<p class="empty">' + (todos.length ? "No hay nada en esta vista." : "Sin notas todavía. Pausa el video y escribe abajo.") + '</p>';
     $("#hiloCount").textContent = "0 de " + todos.length;
     L.dataset.renderMs = (performance.now() - inicio).toFixed(2);
     pintarVistoChip();
     return;
   }
   const ph = st.playhead;
-  const pinta = n => {
-    if(n.kind === "cambio") return x2DecisionCard(n);
-    const on = n.id === st.selId;
-    const bajo = n.video === st.vid && n.frame === ph;   // el cursor de play esta aqui
-    // el intervalo mostraba n.timecode, o sea el INICIO otra vez ("00:01 → 00:01").
-    // El final es end_timecode; si una nota vieja no lo trae, se calcula del frame.
-    const rng = n.end_frame != null
-      ? '<span class="rng">→ ' + esc(n.end_timecode || tc(null, n.end_frame)) + '</span>' : '';
-    /* El chip de autor va SIEMPRE, con TEXTO. Antes tus notas no llevaban nada y se
-   distinguian de las de Agente solo por una barra de 3px negra contra gris — eso no
-   es un estado, es adivinar. Y "hermes" era un resto muerto de una version vieja. */
-const quien = quienEs(n);
-const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitado" ? "i" : "y") + '">' +
-            esc(nombreAutor(n)) + '</span>';
-    const th = st.thumbs && n.thumb ? '<img class="thumb" src="/thumbs/' + st.slug + '/' + n.thumb + '" alt="">' : '';
-    const txt = n.text ? esc(n.text) :
-      (n.drawing && n.drawing.strokes && n.drawing.strokes.length ? '<span style="color:var(--fg-mute);font-style:italic">[dibujo]</span>' :
-       '<span style="color:var(--fg-mute);font-style:italic">[vacía]</span>');
-    // ── estado del hilo: la pastilla solo aparece cuando dice algo ──
-    const reps = respuestasDe(n.id);
-    const est = estadoHilo(n);
-    const plegado = !!st.plegados[n.id];
-    let pastilla = "";
-    if(est === EST.CERR){
-      pastilla = '<span class="hst cerrado has-tip" data-fold="' + n.id + '" data-tip="Hilo cerrado — pulsa el check para reabrirlo">' +
-        '<span class="cv"></span>cerrada' + (reps.length ? " · " + reps.length : "") + '</span>';
-    }else if(reps.length){
-      pastilla = '<span class="hst abierto has-tip' + (plegado ? " plegado" : "") + '" data-fold="' + n.id +
-        '" data-tip="' + (plegado ? "Mostrar" : "Esconder") + ' las respuestas">' +
-        '<span class="cv"></span>' + reps.length + (reps.length === 1 ? " respuesta" : " respuestas") + '</span>';
-    }
-    const deOtra = n.from_video
-      ? '<span class="vfrom has-tip" data-tip="Este hilo viene de la versión anterior">heredado</span>' : '';
-    const cuerpoReps = (reps.length && !plegado) ? reps.map(htmlRespuesta).join("") : "";
-    return '<div class="hilo-b" data-hilo="' + n.id + '">' +
-      '<div class="note raiz' + (on?" on":"") + (bajo?" ph":"") + (n.resolved?" res":"") +
-      (st.replyTo === n.id ? " respondiendo" : "") +
-      '" data-v="' + esc(n.video) + '" data-f="' + n.frame + '" data-id="' + esc(n.id) + '" data-who="' + quien + '">' +
-      '<span class="phdot" title="Aqui esta el cursor del video"></span>' +
-      '<div class="body"><div class="meta"><span class="tcx">' + esc(n.timecode) + '</span>' +
-      rng + who + '<strong>' + esc(x2Numero(n)) + '</strong>' + (String(n.id).startsWith("tmp_") ? '<span class="draft-badge">borrador</span>' : '') + pastilla + deOtra +
-      // P5: insignia de "ya viajo al Agente" (solo para el anfitrion)
-      (!esInvitado && n.enviada_el ? '<span class="sent-badge" title="Enviada al Agente" aria-label="Enviada al Agente"><svg viewBox="0 0 24 24"><use href="#i-send"/></svg>enviada</span>' : '') + '</div>' +
-      '<div class="txt">' + txt + '</div></div>' + th +
-      '<div class="acts">' +
-      '<button class="rp has-tip" data-rp="' + esc(n.id) + '" data-tip="Responder en este hilo" data-key="R"><svg viewBox="0 0 24 24"><use href="#i-reply"/></svg></button>' +
-      // el invitado solo edita SUS notas; cerrar / mover / borrar no existen para el
-      ((!esInvitado || esMia(n)) ? '<button class="ed has-tip" data-ed="' + esc(n.id) + '" data-tip="' + (esInvitado ? "Editar tu nota" : "Editar el texto") + '"><svg viewBox="0 0 24 24"><use href="#i-pen"/></svg></button>' : '') +
-      (esInvitado ? '' :
-      '<button class="ok has-tip" data-res="' + esc(n.id) + '" data-tip="' + (n.resolved?"Reabrir el hilo":"Cerrar el hilo") + '"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></button>' +
-      '<button class="mv has-tip" data-mv="' + esc(n.id) + '" data-tip="Mover a otro momento"><svg viewBox="0 0 24 24"><use href="#i-timeshift"/></svg></button>' +
-      '<button class="del has-tip" data-del="' + esc(n.id) + '" data-tip="Eliminar' + (reps.length ? " el hilo entero" : "") + '"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg></button>') +
-      '</div></div>' +
-      cuerpoReps +
-      '</div>';
-  };
+  const pinta = x2Tarjeta;
   const html = filtradas.map(pinta).join("");
   // Si el contenido no cambia, conservar los nodos evita interrumpir el scroll
   // suave y el foco durante los repintados del reproductor y del sondeo.
@@ -2621,13 +2680,18 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
      decision (que boton se pulso, o si fue el cuerpo). Antes era un oyente por nota;
      con respuestas serian el doble de cierres por repintado. */
   for(const el of L.querySelectorAll(".hilo-b")){
+    el.onkeydown = ev => { if((ev.key === "Enter" || ev.key === " ") && ev.target.classList && ev.target.classList.contains("item")){ ev.preventDefault(); ev.target.click(); } };
     el.onclick = ev => {
       const d = ev.target.closest("[data-del]"), r = ev.target.closest("[data-res]"),
             m = ev.target.closest("[data-mv]"), ed = ev.target.closest("[data-ed]"),
             rp = ev.target.closest("[data-rp]"), fo = ev.target.closest("[data-fold]"),
             ap = ev.target.closest("[data-approve]"), ad = ev.target.closest("[data-adjust]"),
-            rd = ev.target.closest("[data-redecide]");
+            rd = ev.target.closest("[data-redecide]"), go = ev.target.closest("[data-goto]"),
+            cm = ev.target.closest("[data-cmp]"), pr = ev.target.closest("[data-playrange]");
       if(ap){ x2Aprobar(ap.dataset.approve); return; }
+      if(go){ x2IrA(go.dataset.goto); return; }
+      if(cm){ x2Comparar(cm.dataset.cmp); return; }
+      if(pr){ x2ReproducirTramo(pr.dataset.playrange); return; }
       if(ad){ x2PedirAjuste(ad.dataset.adjust); return; }
       if(rd){ x2Reconsiderar(rd.dataset.redecide); return; }
       if(d){ askDelete(d.dataset.del); return; }
@@ -2704,7 +2768,7 @@ function x2PedirAjuste(id){
   const c = st.notas.find(n => n.id === id && n.kind === "cambio"); if(!c) return;
   st.adjustTo = id; st.replyTo = null; editingId = null;
   $("#ta").value = ""; $("#ta").placeholder = "Qué ajuste le pides al Agente sobre " + x2Numero(c) + "…";
-  $(".editor").classList.add("adjusting"); $("#edLbl").textContent = "pidiendo ajuste en " + x2Numero(c);
+  $(".editor").classList.add("adjusting"); $("#edLbl").textContent = "Pedir ajuste · " + x2Numero(c);
   $("#bCancel").style.display = ""; setDirty(false); $("#ta").focus();
 }
 async function x2Reconsiderar(id){
@@ -3722,6 +3786,30 @@ $("#x2Search").oninput = e => { st.x2Search=e.target.value; renderList(); };
 $("#x2Type").onchange = e => { st.x2Type=e.target.value; renderList(); };
 $("#x2Person").onchange = e => { st.x2Person=e.target.value; renderList(); };
 $("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; renderList(); };
+$("#openTab").onclick = () => x2Tab("abiertas");
+$("#resolvedTab").onclick = () => x2Tab("resueltas");
+$$("#filterBar .seg-btn").forEach(b => b.onclick = () => { const sl = $("#x2Type"); sl.value = b.dataset.type; sl.dispatchEvent(new Event("change")); });
+$$("#personOptions .person-opt").forEach(b => b.onclick = () => { const sl = $("#x2Person"); sl.value = b.dataset.person; sl.dispatchEvent(new Event("change")); });
+$("#searchClear").onclick = () => { const i = $("#x2Search"); i.value = ""; i.dispatchEvent(new Event("input")); i.focus(); };
+$("#chkReviewed").onchange = e => { st.x2ShowReviewed = e.target.checked; renderList(); };
+function x2CerrarFiltros(){ const p = $("#filtersPop"); if(!p || p.hidden) return; p.hidden = true; $("#filtersBtn").setAttribute("aria-expanded", "false"); }
+$("#filtersBtn").onclick = ev => {
+  ev.stopPropagation();
+  const p = $("#filtersPop"), b = $("#filtersBtn");
+  if(!p.hidden){ x2CerrarFiltros(); return; }
+  const r = b.getBoundingClientRect();
+  p.hidden = false; b.setAttribute("aria-expanded", "true");
+  p.style.top = (r.bottom + 6) + "px";
+  p.style.left = Math.max(8, Math.min(innerWidth - p.offsetWidth - 8, r.right - p.offsetWidth)) + "px";
+};
+document.addEventListener("click", ev => { if(!ev.target.closest("#filtersPop") && !ev.target.closest("#filtersBtn")) x2CerrarFiltros(); });
+document.addEventListener("keydown", ev => { if(ev.key === "Escape") x2CerrarFiltros(); });
+$("#clearFiltersLink").onclick = () => {
+  st.x2Search = ""; st.x2Type = "all"; st.x2Person = "all"; st.x2Drawing = false; st.x2ShowReviewed = false; st.filterVid = "";
+  $("#x2Search").value = ""; $("#x2Type").value = "all"; $("#x2Person").value = "all"; $("#x2Drawing").checked = false; $("#chkReviewed").checked = false;
+  const vf = $("#vfilter"); if(vf) vf.value = "";
+  renderList();
+};
 /* Dos casillas para el MISMO ajuste (la de la barra superior y la del panel de
    notas). Solo una de las dos sincronizaba a la otra, asi que marcar la de abajo
    dejaba la de arriba desmarcada diciendo lo contrario. Un solo handler. */
@@ -4840,7 +4928,7 @@ function updateEditor(){
   const enEdicion = editingId ? st.notas.find(x => x.id === editingId) : null;
   const f = snap(v.currentTime);
   $("#edAt").textContent = enEdicion ? enEdicion.timecode : tc(v.currentTime, f);
-  $("#edLbl").textContent = enEdicion ? ("editando " + enEdicion.timecode) : ("fotograma " + f);
+  $("#edLbl").textContent = enEdicion ? "Editando nota" : "Nueva nota";
   const ta = $("#ta");
   /* ── Modo respuesta: el cuadro DEBE_DECIRLO ──
      Cristian: "a veces se buggea y no me deja crear". La causa era que st.replyTo se
@@ -4858,14 +4946,16 @@ function updateEditor(){
     }
   }
   const replying = !!st.replyTo;
+  $(".composer").classList.toggle("replying", replying);
+  { const t = $("#bSaveTxt"); if(t) t.textContent = replying ? "Responder" : editingId ? "Guardar" : st.adjustTo ? "Pedir ajuste" : "Añadir"; }
   const rNota = replying ? st.notas.find(x => x.id === st.replyTo) : null;
   const lbl = $("#edLbl");
   if(lbl){
     if(replying){
-      lbl.textContent = "respondiendo en " + (rNota ? rNota.timecode : "el hilo");
+      lbl.textContent = "Respondiendo a " + (rNota ? x2Numero(rNota) : "el hilo");
       lbl.classList.add("respondiendo");
     } else {
-      lbl.textContent = enEdicion ? ("editando " + enEdicion.timecode) : ("fotograma " + f);
+      lbl.textContent = enEdicion ? "Editando nota" : "Nueva nota";
       lbl.classList.remove("respondiendo");
     }
   }
@@ -4903,7 +4993,7 @@ function updateEditor(){
     const c = st.notas.find(n => n.id === st.adjustTo);
     $(".editor").classList.add("adjusting");
     ta.placeholder = "Qué ajuste le pides al Agente sobre " + (c ? x2Numero(c) : "este cambio") + "…";
-    if(lbl) lbl.textContent = "pidiendo ajuste en " + (c ? x2Numero(c) : "el cambio");
+    if(lbl) lbl.textContent = "Pedir ajuste · " + (c ? x2Numero(c) : "el cambio");
     if(bc) bc.style.display = "";
     if(bs) bs.title = "Enviar el ajuste al Agente";
   }
