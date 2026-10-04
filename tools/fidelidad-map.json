@@ -1247,8 +1247,6 @@
       "w",
       "h",
       "borderRadius",
-      "backgroundColor",
-      "color",
       "fontFamily",
       "fontSize",
       "fontWeight",
@@ -1256,7 +1254,8 @@
       "boxShadow",
       "display",
       "placeItems"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "marcador-seleccionado",
@@ -1886,9 +1885,9 @@
       "position",
       "borderTopWidth",
       "borderTopColor",
-      "borderTopLeftRadius",
-      "backgroundColor"
-     ]
+      "borderTopLeftRadius"
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "tarjeta-cambio",
@@ -1919,12 +1918,11 @@
      "props": [
       "w",
       "h",
-      "backgroundColor",
-      "color",
       "borderTopLeftRadius",
       "fontSize",
       "fontWeight"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "marcador-cambio",
@@ -1946,9 +1944,9 @@
      "r": ".item-who strong",
      "props": [
       "fontSize",
-      "fontWeight",
-      "color"
-     ]
+      "fontWeight"
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "autor-rotulo",
@@ -1957,9 +1955,9 @@
      "props": [
       "fontSize",
       "letterSpacing",
-      "textTransform",
-      "color"
-     ]
+      "textTransform"
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "hace",
@@ -1994,10 +1992,10 @@
       "fontFamily",
       "paddingLeft",
       "paddingRight",
-      "backgroundColor",
       "borderTopLeftRadius",
       "columnGap"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "texto",
@@ -2006,10 +2004,10 @@
      "props": [
       "fontSize",
       "lineHeight",
-      "color",
       "marginBottom",
       "marginTop"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "acciones",
@@ -2029,10 +2027,10 @@
      "props": [
       "minHeight",
       "fontSize",
-      "color",
       "columnGap",
       "display"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "respuesta",
@@ -2042,9 +2040,9 @@
       "marginLeft",
       "marginTop",
       "paddingLeft",
-      "borderLeftWidth",
-      "borderLeftColor"
-     ]
+      "borderLeftWidth"
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "respuesta-texto",
@@ -2071,10 +2069,9 @@
      "props": [
       "w",
       "h",
-      "backgroundColor",
-      "color",
       "borderTopLeftRadius"
-     ]
+     ],
+     "nota": "la tarjeta SELECCIONADA va en negativo (decision del usuario): colores cubiertos por tools/test-sel.py"
     },
     {
      "n": "redactor",

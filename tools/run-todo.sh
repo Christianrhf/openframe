@@ -12,6 +12,10 @@ limpia
 rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9421 >logs/s.out 2>&1 & api 9421
 python3 tools/setup-x2.py --api http://127.0.0.1:9421 >/dev/null 2>&1; tools/chrome.sh start 9422 >/dev/null
 res test-x2 "$(CDP_PORT=9422 $PY tools/test-x2.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
+# seleccion en negativo + persistente + redactor (datos x2)
+rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9421 >logs/s.out 2>&1 & api 9421
+python3 tools/setup-x2.py --api http://127.0.0.1:9421 >/dev/null 2>&1; tools/chrome.sh start 9422 >/dev/null
+res test-sel "$(CDP_PORT=9422 $PY tools/test-sel.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
 # i2 (datos reales)
 rm -rf data logs; mkdir -p logs; cp -R /tmp/o10/datos-reales data; python3 server.py --puerto 9431 >logs/s.out 2>&1 & api 9431; tools/chrome.sh start 9433 >/dev/null
 res test-i2 "$(CDP_PORT=9433 $PY tools/test-i2.py --api http://127.0.0.1:9431 2>&1 | grep -E 'checks|✘|FALLAN' | tr '\n' ' ')"; limpia
