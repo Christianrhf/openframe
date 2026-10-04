@@ -127,6 +127,20 @@ def abrir_real(api, w, h):
     return pg
 
 
+def preparar_estado(pgm, pgr, region):
+    """Coloca cada región en el estado visual declarado por el mapa.
+
+    La navegación R2 se compara desplegada; las regiones comunes conservan el estado
+    plegado aprobado. Se cambia solo la vista, sin escribir localStorage ni datos.
+    """
+    if region.get("estado") == "nav-abierta":
+        pgm.ev("(()=>{const e=document.querySelector('.item');if(e)e.click();return !!e})()")
+        pgr.ev("document.body.classList.remove('nav-plegado')")
+    else:
+        pgr.ev("document.body.classList.add('nav-plegado')")
+    time.sleep(0.15)
+
+
 # ── capturas lado a lado (sin PIL: se componen en el propio Chrome) ─────────
 def recorte(pagina, sel, margen=8):
     r = pagina.rect(sel)
@@ -198,6 +212,7 @@ def main():
         pgr = abrir_real(args.api, w, h)
         print("\n════ %dx%d ════" % (w, h))
         for reg in regiones:
+            preparar_estado(pgm, pgr, reg)
             pares = [p for p in reg["pares"] if not p.get("vp") or w in p["vp"]]
             if not pares:
                 continue
@@ -222,6 +237,7 @@ def main():
         if not args.sin_capturas and w == VIEWPORTS[0][0]:
             pgc = Page(url="about:blank", w=1600, h=1000)
             for reg in regiones:
+                preparar_estado(pgm, pgr, reg)
                 sels = reg.get("captura")
                 if not sels:
                     continue
