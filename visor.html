@@ -236,7 +236,10 @@
      los estrujaba a 16px de ancho con un icono de 14px dentro — el de reproducir
      quedaba invisible. Cristian: "el boton de reproducir no se ve". */
   .tp-row{display:flex;align-items:center;gap:8px}
-  .tp-row > .btn{flex:0 0 auto}
+  .tp-row .btn{flex:0 0 auto}
+  /* los iconos que forman un grupo saltan de linea JUNTOS: antes el par
+     «un segundo atras / adelante» se partia entre las dos filas. */
+  .tp-grupo{display:flex;align-items:center;gap:8px;flex:0 0 auto}
   .tp-row .btn.icon{width:30px;height:30px;flex:0 0 30px}
   .tp-row .btn svg{width:16px;height:16px;flex:0 0 16px}
   .tc{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;min-width:92px;letter-spacing:-.02em}
@@ -258,9 +261,11 @@
   /* ── Panel de notas ── */
   .side{flex:0 0 360px;width:360px;background:var(--panel);border-left:1px solid var(--line);
     display:flex;flex-direction:column;min-height:0}
-  .side-head{flex:0 0 auto;padding:8px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
-  .side-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1}
-  .cnt{font-family:var(--mono);font-size:11px;color:var(--fg-mute)}
+  .side-head{flex:0 0 auto;padding:8px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap;row-gap:4px}
+  /* con el texto a 11px (P6) el contador ya no cabe en la misma linea a 1280px:
+     antes se partia POR DENTRO («3 / cambios»). Ahora salta entero a la segunda. */
+  .side-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-mute);flex:1 1 auto;min-width:max-content}
+  .cnt{font-family:var(--mono);font-size:11px;color:var(--fg-mute);white-space:nowrap}
   .filter{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:6px 11px;border-bottom:1px solid var(--line-soft);font-size:11px}
   .vfilter{padding:3px 6px;min-height:28px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);
     font-size:11px;color:var(--fg-dim);max-width:118px}
@@ -1170,21 +1175,25 @@
              Antes flotaba sola a la derecha de la barra, descolgada de todo. -->
         <span class="tlinfo" id="tlInfo">todo el video</span>
         <div class="sep"></div>
+        <div class="tp-grupo">
         <button class="btn icon has-tip" id="bPrev" data-tip="Fotograma anterior" data-key="←" title="←"><svg viewBox="0 0 24 24"><use href="#i-prev"/></svg></button>
         <button class="btn icon has-tip" id="bPlay" data-tip="Reproducir / pausar" data-key="Espacio" title="Espacio"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
         <button class="btn icon has-tip" id="bNext" data-tip="Fotograma siguiente" data-key="→" title="→"><svg viewBox="0 0 24 24"><use href="#i-next"/></svg></button>
         <button class="btn icon has-tip" id="bBack" data-tip="Un segundo atrás" data-key="⇧←" title="⇧←"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
         <button class="btn icon has-tip" id="bFwd" data-tip="Un segundo adelante" data-key="⇧→" title="⇧→"><svg viewBox="0 0 24 24"><use href="#i-fwd"/></svg></button>
+        </div>
         <div class="sep"></div>
         <!-- lectura y control separados: la casilla no decia que hacia porque su
              etiqueta era el propio valor de fps. Ahora dice "medir". -->
         <span class="fpsv" id="fpsLbl">auto</span>
         <label class="chk" title="Medir los fps reales mientras se reproduce"><input type="checkbox" id="cDet" checked><span>medir</span></label>
         <div class="spacer"></div>
+        <div class="tp-grupo">
         <button class="btn icon has-tip" id="bErase" data-tip="Borrar el dibujo de este fotograma" title="⌫"><svg viewBox="0 0 24 24"><use href="#i-eraser"/></svg></button>
         <button class="btn icon has-tip" id="bUndo" data-tip="Deshacer el dibujo" title="⌘Z"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg></button>
         <button class="btn icon has-tip" id="bRedo" data-tip="Rehacer el dibujo" title="⇧⌘Z"><svg viewBox="0 0 24 24"><use href="#i-redo"/></svg></button>
         <button class="btn icon has-tip" id="bMax" data-tip="Pantalla completa" title=""><svg viewBox="0 0 24 24"><use href="#i-max"/></svg></button>
+        </div>
       </div>
       <!-- Controles de la banda de tiempo. Antes vivian A LA DERECHA de la banda y le
            robaban 301px: la pista se quedaba en 423px de los 778 disponibles. Ahora
