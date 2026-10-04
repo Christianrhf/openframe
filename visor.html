@@ -1165,6 +1165,7 @@ let st = { proyectos:[], slug:null, vid:null, videos:[], notas:[], rev:-1, pendi
            det:true, onlyPend:false, thumbs:false, filterVid:"", busyNote:false,
            x2Search:"", x2Type:"all", x2Person:"all", x2Drawing:false,
            x2Page:0, adjustTo:null,
+           x2Size:0,          // tarjetas que CABEN en la pagina (medido en renderList)
            x2Llegadas:[],     // notas que trajo el ultimo sondeo (para avisar y paginar)
            selId:null,        // id de la nota activa (editar/mover/borrar)
            playhead:-1,      // fotograma bajo el cursor de reproduccion
@@ -1711,6 +1712,7 @@ async function openVideo(vid){
   if(esInvitado && vid !== INV.video) return;   // un invitado ve UN video
   if(typeof shCerrar === "function") shCerrar();
   st.vid = vid; st.pend = null; st.hist=[]; st.hpos=-1;
+  st.x2Page = 0; x2OlvidarTamano();     // otras notas, otras alturas: volver a medir
   guardarSesion();
   st.undo=[]; st.uPos=-1; actualizarBotonUndo();
   st.tl = {zoom:1, off:0};              // vista del timeline: siempre empieza entera
@@ -1944,6 +1946,9 @@ function x2Filtradas(){
    sondeo y NO se veia: la lista seguia en la pagina 1 y la nota, que ordena por
    fotograma, caia en la ultima. Medido: 10 notas, «Página 1 de 3», la nota del
    invitado en la 3 — invisible hasta hacer clic en «siguiente». */
+/* Al cambiar filtros, video o ventana hay que volver a medir desde la apuesta alta:
+   si no, el tamano se queda clavado en el minimo de la vista mas apretada. */
+function x2OlvidarTamano(){ st.x2Size = 0; }
 function x2PageSize(){
   const h = $("#list").clientHeight || 360;
   return h < 330 ? 2 : h < 490 ? 3 : 4;
@@ -1951,17 +1956,26 @@ function x2PageSize(){
 // pagina (0..n) en la que cae una nota con los filtros de AHORA; -1 si no entra
 function x2PaginaDe(id){
   const i = x2Filtradas().findIndex(n => n.id === id);
-  return i < 0 ? -1 : Math.floor(i / x2PageSize());
+  // el tamano EFECTIVO del ultimo pintado; x2PageSize() solo es la primera apuesta
+  return i < 0 ? -1 : Math.floor(i / (st.x2Size || x2PageSize()));
 }
 /* Lleva la lista a la pagina de esa nota. Devuelve true si tuvo que moverse.
    Si la nota no pasa los filtros activos NO se toca nada: los filtros son una
    decision explicita de quien mira y una nota nueva no los anula. */
 function x2SeguirNota(id){
   if(!id) return false;
-  const p = x2PaginaDe(id);
-  if(p < 0 || p === st.x2Page) return false;
-  st.x2Page = p;
-  return true;
+  let movio = false;
+  /* Se repinta dentro: pintar la pagina puede ENCOGERLA (las tarjetas reales no
+     miden todas igual) y entonces la nota cae en otra. Con 4 vueltas sobra: el
+     tamano solo baja, y el minimo es 1. */
+  for(let i = 0; i < 4; i++){
+    const p = x2PaginaDe(id);
+    if(p < 0 || p === st.x2Page) break;
+    st.x2Page = p;
+    movio = true;
+    renderList();
+  }
+  return movio;
 }
 /* Notas raiz que no estaban en la carga anterior. `null` hasta la primera carga:
    al arrancar TODAS son nuevas y no hay nada que seguir. */
@@ -2021,11 +2035,7 @@ function renderList(){
     return;
   }
   const ph = st.playhead;
-  let pageSize = x2PageSize();
-  const pages = Math.max(1, Math.ceil(filtradas.length / pageSize));
-  st.x2Page = clamp(st.x2Page, 0, pages - 1);
-  const ini = st.x2Page * pageSize, list = filtradas.slice(ini, ini + pageSize);
-  L.innerHTML = list.map(n => {
+  const pinta = n => {
     if(n.kind === "cambio") return x2DecisionCard(n);
     const on = n.id === st.selId;
     const bajo = n.video === st.vid && n.frame === ph;   // el cursor de play esta aqui
@@ -2078,7 +2088,26 @@ const who = '<span class="who ' + (quien === "claude" ? "c" : quien === "invitad
       '</div></div>' +
       cuerpoReps +
       '</div>';
-  }).join("");
+  };
+  /* El tamano de pagina se MIDE, no se adivina. Con notas REALES (texto largo, tramo,
+     respuestas colgando) cuatro tarjetas desbordaban la caja y la lista salia con
+     scroll: medido 650 px de contenido en 638 de caja con v03-empire-state a
+     1600x1000. Se pinta la pagina y, si no cabe, se quita una tarjeta y se repinta.
+     El tamano EFECTIVO queda en `st.x2Size` y NO vuelve a crecer mientras no cambien
+     los filtros, el video o la ventana (x2OlvidarTamano): si cada pagina usara un
+     tamano distinto, `pagina * tamano` se descuadraria y habria tarjetas repetidas y
+     tarjetas que no salen en ninguna pagina. */
+  let pageSize = st.x2Size || x2PageSize(), pages, ini, list;
+  for(;;){
+    pages = Math.max(1, Math.ceil(filtradas.length / pageSize));
+    st.x2Page = clamp(st.x2Page, 0, pages - 1);
+    ini = st.x2Page * pageSize;
+    list = filtradas.slice(ini, ini + pageSize);
+    L.innerHTML = list.map(pinta).join("");
+    if(pageSize <= 1 || !L.clientHeight || L.scrollHeight <= L.clientHeight + 2) break;
+    pageSize--;
+  }
+  st.x2Size = pageSize;
   /* UN solo oyente por bloque de hilo: la raiz y sus respuestas comparten la misma
      decision (que boton se pulso, o si fue el cuerpo). Antes era un oyente por nota;
      con respuestas serian el doble de cierres por repintado. */
@@ -2969,11 +2998,11 @@ $("#bNext").onclick = () => stepF(1);
 $("#bBack").onclick = () => stepS(-1);
 $("#bFwd").onclick = () => stepS(1);
 $("#bMax").onclick = () => { (v.requestFullscreen||v.webkitRequestFullscreen||function(){}).call(v); };
-$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; renderList(); };
-$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; renderList(); };
-$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; renderList(); };
+$("#cPend").onchange = e => { st.onlyPend = e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Search").oninput = e => { st.x2Search=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Type").onchange = e => { st.x2Type=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Person").onchange = e => { st.x2Person=e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
+$("#x2Drawing").onchange = e => { st.x2Drawing=e.target.checked; st.x2Page=0; x2OlvidarTamano(); renderList(); };
 $("#x2Prev").onclick = () => { if(st.x2Page>0){ st.x2Page--; renderList(); } };
 $("#x2Next").onclick = () => { st.x2Page++; renderList(); };
 new ResizeObserver(() => renderList()).observe($("#list"));
@@ -3052,8 +3081,9 @@ document.addEventListener("focusin", e => {
 document.addEventListener("focusout", hideTip);
 window.addEventListener("scroll", hideTip, true);
 window.addEventListener("resize", hideTip);
+window.addEventListener("resize", () => { x2OlvidarTamano(); renderList(); });
 window.addEventListener("blur", hideTip);
-$("#vfilter").onchange = e => { st.filterVid = e.target.value; st.x2Page=0; renderList(); };
+$("#vfilter").onchange = e => { st.filterVid = e.target.value; st.x2Page=0; x2OlvidarTamano(); renderList(); };
 
 /* ── ATajos: una sola tabla, un solo dueñо por tecla ──
    Antes habia DOS cadenas if en paralelo comparando contra la misma tecla, asi que

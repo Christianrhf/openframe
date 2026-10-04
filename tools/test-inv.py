@@ -35,6 +35,23 @@ VISIBLES_INVITADO = ["#invBanner", "#bPlay", "#bPrev", "#bNext", "#ta", "#bSave"
                      "[data-tool=pen]", "[data-tool=arrow]", "#swBtn", "#tlZout", "#tlZin", "#tlNear",
                      "#cPend", "#cThumb", "#bErase", "#bUndo", "#bMax", "#scrub"]
 
+# La lista de notas esta PAGINADA (fase 3 del porte): el DOM solo tiene la pagina
+# activa. Para contar o buscar tarjetas hay que recorrer todas las paginas y dejar
+# la lista como estaba.
+RECORRER_PAGINAS = """(()=>{
+  const out = [], p0 = st.x2Page;
+  const total = Math.max(1, Math.ceil(x2Filtradas().length / (st.x2Size || x2PageSize())));
+  for(let p = 0; p < total; p++){
+    st.x2Page = p; renderList();
+    for(const n of document.querySelectorAll('#list .note')){
+      const w = n.querySelector('.who');
+      out.push([n.dataset.who, w ? w.textContent : null, !!n.querySelector('.ed')]);
+    }
+  }
+  st.x2Page = p0; renderList();
+  return JSON.stringify(out);
+})()"""
+
 RES = []
 
 
@@ -238,7 +255,15 @@ def pruebas_invitado():
     r = json.loads(j(pg, "document.querySelector('#cv').getBoundingClientRect().toJSON()"))
     x0, y0 = r["x"] + r["width"] * 0.3, r["y"] + r["height"] * 0.3
     pg.drag(x0, y0, x0 + r["width"] * 0.3, y0 + r["height"] * 0.25, steps=10)
-    esperar(pg, "st.notas.some(n=>n.author==='invitado' && !String(n.id).startsWith('tmp_') && n.frame===snap(4) && n.drawing && n.drawing.strokes && n.drawing.strokes.length>0)", 6)
+    # fase 2 del porte: el trazo nace como BORRADOR local (`tmp_`) y sale del navegador
+    # al pulsar Guardar, en UN solo POST con texto + trazos + tramo + JPEG.
+    esperar(pg, "st.notas.some(n=>String(n.id).startsWith('tmp_') && n.drawing && n.drawing.strokes.length>0)", 6)
+    check("el trazo del invitado nace como borrador local, sin nota vacia en el servidor",
+          not any(n.get("author") == "invitado" and (n.get("drawing") or {}).get("strokes")
+                  and n.get("frame") == pg.ev("snap(4)") for n in notas_upstream()),
+          j(pg, "st.notas.filter(n=>n.drawing&&n.drawing.strokes.length).map(n=>n.id)"))
+    pg.click("#bSave")
+    esperar(pg, "st.notas.some(n=>n.author==='invitado' && !String(n.id).startsWith('tmp_') && n.frame===snap(4) && n.drawing && n.drawing.strokes && n.drawing.strokes.length>0)", 8)
     time.sleep(1.2)
     f4 = pg.ev("snap(4)")
     nd = [n for n in notas_upstream() if n.get("author") == "invitado" and n.get("frame") == f4 and (n.get("drawing") or {}).get("strokes")]
@@ -249,9 +274,11 @@ def pruebas_invitado():
 
     # ── ve_otras: ve a Cristian y Claude, no los edita, puede responder ──
     mock({"ve_otras": True}); pg.reload(); time.sleep(1.8)
-    check("ve_otras=true: ve «Cristian» y «Claude» con sus chips, sin boton de editar en esas",
-          pg.ev("(()=>{const c=document.querySelector('#list .note[data-who=cristian]'), k=document.querySelector('#list .note[data-who=claude]');return !!c && !!k && c.querySelector('.who').textContent==='Cristian' && k.querySelector('.who').textContent==='Claude' && !c.querySelector('.ed') && !k.querySelector('.ed')})()"),
-          j(pg, "[...document.querySelectorAll('#list .note')].map(n=>[n.dataset.who, n.querySelector('.who').textContent, !!n.querySelector('.ed')])"))
+    # la lista pagina (fase 3): hay que recorrer las paginas, no solo la que se ve
+    chips = json.loads(pg.ev(RECORRER_PAGINAS))
+    check("ve_otras=true: ve «Cristian» y «Agente» con sus chips, sin boton de editar en esas",
+          any(c == ["cristian", "Cristian", False] for c in chips)
+          and any(c == ["claude", "Agente", False] for c in chips), chips)
     cid = pg.ev("(st.notas.find(n=>n.author==='cristian')||{}).id")
     pg.ev("startEdit(%s)" % json.dumps(cid)); time.sleep(0.2)
     check("consola: startEdit() sobre la nota de Cristian no entra en edicion", pg.ev("editingId===null"), pg.ev("editingId"))
@@ -317,9 +344,21 @@ def pruebas_cristian():
     ov0 = overflow(pg)
     check("sin __INVITADO: vista normal, boton Compartir (share-2) en la cabecera del video, sin banner",
           pg.ev("!document.body.classList.contains('invitado') && document.querySelector('.vcol-head #bShare').offsetParent!==null && document.querySelector('#bShare use').getAttribute('href')==='#i-share2' && document.querySelector('#invBanner').offsetParent===null"))
-    check("insignia en la vista de Cristian: «Invitado · Ana Pérez» distinta de «Tú» y «Claude»; marcador a rayas",
-          pg.ev("(()=>{const w=[...document.querySelectorAll('#list .note .who')].map(e=>e.className+'|'+e.textContent);return w.includes('who i|Invitado · Ana Pérez') && w.includes('who y|Tú') && w.includes('who c|Claude') && !!document.querySelector('#scrub .mark.inv') && !!document.querySelector('#list .rep[data-who=invitado]')})()"),
-          j(pg, "[...document.querySelectorAll('#list .note .who')].map(e=>e.className+'|'+e.textContent)"))
+    insig = json.loads(pg.ev("""(()=>{
+      const out = [], p0 = st.x2Page;
+      const total = Math.max(1, Math.ceil(x2Filtradas().length / (st.x2Size || x2PageSize())));
+      let rep = false;
+      for(let p = 0; p < total; p++){
+        st.x2Page = p; renderList();
+        for(const e of document.querySelectorAll('#list .note .who')) out.push(e.className + '|' + e.textContent);
+        if(document.querySelector('#list .rep[data-who=invitado]')) rep = true;
+      }
+      st.x2Page = p0; renderList();
+      return JSON.stringify({chips: out, rep: rep, marca: !!document.querySelector('#scrub .mark.inv')});
+    })()"""))
+    check("insignia en la vista de Cristian: «Invitado · Ana Pérez» distinta de «Tú» y «Agente»; marcador a rayas",
+          "who i|Invitado · Ana Pérez" in insig["chips"] and "who y|Tú" in insig["chips"]
+          and "who c|Agente" in insig["chips"] and insig["marca"] and insig["rep"], insig)
     check("Cristian conserva cerrar/mover/borrar sobre la nota del invitado",
           pg.ev("(()=>{const a=document.querySelector('#list .note[data-who=invitado] .acts');return !!a.querySelector('.ok') && !!a.querySelector('.mv') && !!a.querySelector('.del')})()"))
     r = json.loads(j(pg, "document.querySelector('#list .note[data-who=invitado]').getBoundingClientRect().toJSON()"))
@@ -400,13 +439,16 @@ def pruebas_cristian():
     pg.key("Escape")
     mock({"sin_endpoints": False})
     # el sondeo repinta: una nota nueva del invitado aparece sola
-    antes = pg.ev("document.querySelectorAll('#list .note').length")
+    # con la lista paginada, «aparece sola» = la tarjeta esta EN LA PAGINA que se ve
+    # y el total de raices ha crecido en una (contar `.note` del DOM topa en pageSize)
+    antes = pg.ev("visibleNotes().length")
     mock({"nombre": "Ana Pérez", "caducado": False})
     http("POST", GUEST + "/api/proyectos/%s/notas" % SLUG, {"video": pg.ev("st.vid"), "frame": 90, "text": "Llego por el sondeo"})
     esperar(pg, "[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')", 8)
     check("el sondeo pinta la nota nueva del invitado sin tocar nada (arreglo de `dibujando`)",
-          pg.ev("[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')") and pg.ev("document.querySelectorAll('#list .note').length") == antes + 1,
-          (antes, pg.ev("document.querySelectorAll('#list .note').length")))
+          pg.ev("[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')")
+          and pg.ev("visibleNotes().length") == antes + 1,
+          (antes, pg.ev("visibleNotes().length"), pg.ev("document.querySelector('#x2Page').textContent")))
     check("servidor sin endpoints: solo el 404 esperado en consola, ninguna excepcion", solo_404(errores(pg, n_err)), errores(pg, n_err))
     for (w, h) in ((1440, 900), (1600, 1000)):
         pg.viewport(w, h, reload=True, clear_storage=False); time.sleep(1.8)
