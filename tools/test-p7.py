@@ -199,7 +199,7 @@ def main():
           pg.ev("(()=>{const a=v.getBoundingClientRect(),b=cv.getBoundingClientRect();return Math.abs(a.width-b.width)<1.5&&Math.abs(a.height-b.height)<1.5&&Math.abs(a.left-b.left)<1.5})()"))
     check("rotulos de cada corte y pill «Comparando … con …» con el aviso de fps distintos",
           pg.ev("!cmpPill.hidden && cmpPill.textContent.includes('Comparando') && cmpPill.textContent.includes('corte-v02') && "
-                "cmpPill.textContent.includes('corte-v01') && cmpPill.textContent.includes('fps distintos') && "
+                "cmpPill.textContent.includes('corte-v01') && cmpPill.textContent.includes('fps 21.533 / 24') && "
                 "!cmpLblCur.hidden && cmpLblCur.textContent==='corte-v02.mp4' && cmpLblOtro.textContent==='corte-v01.mp4'"),
           pg.ev("cmpPill.textContent"))
     m = metric(pg)
@@ -246,6 +246,10 @@ def main():
           pg.ev("[CMP.pct, v.currentTime]"))
     pg.ev("cmpSetPct(50)")
     pg.shot("p7-curtain-1280x800.png")
+    pg.ev("cmpSel.focus()")
+    pg.key("Escape")
+    check("Esc con el selector enfocado NO sale del modo (cierra el desplegable)", pg.ev("CMP.on===true"))
+    pg.ev("cmpSel.blur()")
 
     # ── sincronizacion: reproducir 10 s a 0.5x (el clip dura 6 s), pausar, pasos, saltos ──
     pg.ev("seek(0); v.playbackRate = 0.5;")

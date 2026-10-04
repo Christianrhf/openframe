@@ -1737,6 +1737,7 @@ async function archivarProyecto(slug, archivar){
 async function openProject(slug, opts){
   if(esInvitado) return;                 // el invitado solo tiene SU proyecto (invArrancar)
   opts = opts || {};
+  cmpSalir(false);                      // otro proyecto (aunque no tenga video): fuera la comparacion
   st.slug = slug; st.vid = null; st.filterVid = "";
   st.vidAVolver = opts.vid || null;
   await pullDetail();
@@ -2371,8 +2372,8 @@ cv.addEventListener("pointerdown", e => {
      universal de pausar, crea una nota vacia... 7 notas vacias en rafaga y 4 trazos
      de 1 punto". El lapiz ya no viene activo y el canvas no se come el clic. */
   if(!st.tool){
-    // con la cortina activa el clic sobre el video es parte del gesto del divisor:
-    // no cambia reproducir/pausar (igual que en la maqueta)
+    // con la cortina activa, el clic sobre el video (a cualquier lado del divisor)
+    // NO cambia reproducir/pausar: el gesto de ese modo es el divisor (como en la maqueta)
     if(cmpEstado().on && cmpEstado().modo === "curtain") return;
     if(v.paused) play(); else pause();
     return;
@@ -4341,8 +4342,9 @@ function cmpLayout(){
       const PAD = 16, GAP = 12;
       const W = sc.clientWidth - 2 * PAD, H = sc.clientHeight - 2 * PAD;
       if(W <= 0 || H <= 0) return;
-      // sin pasar del tamano natural: el visor normal tampoco amplia un clip pequeno
-      const natural = Math.max(vh || H, v2.videoHeight || 0);
+      // sin pasar del tamano natural de NINGUNO de los dos: el visor normal tampoco
+      // amplia un clip pequeno (misma altura para ambos => manda el mas bajo)
+      const natural = Math.min(vh || H, v2.videoHeight || H);
       const h = Math.floor(Math.min(H, (W - GAP) / (r1 + r2), natural));
       cmpPx(fw, {width: h * r1, height: h});
       cmpPx(w2, {width: h * r2, height: h});
@@ -4487,7 +4489,7 @@ document.addEventListener("keydown", ev => {
   if(typeof shAbierto === "function" && shAbierto()) return;
   const sw = $("#swPop"); if(sw && !sw.hidden) return;
   const tag = (ev.target.tagName || "").toLowerCase();
-  if(tag === "textarea" || tag === "input") return;
+  if(tag === "textarea" || tag === "input" || tag === "select") return;   // Esc ahi cierra el desplegable
   cmpSalir(true);
 });
 
