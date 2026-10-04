@@ -384,7 +384,7 @@ def parte_ui(slug, vid, notas):
         m = json.loads(pg.ev(
             "JSON.stringify({page:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],"
             "view:[innerWidth,innerHeight],"
-            "side:[document.querySelector('.side').clientWidth,document.querySelector('.side').scrollWidth],"
+            "side:[document.querySelector('.sidebar').clientWidth,document.querySelector('.sidebar').scrollWidth],"
             "head:[document.querySelector('.side-head').clientWidth,document.querySelector('.side-head').scrollWidth],"
             "rail:[document.querySelector('.rail').clientWidth,document.querySelector('.rail').scrollWidth],"
             "round:roundStatus.getBoundingClientRect().height})"))

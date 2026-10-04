@@ -122,7 +122,7 @@ def abrir_real(api, w, h):
     Es el estado comparable con el de la maqueta (que pinta la nota 1 en pantalla)."""
     pg = Page(url=api + "/", w=w, h=h)
     time.sleep(2.0)
-    pg.ev("(()=>{const n=document.querySelector('#list .note');if(n)n.click();return !!n})()")
+    pg.ev("(()=>{const n=document.querySelector('#list .item');if(n)n.click();return !!n})()")
     time.sleep(0.8)
     return pg
 

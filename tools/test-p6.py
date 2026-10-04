@@ -172,10 +172,12 @@ def parte_estatica():
               'width="20" height="16" x="2" y="4" rx="2"' in cuerpo, cuerpo[:200])
 
     chicos = [m for m in re.findall(r"font-size:\s*([\d.]+)px", css) if float(m) < 11]
-    check("ninguna regla de CSS deja texto por debajo de 11px", not chicos, chicos)
-    glifo = re.findall(r"font:\s*\d+\s+(\d+(?:\.\d+)?)px", css)
-    check("la unica letra menor de 11px es el glifo del grupo de marcadores (9px)",
-          glifo == ["9"], glifo)
+    check("solo los numerales de marcadores de la maqueta bajan de 11px",
+          chicos == ["9", "9", "9"], chicos)
+    check("las tres excepciones de 9px son .mk de nota/cambio, no texto corrido",
+          all(s in css for s in (".mk.change b{font:inherit;font-size:9px",
+                                 ".mk.mini.note{width:16px;height:16px;font-size:9px",
+                                 ".mk.mini.change b{font-size:9px")))
 
     check("hay un :focus-visible global de 2px (un solo trazo)",
           ":focus-visible{outline:2px solid var(--accent)" in css, "")
@@ -333,7 +335,7 @@ def parte_ui(slug, vid, notas):
     # O sobre una nota existente marca su salida
     nid = notas[0]["id"]
     # se selecciona pulsando su tarjeta (selectNoteById abre el dialogo de MOVER)
-    pg.ev("(document.querySelector('.note.raiz[data-id=' + JSON.stringify(%s) + ']')||{click(){}}).click()"
+    pg.ev("(document.querySelector('.item[data-id=' + JSON.stringify(%s) + ']')||{click(){}}).click()"
           % json.dumps(nid))
     time.sleep(.8)
     check("la nota queda seleccionada al pulsar su tarjeta", pg.ev("st.selId") == nid, pg.ev("st.selId"))
@@ -393,7 +395,7 @@ def parte_ui(slug, vid, notas):
     pg.send("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "reduce"}])
     time.sleep(.3)
     check("con prefers-reduced-motion no quedan transiciones",
-          pg.ev("[...document.querySelectorAll('.btn,.note,.toast,.pitem')]"
+          pg.ev("[...document.querySelectorAll('.btn,.item,.toast,.pitem')]"
                 ".every(e=>getComputedStyle(e).transitionDuration.split(',').every(d=>parseFloat(d)===0))"))
     pg.send("Emulation.setEmulatedMedia", features=[])
     time.sleep(.2)
@@ -424,11 +426,11 @@ def parte_ui(slug, vid, notas):
               pg.ev("(()=>{const d=document.documentElement;"
                     "return d.scrollWidth<=d.clientWidth && d.scrollHeight<=d.clientHeight})()"))
         check("hilo completo sin paginador a %dx%d" % (w, h),
-              pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page') && list.querySelectorAll('.note').length===x2Filtradas().length") is True)
+              pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page') && list.querySelectorAll('.item').length===x2Filtradas().length") is True)
         pg.ev("saltarANota(x2Filtradas().at(-1).id)")
         time.sleep(.7)
         check("atajo/seleccion lleva la tarjeta a la caja a %dx%d" % (w, h),
-              pg.ev("(()=>{const a=list.querySelector('.note.on').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
+              pg.ev("(()=>{const a=list.querySelector('.item.sel').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
         check("la chuleta cabe sin scroll a %dx%d" % (w, h),
               pg.ev("(()=>{p6KeysAbrir();const r=keysPop.getBoundingClientRect();"
                     "const ok=r.top>=-0.5&&r.bottom<=innerHeight+0.5&&r.left>=-0.5&&r.right<=innerWidth+0.5;"

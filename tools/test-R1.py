@@ -144,19 +144,19 @@ def main():
           css(pg, ".main-grid", "gridTemplateColumns"))
     for w, h, esperado in ((1440, 900, 1440 * 0.29), (1600, 1000, 1600 * 0.29)):
         pg.viewport(w, h); time.sleep(2.2)
-        anchoc = rect(pg, ".side").get("w", 0)
+        anchoc = rect(pg, ".sidebar").get("w", 0)
         check("Conversación mide clamp(380,29vw,460) a %dx%d" % (w, h),
               abs(anchoc - max(380, min(460, esperado))) <= 1, anchoc)
         check("el visor y Conversación tienen el mismo alto a %dx%d" % (w, h),
-              abs(rect(pg, ".stage").get("h", 0) - rect(pg, ".side").get("h", -1)) <= 1,
-              (rect(pg, ".stage"), rect(pg, ".side")))
+              abs(rect(pg, ".stage").get("h", 0) - rect(pg, ".sidebar").get("h", -1)) <= 1,
+              (rect(pg, ".stage"), rect(pg, ".sidebar")))
         check("la página NO tiene scroll a %dx%d" % (w, h),
               pg.ev("document.documentElement.scrollHeight <= window.innerHeight + 1"),
               pg.ev("document.documentElement.scrollHeight + ' > ' + window.innerHeight"))
     check("Conversación es la tarjeta de la maqueta (blanca, borde --line, radio 8)",
-          css(pg, ".side", "backgroundColor") == "rgb(255, 255, 255)"
-          and css(pg, ".side", "borderTopColor") == "rgb(231, 231, 229)"
-          and css(pg, ".side", "borderRadius") == "8px")
+          css(pg, ".sidebar", "backgroundColor") == "rgb(255, 255, 255)"
+          and css(pg, ".sidebar", "borderTopColor") == "rgb(231, 231, 229)"
+          and css(pg, ".sidebar", "borderRadius") == "8px")
 
     print("\n── barra de proyectos: PLEGADA por defecto (lo que el usuario aprobó)")
     pg.viewport(1440, 900); time.sleep(2.2)

@@ -103,7 +103,7 @@ def sonda(ADMIN, GATE):
              {"video": VID, "frame": 5 + i, "text": "relleno %d" % i, "author": "cristian"})
     time.sleep(3.0)
     print("B1 hilo:", json.dumps(cp.ev("hiloCount.textContent")),
-          "| scroll:", cp.ev("list.scrollTop"), "| cards:", cp.ev("document.querySelectorAll('#list .note').length"))
+          "| scroll:", cp.ev("list.scrollTop"), "| cards:", cp.ev("document.querySelectorAll('#list .item').length"))
 
     pg.ev("v.currentTime = 5.0")
     time.sleep(0.4)

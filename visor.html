@@ -427,7 +427,7 @@
   /* .tools = el dock «Anotar» de la maqueta: grupos con grip, herramientas, color,
      grosor e historial, todos .ctl de 34px (R1). El tamaño del boton ya no es de
      esta clase: .tool solo marca "cual es la herramienta activa" para el JS. */
-  .tools{display:flex;align-items:center;gap:12px;min-width:0;white-space:nowrap}
+  .tools{display:flex;align-items:center;gap:12px;min-width:0;white-space:nowrap;overflow-x:auto;overflow-y:hidden}
   .dock-title{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;font-size:11px;
     font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute)}
   .dock-title svg{width:14px;height:14px}
@@ -1044,8 +1044,16 @@
     /* sigue siendo fijo (no crece con el texto), solo mas estrecho */
     .tp-row .tlinfo{flex:0 0 150px;width:150px}
   }
+  @media (max-width:1300px){
+    /* Sin rail, el invitado gana 30px de ancho: a 1280 el 16:9 resultante hacia
+       crecer la tarjeta 16px fuera de la ventana cuando transporte envuelve.
+       Reservar la segunda linea en la formula mantiene la pagina fija. */
+    body.invitado .screen,body.invitado .transport{
+      width:min(100%,calc((100cqh - var(--tl) - var(--dock) - 42px) * 1.7777778))}
+  }
   @media (max-width:1700px){
     .tp-row{flex-wrap:wrap;row-gap:6px}
+    .transport > .tp-row{flex:0 0 auto;height:auto;min-height:var(--grp)}
     .tp-row .tlinfo{flex:1 1 150px;width:auto}
   }
   @media (max-width:920px){
@@ -2496,6 +2504,14 @@ function x2SeguirNota(id){
   // vista. El resultado visual (misma alineacion "nearest") es el que importa,
   // no la animacion.
   el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  /* Con content-visibility:auto la primera pasada puede usar el alto intrinseco
+     estimado del bloque. Materializar la tarjeta y repetir el mismo ajuste evita
+     que quede unos pixeles fuera cuando su alto real sustituye a la estimacion. */
+  void el.getBoundingClientRect().height;
+  el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  requestAnimationFrame(() => {
+    if(el.isConnected) el.scrollIntoView({behavior:"auto", block:"nearest", inline:"nearest"});
+  });
   return true;
 }
 
@@ -4757,12 +4773,7 @@ let drag = null;
       reales, no en "% del ancho") se funde en UN `.cluster-marker` con el
       numero de miembros: nunca quedan dos cajas pisandose. */
 function activarMarcador(n){
-  st.selId = raizDe(n).id;
-  if(esRespuesta(n)) st.plegados[st.selId] = false;
-  st.pend = {frame:n.frame, time:n.frame/fps}; seek(n.frame/fps);
-  if(n.kind === "cambio"){ editingId = null; setDirty(false); }
-  $("#ta").value = n.text||""; drawCanvas(); renderList(); updateEditor();
-  x2SeguirNota(n.id);
+  return saltarANota(n.id);
 }
 // hora/autor/estado en una linea, para el aria-label y la vista previa (P4-d)
 function etiquetaMarcador(n){

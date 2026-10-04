@@ -33,12 +33,12 @@ OCULTOS_INVITADO = [".rail", ".vcol", "#navhandle", "#bProj", "#bClaude", "#bCop
                     "#sello", ".topbar .chk", "#plist", "#vlist"]
 VISIBLES_INVITADO = ["#invBanner", "#bPlay", "#bPrev", "#bNext", "#ta", "#bSave", "#bEnd", "#bGo",
                      "[data-tool=pen]", "[data-tool=arrow]", "#swBtn", "#tlZout", "#tlZin", "#tlNear",
-                     "#cPend", "#cThumb", "#bErase", "#bUndo", "#bMax", "#scrub"]
+                     "#filtersBtn", "#filterBar .seg-btn[data-type=all]", "#bErase", "#bUndo", "#bMax", "#scrub"]
 
 # Todas las tarjetas del hilo existen a la vez; contar no modifica el scroll.
-RECORRER_HILO = """JSON.stringify([...document.querySelectorAll('#list .note')].map(n=>{
-  const w=n.querySelector('.who');
-  return [n.dataset.who,w?w.textContent:null,!!n.querySelector('.ed')];
+RECORRER_HILO = """JSON.stringify([...document.querySelectorAll('#list .item')].map(n=>{
+  const w=n.querySelector('.item-who strong');
+  return [n.dataset.who,w?w.textContent:null,!!n.querySelector('.edit-btn')];
 }))"""
 
 RES = []
@@ -96,7 +96,7 @@ def j(pg, expr):
 
 
 def sin_scroll(pg):
-    return pg.ev("(()=>{const d=document.documentElement;const cajas=[...document.querySelectorAll('.topbar,.tp-row,.tlctrls,.editor,.side-head,.filter,#shPop')]"
+    return pg.ev("(()=>{const d=document.documentElement;const cajas=[...document.querySelectorAll('.topbar,.tp-row,.tlctrls,.composer,.side-head,.filterbar,#shPop')]"
                  ".filter(e=>e.offsetParent!==null).map(e=>({s:e.className||e.id,ok:e.scrollHeight<=e.clientHeight+1&&e.scrollWidth<=e.clientWidth+1}));"
                  "return JSON.stringify({pag:d.scrollHeight<=d.clientHeight&&d.scrollWidth<=d.clientWidth,"
                  "w:d.clientWidth,h:d.clientHeight,cajas:cajas.filter(c=>!c.ok)})})()")
@@ -188,32 +188,36 @@ def pruebas_invitado():
     vi = json.loads(j(pg, "%s.map(s=>{const e=document.querySelector(s);return [s, e? e.offsetParent!==null : 'NOEXISTE']})" % json.dumps(VISIBLES_INVITADO)))
     check("visibles: reproducir, buscar fotograma, dibujar, nota, fin, zoom, filtros, atajos",
           all(v is True for _, v in vi), [s for s, v in vi if v is not True])
+    pg.click("#filtersBtn"); time.sleep(0.2)
+    check("Filtros abre los botones de persona y opciones auxiliares del panel nuevo",
+          pg.ev("!filtersPop.hidden&&document.querySelector('#personOptions .person-opt[data-person=invitado]').offsetParent!==null&&cThumb.offsetParent!==null"))
+    pg.key("Escape"); time.sleep(0.2)
     check("ve_otras=false: no ve las notas de Cristian ni de Claude",
-          pg.ev("st.notas.length===0 && document.querySelectorAll('#list .note').length===0"), j(pg, "st.notas.map(n=>n.author)"))
+          pg.ev("st.notas.length===0 && document.querySelectorAll('#list .item').length===0"), j(pg, "st.notas.map(n=>n.author)"))
 
     # ── crear una nota con texto HTML ──
     pg.ev("document.querySelector('#ta').focus()")
     pg.type(XSS_TEXTO); pg.key("Enter")
-    esperar(pg, "document.querySelectorAll('#list .note[data-who=invitado]').length>0", 5)
+    esperar(pg, "document.querySelectorAll('#list .item[data-who=invitado]').length>0", 5)
     check("nota creada: tarjeta con insignia «Invitado · Ana Pérez» y marcador a rayas",
-          pg.ev("(()=>{const n=document.querySelector('#list .note[data-who=invitado]');return !!n && n.querySelector('.who.i').textContent==='Invitado · Ana Pérez' && !!document.querySelector('#scrub .mark.inv')})()"),
-          j(pg, "{who:[...document.querySelectorAll('#list .who')].map(e=>e.textContent), marks:document.querySelectorAll('.mark').length}"))
+          pg.ev("(()=>{const n=document.querySelector('#list .item[data-who=invitado]');return !!n && n.querySelector('.item-who strong').textContent==='Invitado · Ana Pérez' && !!document.querySelector('#scrub .mark.inv')})()"),
+          j(pg, "{who:[...document.querySelectorAll('#list .item-who strong')].map(e=>e.textContent), marks:document.querySelectorAll('.mark').length}"))
     check("XSS texto: la nota se ve literal, sin <img>, sin ejecutar",
-          pg.ev("(()=>{const t=document.querySelector('#list .note[data-who=invitado] .txt');return t.textContent===%s && !document.querySelector('#list img') && window.__xss===undefined})()" % json.dumps(XSS_TEXTO)),
-          j(pg, "{t:document.querySelector('#list .txt')&&document.querySelector('#list .txt').textContent, x:window.__xss}"))
+          pg.ev("(()=>{const n=document.querySelector('#list .item[data-who=invitado]'),t=n&&n.querySelector(':scope > p');return t&&t.textContent===%s && !document.querySelector('#list img') && window.__xss===undefined})()" % json.dumps(XSS_TEXTO)),
+          j(pg, "{t:document.querySelector('#list .item > p')&&document.querySelector('#list .item > p').textContent, x:window.__xss}"))
     ns = notas_upstream()
     mias = [n for n in ns if n.get("author") == "invitado"]
     check("en el servidor: author=invitado, autor_nombre=Ana Pérez, enlace_id del enlace",
           len(mias) == 1 and mias[0].get("autor_nombre") == "Ana Pérez" and mias[0].get("enlace_id") == "ab12cd34" and mias[0].get("text") == XSS_TEXTO,
           [(n.get("author"), n.get("autor_nombre"), n.get("enlace_id")) for n in ns])
     check("tarjeta del invitado: solo responder + editar (sin cerrar/mover/borrar)",
-          pg.ev("(()=>{const a=document.querySelector('#list .note[data-who=invitado] .acts');return !!a.querySelector('.rp') && !!a.querySelector('.ed') && !a.querySelector('.ok') && !a.querySelector('.mv') && !a.querySelector('.del')})()"),
-          j(pg, "[...document.querySelectorAll('#list .acts button')].map(b=>b.className)"))
+          pg.ev("(()=>{const a=document.querySelector('#list .item[data-who=invitado] .item-actions');return !!a.querySelector('.reply-btn') && !!a.querySelector('.edit-btn') && !a.querySelector('.resolve-btn') && !a.querySelector('.move-btn') && !a.querySelector('.del-btn') && !a.querySelector('.compare-btn')})()"),
+          j(pg, "[...document.querySelectorAll('#list .item-actions button')].map(b=>b.className)"))
     pg.shot("inv-02-vista-1280.png")
 
     # ── editar el texto de SU nota ──
     mid = mias[0]["id"]
-    pg.click("#list .note[data-who=invitado] .ed"); time.sleep(0.4)
+    pg.click("#list .item[data-who=invitado] .edit-btn"); time.sleep(0.4)
     check("editar propia: el cuadro se rellena con el texto",
           pg.ev("editingId===%s && document.querySelector('#ta').value===%s" % (json.dumps(mid), json.dumps(XSS_TEXTO))),
           j(pg, "{e:editingId, v:document.querySelector('#ta').value}"))
@@ -271,13 +275,13 @@ def pruebas_invitado():
     cid = pg.ev("(st.notas.find(n=>n.author==='cristian')||{}).id")
     pg.ev("startEdit(%s)" % json.dumps(cid)); time.sleep(0.2)
     check("consola: startEdit() sobre la nota de Cristian no entra en edicion", pg.ev("editingId===null"), pg.ev("editingId"))
-    pg.click("#list .note[data-who=cristian] .rp"); time.sleep(0.3)
+    pg.click("#list .item[data-who=cristian] .reply-btn"); time.sleep(0.3)
     check("responder: el cuadro entra en modo respuesta al hilo de Cristian", pg.ev("st.replyTo===%s" % json.dumps(cid)), pg.ev("st.replyTo"))
     pg.ev("document.querySelector('#ta').focus()"); pg.type("Respuesta de Ana"); pg.key("Enter")
-    esperar(pg, "[...document.querySelectorAll('#list .rep .rtxt')].some(e=>e.textContent==='Respuesta de Ana')", 5)
+    esperar(pg, "[...document.querySelectorAll('#list .reply > p')].some(e=>e.textContent==='Respuesta de Ana')", 5)
     check("responder al hilo de Cristian: respuesta con «Invitado · Ana Pérez» bajo su nota",
-          pg.ev("(()=>{const r=[...document.querySelectorAll('#list .rep')].find(x=>x.querySelector('.rtxt').textContent==='Respuesta de Ana');return !!r && r.dataset.who==='invitado' && r.querySelector('.rwho').textContent.startsWith('Invitado · Ana Pérez') && r.closest('.hilo-b').querySelector('.note').dataset.who==='cristian'})()"),
-          j(pg, "[...document.querySelectorAll('#list .rep')].map(r=>[r.dataset.who, r.querySelector('.rwho').textContent, r.querySelector('.rtxt').textContent])"))
+          pg.ev("(()=>{const r=[...document.querySelectorAll('#list .reply')].find(x=>x.querySelector(':scope > p').textContent==='Respuesta de Ana');return !!r && r.dataset.who==='invitado' && r.querySelector('.item-top strong').textContent==='Invitado · Ana Pérez' && r.closest('.hilo-b').querySelector('.item').dataset.who==='cristian'})()"),
+          j(pg, "[...document.querySelectorAll('#list .reply')].map(r=>[r.dataset.who, r.querySelector('.item-top strong').textContent, r.querySelector(':scope > p').textContent])"))
     rp = next((n for n in notas_upstream() if n.get("text") == "Respuesta de Ana"), {})
     check("en el servidor: la respuesta cuelga de la nota de Cristian (parent) con author=invitado",
           rp.get("parent") == cid and rp.get("author") == "invitado" and rp.get("autor_nombre") == "Ana Pérez", rp)
@@ -334,16 +338,16 @@ def pruebas_cristian():
     check("sin __INVITADO: vista normal, boton Compartir (share-2) en la cabecera del video, sin banner",
           pg.ev("!document.body.classList.contains('invitado') && document.querySelector('.vcol-head #bShare').offsetParent!==null && document.querySelector('#bShare use').getAttribute('href')==='#i-share2' && document.querySelector('#invBanner').offsetParent===null"))
     insig = json.loads(pg.ev("""(()=>{
-      const out = [...document.querySelectorAll('#list .note .who')].map(e=>e.className+'|'+e.textContent);
-      const rep = !!document.querySelector('#list .rep[data-who=invitado]');
+      const out = [...document.querySelectorAll('#list .item')].map(e=>e.dataset.who+'|'+e.querySelector('.item-who strong').textContent);
+      const rep = !!document.querySelector('#list .reply[data-who=invitado]');
       return JSON.stringify({chips: out, rep: rep, marca: !!document.querySelector('#scrub .mark.inv')});
     })()"""))
     check("insignia en la vista de Cristian: «Invitado · Ana Pérez» distinta de «Tú» y «Agente»; marcador a rayas",
-          "who i|Invitado · Ana Pérez" in insig["chips"] and "who y|Tú" in insig["chips"]
-          and "who c|Agente" in insig["chips"] and insig["marca"] and insig["rep"], insig)
+          "invitado|Invitado · Ana Pérez" in insig["chips"] and "cristian|Tú" in insig["chips"]
+          and "claude|Agente" in insig["chips"] and insig["marca"] and insig["rep"], insig)
     check("Cristian conserva cerrar/mover/borrar sobre la nota del invitado",
-          pg.ev("(()=>{const a=document.querySelector('#list .note[data-who=invitado] .acts');return !!a.querySelector('.ok') && !!a.querySelector('.mv') && !!a.querySelector('.del')})()"))
-    r = json.loads(j(pg, "document.querySelector('#list .note[data-who=invitado]').getBoundingClientRect().toJSON()"))
+          pg.ev("(()=>{const a=document.querySelector('#list .item[data-who=invitado] .item-actions');return !!a.querySelector('.resolve-btn') && !!a.querySelector('.move-btn') && !!a.querySelector('.del-btn')})()"))
+    r = json.loads(j(pg, "document.querySelector('#list .item[data-who=invitado]').getBoundingClientRect().toJSON()"))
     pg.shot("cri-01-tarjeta-insignia.png", clip=(r["x"] - 2, r["y"] - 2, r["width"] + 4, r["height"] + 4))
 
     # popover vacio
@@ -422,16 +426,17 @@ def pruebas_cristian():
     mock({"sin_endpoints": False})
     # el sondeo repinta: una nota nueva del invitado aparece sola
     # El sondeo agrega la tarjeta sin mover la lectura ni cambiar la seleccion.
-    lectura = pg.ev("({top:list.scrollTop,sel:st.selId})")
+    pg.ev("window.__lectura={sel:st.selId};window.__ancla=[...list.children].find(n=>n.getBoundingClientRect().bottom>list.getBoundingClientRect().top)||list.firstElementChild;window.__aid=__ancla&&__ancla.dataset.hilo;window.__y=__ancla&&__ancla.getBoundingClientRect().top")
     antes = pg.ev("visibleNotes().length")
     mock({"nombre": "Ana Pérez", "caducado": False})
     http("POST", GUEST + "/api/proyectos/%s/notas" % SLUG, {"video": pg.ev("st.vid"), "frame": 90, "text": "Llego por el sondeo"})
-    esperar(pg, "[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')", 8)
+    esperar(pg, "[...document.querySelectorAll('#list .item > p')].some(e=>e.textContent==='Llego por el sondeo')", 8)
     check("el sondeo pinta la nota nueva del invitado sin tocar nada (arreglo de `dibujando`)",
-          pg.ev("[...document.querySelectorAll('#list .txt')].some(e=>e.textContent==='Llego por el sondeo')")
+          pg.ev("[...document.querySelectorAll('#list .item > p')].some(e=>e.textContent==='Llego por el sondeo')")
           and pg.ev("visibleNotes().length") == antes + 1,
           (antes, pg.ev("visibleNotes().length"), pg.ev("document.querySelector('#hiloCount').textContent")))
-    check("el sondeo conserva scroll y seleccion", pg.ev("({top:list.scrollTop,sel:st.selId})") == lectura)
+    check("el sondeo conserva seleccion y la tarjeta anclada en la misma posicion",
+          pg.ev("st.selId===__lectura.sel&&(!__aid||Math.abs(list.querySelector('[data-hilo='+CSS.escape(__aid)+']').getBoundingClientRect().top-__y)<=2)"))
     check("sin controles de pagina en anfitrion", pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
     check("servidor sin endpoints: solo el 404 esperado en consola, ninguna excepcion", solo_404(errores(pg, n_err)), errores(pg, n_err))
     for (w, h) in ((1440, 900), (1600, 1000)):

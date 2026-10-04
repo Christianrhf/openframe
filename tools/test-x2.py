@@ -24,7 +24,7 @@ def check(name, value, detail=""):
 def metric(pg):
     return json.loads(pg.ev("JSON.stringify({page:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],"
                             "view:[innerWidth,innerHeight],list:[list.clientWidth,list.scrollWidth,list.clientHeight,list.scrollHeight],"
-                            "side:[document.querySelector('.side').clientWidth,document.querySelector('.side').scrollWidth],"
+                            "side:[document.querySelector('.sidebar').clientWidth,document.querySelector('.sidebar').scrollWidth],"
                             "stage:[document.querySelector('.stage').clientWidth,document.querySelector('.stage').scrollWidth],"
                             "pageText:hiloCount.textContent,cards:list.querySelectorAll('.hilo-b').length})"))
 
@@ -45,18 +45,18 @@ def main():
         check("sin controles de pagina %dx%d" % (w, h), pg.ev("!document.querySelector('#x2Prev,#x2Next,#x2Page')") is True)
         pg.ev("saltarANota(x2Filtradas().at(-1).id)")
         time.sleep(.7)
-        check("seleccion visible %dx%d" % (w, h), pg.ev("(()=>{const a=list.querySelector('.note.on').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
+        check("seleccion visible %dx%d" % (w, h), pg.ev("(()=>{const a=list.querySelector('.item.sel').getBoundingClientRect(),b=list.getBoundingClientRect();return a.top>=b.top-2&&a.bottom<=b.bottom+2})()") is True)
         pg.shot("x2-%dx%d.png" % (w, h))
 
     pg.ev("x2Search.value='Cambio aplicado 4';x2Search.dispatchEvent(new Event('input',{bubbles:true}))")
     check("busqueda N de M", pg.ev("list.querySelectorAll('.hilo-b').length===1 && hiloCount.textContent==='1 de 11'"))
     pg.ev("x2Search.value='';x2Search.dispatchEvent(new Event('input',{bubbles:true}))")
-    pg.ev("x2Type.value='cambio';x2Type.dispatchEvent(new Event('change',{bubbles:true}))")
-    check("filtro de cambios", pg.ev("[...list.querySelectorAll('.note')].every(e=>e.classList.contains('change'))"))
-    pg.ev("x2Type.value='all';x2Type.dispatchEvent(new Event('change',{bubbles:true}))")
+    pg.click("#filterBar .seg-btn[data-type=cambio]")
+    check("filtro visible de cambios", pg.ev("[...list.querySelectorAll('.item')].every(e=>e.classList.contains('change')) && document.querySelector('#filterBar .seg-btn[data-type=cambio]').getAttribute('aria-pressed')==='true'"))
+    pg.click("#filterBar .seg-btn[data-type=all]")
 
     check("rotulo Agente", pg.ev("document.body.innerText.includes('Agente') && !document.body.innerText.includes('Claude')"))
-    check("numeros Nota/A", pg.ev("!![...list.querySelectorAll('.note')].find(e=>/Nota \\d|A\\d/.test(e.innerText))"))
+    check("numeros Nota/A", pg.ev("!![...list.querySelectorAll('.item')].find(e=>/Nota \\d|A\\d/.test(e.innerText))"))
     check("cero excepciones de pagina", not pg.errors, pg.errors)
     print("\n%d/%d checks" % (sum(checks), len(checks)))
     raise SystemExit(0 if all(checks) else 1)
