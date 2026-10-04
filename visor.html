@@ -334,7 +334,7 @@
      «Línea de tiempo» queda solo para lectores de pantalla; el rótulo de cada carril vive
      DENTRO del carril y las flechas de navegar junto al zoom. */
   .tl-corner{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .lane-tag{position:absolute;left:8px;z-index:1;height:calc((100% - 2px)/2);display:flex;align-items:center;gap:6px;
+  .lane-tag{position:absolute;left:8px;z-index:1;height:calc((100% - 2px)/2);box-sizing:border-box;padding-top:3px;display:flex;align-items:flex-start;gap:6px;
     font-size:11px;font-weight:600;white-space:nowrap;pointer-events:none;color:var(--ink)}
   .lane-tag.note{top:0}
   .lane-tag.cambio{bottom:0}
