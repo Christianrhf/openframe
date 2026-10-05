@@ -1054,6 +1054,8 @@
   .shst.activo{border-color:var(--fg);color:var(--fg);font-weight:600}
   .shst.caducado{border-style:dashed}
   .shst.revocado{text-decoration:line-through}
+  .shsec{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+  .shall{margin-top:10px}
   .shlink.muerto .shetq,.shlink.muerto .shm{color:var(--fg-mute)}
   .shlink .btn.xs{flex:0 0 auto}
   .shlink .btn.xs.confirmar{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
@@ -5429,7 +5431,7 @@ async function invArrancar(){
    nº de notas), copiar y revocar (confirmacion en el propio boton, sin confirm()).
    Si server.py aun no tiene los endpoints (404), lo dice en una linea y no rompe nada.
    Etiquetas y URLs se pintan con textContent: nada del servidor entra como HTML. */
-const SH = {enlaces: [], estado: null, sinEndpoints: false, error: "", cargando: false, confirmar: null, confirmarT: 0, nuevo: null};
+const SH = {enlaces: [], todos: [], estado: null, sinEndpoints: false, error: "", cargando: false, confirmar: null, confirmarT: 0, nuevo: null};
 const shBtn = $("#bShare"), shPop = $("#shPop");
 function shAbierto(){ return !!shPop && !shPop.hidden; }
 function shUrl(){ return P(st.slug) + "/videos/" + encodeURIComponent(st.vid) + "/invitar"; }
@@ -5478,6 +5480,7 @@ async function shCargar(){
     SH.enlaces = (d && Array.isArray(d.enlaces)) ? d.enlaces : [];
     SH.sinEndpoints = false;
     try{ SH.estado = await api("/api/invitados/estado"); }catch(e){ SH.estado = null; }
+    try{ const t = await api("/api/invitados/activos"); SH.todos = (t && Array.isArray(t.enlaces)) ? t.enlaces : []; }catch(e){ SH.todos = []; }
   }catch(e){
     SH.enlaces = [];
     SH.sinEndpoints = /^HTTP 404|no encontrado/.test(e.message || "");
@@ -5553,6 +5556,65 @@ function shPintar(){
     }
     L.appendChild(row);
   }
+  // ── enlaces vivos de OTROS videos y proyectos: revocar a mano desde aqui ──
+  const otros = SH.todos.filter(e => !(e.slug === st.slug && e.vid === st.vid));
+  if(otros.length && !SH.sinEndpoints){
+    L.appendChild(shEl("div", "shsec", "En otros videos"));
+    for(const e of otros){
+      const key = e.slug + "/" + e.vid + "/" + e.id;
+      const row = shEl("div", "shlink"); row.dataset.eid = e.id || ""; row.dataset.estado = "activo"; row.dataset.otro = "1";
+      const body = shEl("div", "shb"), n1 = shEl("div", "shn");
+      n1.appendChild(shEl("span", "shst activo", "activo"));
+      n1.appendChild(shEl("span", "shetq", e.etiqueta ? String(e.etiqueta).slice(0, 60) : ("enlace " + (e.id || ""))));
+      body.appendChild(n1);
+      const usos = +e.usos || 0;
+      // lo que distingue al enlace va primero (etiqueta); donde vive va en la segunda linea (el proyecto solo si es otro)
+      body.appendChild(shEl("span", "shm", (e.slug !== st.slug ? String(e.proyecto || e.slug).slice(0, 24) + " · " : "") + String(e.video || e.vid).slice(0, 28) + " · " +
+        usos + (usos === 1 ? " uso" : " usos") + (e.expira ? " · hasta " + fechaCorta(e.expira) : "")));
+      row.appendChild(body);
+      const bc = shEl("button", "btn xs", "Copiar"); bc.title = "Copiar el enlace";
+      bc.onclick = async () => toast((await copyText(e.url || "")) ? "Enlace copiado" : "No se pudo copiar", 2200);
+      row.appendChild(bc);
+      const br = shEl("button", "btn xs" + (SH.confirmar === key ? " confirmar" : ""), SH.confirmar === key ? "¿Revocar?" : "Revocar");
+      br.title = SH.confirmar === key ? "Pulsa otra vez para revocar: el invitado deja de entrar al instante" : "Revocar este enlace (pide confirmación)";
+      br.dataset.rev = e.id || ""; br.onclick = () => shRevocarOtro(e);
+      row.appendChild(br);
+      L.appendChild(row);
+    }
+  }
+  if(SH.todos.length >= 2 && !SH.sinEndpoints){
+    const bt = shEl("button", "btn xs shall" + (SH.confirmar === "*" ? " confirmar" : ""),
+      SH.confirmar === "*" ? "¿Revocar los " + SH.todos.length + "?" : "Revocar todos (" + SH.todos.length + ")");
+    bt.id = "shRevTodos"; bt.title = "Revoca todos los enlaces vivos de todos los proyectos (pide confirmación)";
+    bt.onclick = () => shRevocarTodos();
+    L.appendChild(bt);
+  }
+}
+// confirmacion EN el boton, comun a «otros videos» y «todos»: el primer clic arma 4 s, el segundo ejecuta
+function shArmar(key){
+  if(SH.confirmar !== key){
+    SH.confirmar = key; shPintar();
+    clearTimeout(SH.confirmarT);
+    SH.confirmarT = setTimeout(() => { if(SH.confirmar === key){ SH.confirmar = null; shPintar(); } }, 4000);
+    return false;
+  }
+  SH.confirmar = null; clearTimeout(SH.confirmarT); return true;
+}
+const shUrlDe = e => P(e.slug) + "/videos/" + encodeURIComponent(e.vid) + "/invitar/" + encodeURIComponent(e.id);
+async function shRevocarOtro(e){
+  if(esInvitado || !shArmar(e.slug + "/" + e.vid + "/" + e.id)) return;
+  try{ await api(shUrlDe(e), {method:"DELETE"}); toast("Enlace revocado", 2200); }
+  catch(err){ toast("No se pudo revocar: " + err.message, 4000); }
+  await shCargar(); shColocar();
+}
+async function shRevocarTodos(){
+  if(esInvitado || !shArmar("*")) return;
+  let ok = 0, mal = 0;
+  for(const e of SH.todos.slice()){
+    try{ await api(shUrlDe(e), {method:"DELETE"}); ok++; }catch(err){ mal++; }
+  }
+  toast(mal ? "Revocados " + ok + "; fallaron " + mal : (ok === 1 ? "Enlace revocado" : ok + " enlaces revocados"), 3200);
+  await shCargar(); shColocar();
 }
 async function shCrear(){
   if(esInvitado || !st.slug || !st.vid) return;

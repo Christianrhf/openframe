@@ -16,6 +16,10 @@ res test-x2 "$(CDP_PORT=9422 $PY tools/test-x2.py 2>&1 | grep -E 'checks|✘' | 
 rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9421 >logs/s.out 2>&1 & api 9421
 python3 tools/setup-x2.py --api http://127.0.0.1:9421 >/dev/null 2>&1; tools/chrome.sh start 9422 >/dev/null
 res test-sel "$(CDP_PORT=9422 $PY tools/test-sel.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
+# revocar enlaces a mano (panel Compartir) con datos x2
+rm -rf data logs; mkdir -p logs; python3 server.py --puerto 9421 >logs/s.out 2>&1 & api 9421
+python3 tools/setup-x2.py --api http://127.0.0.1:9421 >/dev/null 2>&1; tools/chrome.sh start 9422 >/dev/null
+res test-enlaces "$(CDP_PORT=9422 $PY tools/test-enlaces.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
 # i2 (datos reales)
 rm -rf data logs; mkdir -p logs; cp -R /tmp/o10/datos-reales data; python3 server.py --puerto 9431 >logs/s.out 2>&1 & api 9431; tools/chrome.sh start 9433 >/dev/null
 res test-i2 "$(CDP_PORT=9433 $PY tools/test-i2.py --api http://127.0.0.1:9431 2>&1 | grep -E 'checks|✘|FALLAN' | tr '\n' ' ')"; limpia
@@ -35,6 +39,8 @@ res test-p6 "$(CDP_PORT=9473 $PY tools/test-p6.py 2>&1 | grep -E 'checks|FALLA' 
 # bugs-r2 (los 4 hallazgos de R2 deben NO reproducirse)
 tools/chrome.sh start 9483 >/dev/null; sleep 2
 res bugs-r2 "$(CDP_PORT=9483 $PY tools/bugs-r2.py 2>&1 | tail -1)"; limpia
+# apagado por inactividad del servidor real (puertos 955x propios)
+res test-idle "$(python3 tools/test-idle.py 2>&1 | grep -E 'checks|✘' | tr '\n' ' ')"; limpia
 # hilo continuo (server 9491, guest 9492, Chrome 9493; procesos propios)
 res test-hilo "$( $PY tools/test-hilo.py 2>&1 | grep -E 'checks|✘|NO VERIFICADO' | tr '\n' ' ')"; limpia
 # guest + ataque

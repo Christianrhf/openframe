@@ -949,6 +949,24 @@ def listar_enlaces(slug, vid):
     return out
 
 
+def enlaces_vivos_todos():
+    """Todos los enlaces VIVOS de todos los proyectos (panel «Compartir»: revocar a mano desde un solo sitio)."""
+    out = []
+    for slug, vid in sorted({(s_, v_) for s_, v_, _l in iter_enlaces()}):
+        try:
+            items = listar_enlaces(slug, vid)
+        except ValueError:
+            continue
+        pn = (plist(slug) or {}).get("nombre", slug)
+        vn = next((v.get("nombre") for v in load_videos(slug) if v.get("id") == vid), None) or vid
+        for it in items:
+            if link_activo(it):
+                it.update({"slug": slug, "vid": vid, "proyecto": pn, "video": vn})
+                out.append(it)
+    out.sort(key=lambda x: x.get("creado") or "", reverse=True)
+    return out
+
+
 def revocar_enlace(slug, vid, enlace_id):
     found = {"ok": False}
 
@@ -1098,12 +1116,40 @@ H = {
 }
 
 
+# ── Apagado por inactividad ──
+# OpenFrame no se queda residente: lo levanta la app (o `visor`) y se apaga solo tras unos minutos sin
+# ninguna peticion (la interfaz abierta consulta cada ~2 s; la CLI tambien cuenta). Solo el servidor
+# real (8477); los de prueba no se apagan. Si la puerta de invitados esta abierta NO se apaga: guest.py
+# le pide los datos a este servidor.
+_ultimo_uso = [time.time()]
+
+
+def _vigia_inactividad(srv, minutos, guest_port):
+    import socket
+    while True:
+        time.sleep(15)
+        if time.time() - _ultimo_uso[0] < minutos * 60:
+            continue
+        try:
+            socket.create_connection(("127.0.0.1", guest_port), timeout=1).close()
+            continue
+        except OSError:
+            pass
+        print("Sin uso desde hace %g min: me apago (se levanta al abrir OpenFrame)" % minutos, flush=True)
+        srv.shutdown()
+        return
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "VisorNotas/2.0"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt, *args):
         pass  # silencio: solo queremos errores reales
+
+    def handle_one_request(self):
+        _ultimo_uso[0] = time.time()
+        super().handle_one_request()
 
     # utilidades
     def _send(self, code, body=b"", ctype="application/json", extra=None):
@@ -1187,6 +1233,8 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/invitados/estado":
                 return self._json({"publicada": puerta_estado(),
                                    "enlaces_activos": enlaces_activos()})
+            if p == "/api/invitados/activos":
+                return self._json({"enlaces": enlaces_vivos_todos()})
             if p == "/api/invitados/actividad":
                 try:
                     notas = actividad_invitados((q.get("desde") or [""])[0])
@@ -1628,6 +1676,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--puerto", type=int, default=8477)
     ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--inactividad", type=float, default=None,
+                    help="minutos sin uso tras los que se apaga (0 = nunca; por defecto 10 en el 8477, 0 en los demas)")
     a = ap.parse_args()
     guest_secret()
     srv = ThreadingHTTPServer((a.host, a.puerto), Handler)
@@ -1635,6 +1685,10 @@ def main():
     watcher = threading.Thread(target=publicar_watchdog, name="publicar-watchdog")
     watcher.daemon = True
     watcher.start()
+    mins = a.inactividad if a.inactividad is not None else float(os.environ.get("OPENFRAME_IDLE_MIN", "10" if a.puerto == 8477 else "0"))
+    if mins > 0:
+        threading.Thread(target=_vigia_inactividad, name="inactividad", daemon=True,
+                         args=(srv, mins, int(os.environ.get("OPENFRAME_GUEST_PORT", "8478")))).start()
     print("Visor de Notas escuchando en http://%s:%d" % (a.host, a.puerto))
     print("Proyectos en %s" % DATA)
     try:
