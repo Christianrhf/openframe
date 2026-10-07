@@ -7,3 +7,6 @@ thumbs/
 ref-S/
 ref-S2/
 ref-U/
+config.json
+.DS_Store
+*.pyc
