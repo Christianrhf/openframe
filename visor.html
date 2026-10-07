@@ -1709,12 +1709,6 @@ function respuestasDe(id){
                  .sort((a,b) => String(a.created||"").localeCompare(String(b.created||"")) ||
                                 String(a.id).localeCompare(String(b.id)));
 }
-const EST = {PEND:"pendiente", RESP:"respondida", CERR:"cerrada"};
-function estadoHilo(raiz){
-  if(!raiz) return EST.PEND;
-  if(raiz.resolved) return EST.CERR;
-  return respuestasDe(raiz.id).length ? EST.RESP : EST.PEND;
-}
 // la nota raiz de cualquier nota (una respuesta devuelve su raiz)
 function raizDe(n){
   if(!n) return null;
@@ -2673,7 +2667,6 @@ function x2Tarjeta(n){
     '<div class="item-meta">' + meta + '</div>' + txt + th + chip +
     '<div class="item-actions">' + acts + '</div>' + cuerpoReps + '</article></div>';
 }
-function x2DecisionCard(n){ return x2Tarjeta(n); }
 function htmlRespuesta(r){
   const quien = quienEs(r);
   const av = quien === "claude" ? '<span class="agent-av">' + X2_IC("sparkles", "xs") + '</span>' : '';
@@ -3667,16 +3660,6 @@ $("#bCancel").onclick = () => {
 };
 $("#bDel").onclick = () => { const n = curNote(); if(!n){ toast("No hay ninguna nota en este fotograma"); return; } askDelete(n.id); };
 $("#bGo").onclick = () => { if(st.pend) seek(frameT(st.pend.frame)); };
-/* Al elegir cualquier nota de la lista, se suelta el modo respuesta: si estabas
-   respondiendo a un hilo y ahora seleccionas otra nota, la intencion es crear/editar
-   esa, no seguir contestando al anterior. */
-function soltarReplySiCambiaDeNota(id){
-  if(!st.replyTo) return;
-  const r = st.notas.find(n => n.id === st.replyTo);
-  const raiz = r ? raizDe(r) : null;
-  if(!raiz || raiz.id !== id){ st.replyTo = null; editingId = null;
-    $("#bCancel").style.display = "none"; }
-}
 /* ── Mover nota: NO se pide un numero de fotograma ──
    El bug de uso: obligaba a calcular "a que fotograma" a mano, y el numero cambia
    con cada tecla. Ahora se elige el MOMENTO: hay una vista previa del video, se navega

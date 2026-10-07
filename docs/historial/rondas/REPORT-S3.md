@@ -1,7 +1,7 @@
 # REPORT · S3 · Puerta de invitados terminada y endurecida
 
 ## Base elegida
-`ref-S/` **no tenía `guest.py`**: el intento de S murió antes de escribirlo, y su
+`docs/historial/ref-S/` **no tenía `guest.py`**: el intento de S murió antes de escribirlo, y su
 `server.py`/`visor.sh` son byte a byte los originales del clon. Así que no había
 híbrido posible y la base es `ref-S2/` entera (`guest.py` 786 líneas, `server.py`
 +240, `visor.sh` +77, `tools/test-guest.py` 522 líneas): su puerta ya tenía lo

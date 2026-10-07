@@ -1,7 +1,7 @@
 # SEGURIDAD · auditoría de caja blanca de la puerta de invitados
 
 Agente R. Solo lectura de código (`guest.py`, partes de `server.py` que tocan
-invitados, `publicar.sh`, `launchd/*.plist`). Entorno propio en 9393/9394,
+invitados, `publicar.sh`, plantillas `launchd/*.plist.example`). Entorno propio en 9393/9394,
 `OPENFRAME_NO_PUBLICAR=1`. Prueba reproducible de cada hallazgo en
 `tools/attack-wb.py` (arranca sus propios `server.py`/`guest.py`); hoy: **4
 FAIL / 4 PASS**.

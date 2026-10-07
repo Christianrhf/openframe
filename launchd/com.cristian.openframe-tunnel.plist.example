@@ -7,14 +7,14 @@
   <array>
     <string>/usr/bin/caffeinate</string>
     <string>-i</string>
-    <string>/Users/cristianhernandez/bin/cloudflared</string>
+    <string>__HOME__/bin/cloudflared</string>
     <string>tunnel</string>
-    <string>--config</string><string>/Users/cristianhernandez/.cloudflared/config.yml</string>
+    <string>--config</string><string>__HOME__/.cloudflared/config.yml</string>
     <string>--no-autoupdate</string>
     <string>run</string><string>openframe</string>
   </array>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>/Users/cristianhernandez/visornotas/logs/tunel.log</string>
-  <key>StandardErrorPath</key><string>/Users/cristianhernandez/visornotas/logs/tunel.log</string>
+  <key>StandardOutPath</key><string>__HOME__/visornotas/logs/tunel.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/visornotas/logs/tunel.log</string>
 </dict>
 </plist>

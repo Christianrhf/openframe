@@ -14,16 +14,14 @@ import json
 import os
 import random
 import re
-import shutil
 import socket
 import string
 import sys
-import tempfile
 import threading
 import time
 from datetime import datetime, timedelta, timezone
 from http.cookies import SimpleCookie
-from urllib.error import HTTPError, URLError
+from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 

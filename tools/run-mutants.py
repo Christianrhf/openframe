@@ -6,7 +6,6 @@ from __future__ import print_function
 import argparse
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile

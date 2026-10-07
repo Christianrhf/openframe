@@ -1,7 +1,7 @@
 # TAREA S3 · Terminar y ENDURECER la puerta de invitados (continuación; dos intentos previos murieron por el límite de uso)
-Lee `docs/CONTRATO-INVITADOS.md` y `docs/TASK-S.md` (es tu especificación; S3 la cumple entera). Tu carpeta es el clon `/tmp/o8/inv-S3`. Puertos de prueba tuyos: server.py 9381, guest.py 9382 (NO uses otros). No edites `visor.html` (lo termina U2 en paralelo).
+Lee `docs/CONTRATO-INVITADOS.md` y `docs/historial/rondas/TASK-S.md` (es tu especificación; S3 la cumple entera). Tu carpeta es el clon `/tmp/o8/inv-S3`. Puertos de prueba tuyos: server.py 9381, guest.py 9382 (NO uses otros). No edites `visor.html` (lo termina U2 en paralelo).
 ## Punto de partida (nada de esto llegó a commit ni a informe)
-- `ref-S/` = intento de S (Codex gpt-6-astra): `guest.py` 520 líneas, cambios en `server.py` (+240) y `visor.sh`, `tools/test-guest.py` 377 líneas. Murió por límite de uso; no sabemos si está completo.
+- `docs/historial/ref-S/` = intento de S (Codex gpt-6-astra): `guest.py` 520 líneas, cambios en `server.py` (+240) y `visor.sh`, `tools/test-guest.py` 377 líneas. Murió por límite de uso; no sabemos si está completo.
 - `ref-S2/` = intento independiente de S2 (Codex gpt-5.6-sol): `guest.py` 786 líneas, `server.py`, `visor.sh`, `tools/test-guest.py` 522 líneas. También murió.
 - `tools/attack-guest.py`, `tools/run-mutants.py`, `tools/mock/` = suite de ataque de CAJA NEGRA escrita por T sin ver ninguna implementación (6/6 mutantes matados). `tools/run-attack.sh` la lanza contra tu clon (levanta server.py y guest.py en tus puertos, borra `data/` y `logs/` antes).
 - Resultado de la suite contra cada intento (ver `docs/ATAQUE-previo.txt`): ref-S 135/159, ref-S2 140/159. Fallos comunes a los dos: crear nota como invitado, PATCH de nota propia, revocado/caducado aceptado en la petición siguiente, límites de dibujo/thumb, `/api/ping` sin cookie (ver abajo).

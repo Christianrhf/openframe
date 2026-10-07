@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R2 · Caza de errores exploratoria del porte fusionado — una prueba por hallazgo (BUGS.md).
+"""R2 · Caza de errores exploratoria del porte fusionado — una prueba por hallazgo (`docs/historial/rondas/BUGS-R2.md`).
 
 Arranca sus propios procesos (nunca los de otro agente):
     server.py --puerto 9481

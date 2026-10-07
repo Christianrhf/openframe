@@ -4,9 +4,11 @@ shots/
 __pycache__/
 *.bak-*
 thumbs/
-ref-S/
 ref-S2/
 ref-U/
 config.json
 .DS_Store
 *.pyc
+launchd/com.cristian.openframe-guest.plist
+launchd/com.cristian.openframe-tunnel.plist
+.atl/

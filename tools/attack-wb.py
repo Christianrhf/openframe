@@ -17,7 +17,6 @@ import os
 import random
 import shutil
 import signal
-import socket
 import string
 import subprocess
 import sys

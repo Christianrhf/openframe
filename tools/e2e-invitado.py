@@ -18,10 +18,8 @@ OPENFRAME_NO_PUBLICAR=1 siempre: esto no toca el tunel.
 Capturas en shots/ (mirarlas con Read). Sale 1 si falla algun check.
 """
 import argparse
-import base64
 import json
 import os
-import re
 import socket
 import subprocess
 import sys

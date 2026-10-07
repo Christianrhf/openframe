@@ -15,7 +15,6 @@ import json
 import os
 import re
 import socket
-import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -281,8 +280,11 @@ class Handler(BaseHTTPRequestHandler):
             pass
         log_line(info, code, self.path)
 
-    def send_json(self, code, value, info=None):
-        self.send_body(code, json.dumps(value, ensure_ascii=False), info=info)
+    def send_json(self, code, value, info=None, extra_cookie=None):
+        extra = {}
+        if extra_cookie:
+            extra["Set-Cookie"] = "ofn=%s; HttpOnly; Secure; SameSite=Lax; Path=/" % extra_cookie
+        self.send_body(code, json.dumps(value, ensure_ascii=False), info=info, extra=extra)
 
     def not_found(self, info=None):
         self.send_body(404, "Este enlace ya no esta disponible", "text/plain; charset=utf-8", info=info)
@@ -531,12 +533,6 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             return self.send_json(400, {"error": str(exc)}, info=info)
         return self.not_found(info)
-
-    def send_json(self, code, value, info=None, extra_cookie=None):
-        extra = {}
-        if extra_cookie:
-            extra["Set-Cookie"] = "ofn=%s; HttpOnly; Secure; SameSite=Lax; Path=/" % extra_cookie
-        self.send_body(code, json.dumps(value, ensure_ascii=False), info=info, extra=extra)
 
     def do_PATCH(self):
         p = urlparse(self.path).path

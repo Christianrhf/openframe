@@ -15,7 +15,7 @@ Capturas lado a lado revisadas con Read: `shots/fid-tokens.png`, `fid-encabezado
   real de cortes, abre el elegido), botón negro «Compartir revisión» (popover real de
   invitados) y avatar `CH`.
 - **Rejilla**: `.workspace` (16/24) > `.main-grid` `1fr | clamp(380px,29vw,460px)`, gap 16.
-- `docs/MAPA-REGIONES.md` con los contenedores estables de R2–R5.
+- `docs/historial/rondas/MAPA-REGIONES.md` con los contenedores estables de R2–R5.
 
 ## Diferencias permitidas (las tres)
 1. **Datos reales**: proyecto, cortes, pendientes, iniciales.

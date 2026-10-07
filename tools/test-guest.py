@@ -2,18 +2,15 @@
 """Suite adversaria autocontenida para guest.py (stdlib, puertos S3 9381/9382)."""
 import base64
 import concurrent.futures
-import datetime
 import http.client
 import json
 import os
 import random
-import shutil
 import socket
 import stat
 import subprocess
 import sys
 import time
-import urllib.parse
 import uuid
 
 

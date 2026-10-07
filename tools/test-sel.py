@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Seleccion en negativo + persistente + redactor sin bordes encimados. Chrome via CDP_PORT, API en 9421 (datos x2)."""
-import sys, json
+import sys
 sys.path.insert(0, __import__('os').path.dirname(__file__))
 from cdp import Page
 API = "http://127.0.0.1:9421/"
